@@ -1,0 +1,56 @@
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Build outputs
+dist/
+build/
+target/
+
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+
+# Backup files
+*.backup
+*.bak 
+okdp-sandbox-ca.crt
+
+# Local overrides
+local/
+.tmp/
+*oidc-secret*.yaml
+*OIDC*
+.OIDC*
+# Le chart oidc-client est du code, pas un secret: il ne fait que generer le
+# secret a l'execution. La regle *OIDC* ci-dessus l'attrape sur les systemes de
+# fichiers insensibles a la casse, ou il devenait invisible au commit.
+!charts/oidc-client/
+!charts/oidc-client/**
+*.bak
+*.draft
