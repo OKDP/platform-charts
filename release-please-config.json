@@ -1,0 +1,129 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "separate-pull-requests": false,
+  "include-v-in-tag": true,
+  "draft-pull-request": true,
+  "packages": {
+    "charts/services/airflow": {
+      "component": "airflow",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/hive-metastore": {
+      "component": "hive-metastore",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/jupyterhub": {
+      "component": "jupyterhub",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/okdp-examples": {
+      "component": "okdp-examples",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/polaris": {
+      "component": "polaris",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/spark-defaults": {
+      "component": "spark-defaults",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/spark-history-server": {
+      "component": "spark-history-server",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/spark-operator": {
+      "component": "spark-operator",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/spark-rbac": {
+      "component": "spark-rbac",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/superset": {
+      "component": "superset",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/services/trino": {
+      "component": "trino",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/system/okdp-control-plane-server": {
+      "component": "okdp-control-plane-server",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    },
+    "charts/system/okdp-control-plane-ui": {
+      "component": "okdp-control-plane-ui",
+      "release-type": "simple",
+      "include-component-in-tag": true,
+      "tag-separator": "/",
+      "changelog-path": "CHANGELOG.md"
+    }
+  },
+  "changelog-sections": [
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation",
+      "hidden": false
+    },
+    {
+      "type": "refactor",
+      "section": "Refactoring",
+      "hidden": false
+    },
+    {
+      "type": "test",
+      "section": "Tests",
+      "hidden": true
+    },
+    {
+      "type": "ci",
+      "section": "Continuous Integration",
+      "hidden": true
+    }
+  ]
+}
