@@ -1,0 +1,23 @@
+# A MySQL database (driver derived from the engine), bigger sizing.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+connections:
+  mysql:
+    contract: database-server
+    engine: mysql
+    host: mysql.example.org
+    port: 3306
+    dbName: metastore
+    secretRef: {name: mysql-creds}
+  aws:
+    contract: s3
+    apiUrl: https://s3.eu-west-1.amazonaws.com
+    region: eu-west-1
+    pathStyle: false
+db: mysql
+storage: aws
+s3SecretRef: hms-aws
+warehouseBucket: lake
+cpu: 1.5
+memoryGi: 4

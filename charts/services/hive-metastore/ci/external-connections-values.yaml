@@ -1,0 +1,28 @@
+# The demo project: database and object store declared as connection files.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+connections:
+  demo-db-hive:
+    contract: database-server
+    description: Hive metastore database
+    engine: postgresql
+    driver: org.postgresql.Driver
+    host: demo-pg-rw.demo.svc.cluster.local
+    port: 5432
+    dbName: hive
+    sslMode: disable
+    secretRef: {name: demo-pg-app}
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef: {name: creds-seaweedfs-s3}
+db: demo-db-hive
+storage: demo-storage
+s3SecretRef: creds-hive-metastore-s3
+warehouseBucket: hive
