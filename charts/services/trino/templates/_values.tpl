@@ -177,7 +177,12 @@ accessControl:
 {{- end }}
 {{- end -}}
 
-{{/* Module opa: opa-kube-mgmt. */}}
+{{/*
+Module opa: opa-kube-mgmt. Never set admissionController.enabled (nor expose it
+in values.schema.json): upstream webhookconfiguration.yaml runs genCA and
+genSignedCert, and okdp-guard-allow.yaml accepts that only because the
+webhook stays disabled.
+*/}}
 {{- define "okdp-trino.values.opa" -}}
 fullnameOverride: {{ include "okdp-trino.opaName" . }}
 authz:
