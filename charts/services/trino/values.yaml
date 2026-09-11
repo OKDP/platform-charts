@@ -1,0 +1,44 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+# Read here: ingress.{suffix,className}, certificateIssuers.selfSigned.name,
+# oidc.{issuerUri,authUrl,tokenUrl,jwksUri,scope,clientProvisioning,dcr}, proxy.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Hive catalogs, one Trino catalog per item:
+#   - name: bronze             # Trino catalog name
+#     metastore: demo-hive     # hive connection (a connection name, or a hive-metastore release in this namespace)
+#     storage: demo-storage    # s3 connection
+#     s3SecretRef: creds-x     # optional, Secret with accessKey/secretKey; default: s3SecretRef below
+hiveCatalogs: []
+
+# Iceberg REST catalogs (Polaris), one Trino catalog per item:
+#   - name: silver
+#     catalog: demo-polaris    # iceberg-catalog connection
+#     storage: demo-storage    # s3 connection
+#     warehouse: silver        # optional, default: the realm of the connection
+#     oidcSecretRef: creds-x   # optional, Secret with client_id/client_secret; default: creds-<release>-oauth2
+#     oauth2Scope: PRINCIPAL_ROLE:ALL
+#     s3SecretRef: creds-x     # optional
+icebergCatalogs: []
+
+# Default S3 identity of this instance (Secret with accessKey/secretKey), used by
+# any catalog that does not name its own. Last resort: the secretRef of the
+# catalog's s3 connection.
+s3SecretRef: ""
+
+numWorkers: 1
+workerCpu: 0.5
+workerMemoryGi: 2
+coordinatorMemoryGi: 8
+
+enableOPA: true
+enableOPAL: false
+enableOPADebugLogs: false
+policyRepoUrl: https://github.com/OKDP/okdp-examples.git
+policyRepoMainBranch: main
+OPAL_POLICY_SUBSCRIPTION_DIRS: trino_opa_policy
+OPAL_POLICY_REPO_MANIFEST_PATH: trino_opa_policy
+opaPolicyPath: v1/data/trino/allow

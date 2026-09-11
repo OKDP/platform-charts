@@ -1,0 +1,4 @@
+{{- /* Module opal, enabled by enableOPA and enableOPAL. Its secrets come from opal-secrets.yaml. */}}
+{{- if and .Values.enableOPA .Values.enableOPAL }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "opal" "values" (include "okdp-trino.values.opal" . | fromYaml)) }}
+{{- end }}

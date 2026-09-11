@@ -1,0 +1,2 @@
+{{- /* Module main. */}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "trino" "values" (include "okdp-trino.values.trino" . | fromYaml)) }}

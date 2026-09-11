@@ -1,0 +1,56 @@
+# External connections only: a hive metastore, an Iceberg REST catalog and an
+# s3 store whose secretRef is the catalogs' S3 identity (no s3SecretRef on the
+# release). Plus an internal Polaris. OAuth client registered by DCR, proxy set.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      clientId: okdp-ui
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      jwksUri: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/certs
+      userinfoUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/userinfo
+      scope: "openid profile email groups"
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://keycloak.okdp.sandbox/realms/master/clients-registrations/openid-connect
+        authMethod: anonymous
+    proxy: {httpProxy: "http://proxy.corp:3128", httpsProxy: "http://proxy.corp:3128", noProxy: ".svc,.cluster.local"}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+    storageClass: {data: standard, workspace: standard}
+connections:
+  lake-s3:
+    contract: s3
+    apiUrl: https://s3.example.org
+    region: eu-west-3
+    pathStyle: false
+    secretRef: {name: lake-s3-creds}
+  corp-hive:
+    contract: hive
+    thriftUri: thrift://hms.corp.example.org:9083
+  corp-iceberg:
+    contract: iceberg-catalog
+    uri: https://iceberg.corp.example.org/api/catalog
+    realm: corp
+hiveCatalogs:
+  - name: raw
+    metastore: corp-hive
+    storage: lake-s3
+icebergCatalogs:
+  - name: curated
+    catalog: corp-iceberg
+    storage: lake-s3
+    oidcSecretRef: creds-trino-iceberg
+  - name: silver
+    catalog: demo-polaris
+    storage: lake-s3
+    warehouse: silver
+    oauth2Scope: PRINCIPAL_ROLE:writer
+    s3SecretRef: creds-silver-s3
+numWorkers: 3
+workerCpu: 1.5
+workerMemoryGi: 6
+coordinatorMemoryGi: 12
+enableOPA: false
