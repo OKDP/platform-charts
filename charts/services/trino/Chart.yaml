@@ -1,0 +1,28 @@
+apiVersion: v2
+name: trino
+description: >-
+  Apache Trino - Distributed SQL query engine designed for large-scale data processing across multiple data sources.
+  High-performance, in-memory query engine that enables fast, interactive analytics on diverse data systems.
+  Supports querying data from multiple databases, data warehouses, and big data platforms in a single query.
+type: application
+# <upstream>-<okdp semver>; the okdp half is owned by release-please. The
+# upstream half stays SemVer (480.0.0): the console compares versions.
+version: 480.0.0-1.0.0
+appVersion: "480"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/trinodb/charts
+annotations:
+  # Former KuboCD package roles/dependencies, kept for the catalog.
+  okdp.io/roles: interactive-query
+  okdp.io/depends-on: data-catalog,ingress
+dependencies:
+  - name: okdp-lib
+    version: 0.1.0
+    # TODO(no-kubocd): switch to oci://quay.io/okdp/platform-charts
+    repository: file://../../../../okdp-lib

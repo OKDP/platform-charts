@@ -1,0 +1,34 @@
+# One hive catalog on an internal metastore (the hive-metastore release demo-hive
+# in the same namespace, no connection file) and an external s3 connection.
+# OPA off, as in the demo project.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      clientId: okdp-ui
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      jwksUri: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/certs
+      userinfoUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/userinfo
+      scope: "openid profile email groups"
+      clientProvisioning: existing
+    proxy: {httpProxy: "", httpsProxy: "", noProxy: ""}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+    storageClass: {data: standard, workspace: standard}
+connections:
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef: {name: creds-seaweedfs-s3}
+s3SecretRef: creds-trino-s3
+hiveCatalogs:
+  - name: bronze
+    metastore: demo-hive
+    storage: demo-storage
+enableOPA: false
