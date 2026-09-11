@@ -1,0 +1,25 @@
+# Reviewed upstream uses the OKDP chart guard (gh-workflows okdp-chart-guard.sh)
+# would refuse otherwise. All are in the vendored opa-kube-mgmt 11.0.12.
+- file: vendor/opa-kube-mgmt/templates/_helpers.tpl
+  pattern: capabilities   # lines 86, 88, 99
+  reason: >-
+    opa.certManagerApiVersion / opa.admissionregistrationApiVersion are only
+    included by webhookconfiguration.yaml, rendered only with
+    admissionController.enabled (false upstream, never set by the wrapper)
+- file: vendor/opa-kube-mgmt/templates/poddisruptionbudget.yaml
+  pattern: capabilities
+  reason: >-
+    only rendered with podDisruptionBudget.enabled (false); policy/v1 is in
+    helm template's default API versions too, so both engines pick policy/v1
+- file: vendor/opa-kube-mgmt/templates/servicemonitor.yaml
+  pattern: capabilities
+  reason: >-
+    guarded by prometheus.enabled and serviceMonitor.enabled (both false
+    upstream, never set by the wrapper)
+- file: vendor/opa-kube-mgmt/templates/webhookconfiguration.yaml
+  pattern: non-deterministic   # genCA, genSignedCert (lines 2-3)
+  reason: >-
+    genCA/genSignedCert build the admission webhook certificate; they run on
+    every render but the output only uses them inside
+    `if .Values.admissionController.enabled`
+  disabledBy: admissionController.enabled=false
