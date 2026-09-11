@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "hive-metastore",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU request in vCPU. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 1,
+      "x-ui-columns": 2
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory request in GiB. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 2,
+      "x-ui-columns": 2
+    },
+    "db": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the SQL database hosting the metastore schema. Its credentials Secret holds the keys username and password.",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 1
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store hosting the warehouse.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 1
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2
+    },
+    "warehouseBucket": {
+      "type": "string",
+      "title": "Warehouse bucket",
+      "description": "S3 bucket used as the warehouse directory.",
+      "default": "hive",
+      "x-ui-group": "Storage",
+      "x-ui-order": 3,
+      "x-ui-columns": 2
+    }
+  },
+  "required": [
+    "db",
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false
+}

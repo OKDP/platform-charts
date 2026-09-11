@@ -1,0 +1,1 @@
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "hive-metastore" "values" (include "hive-metastore.upstream.values" . | fromYaml)) }}

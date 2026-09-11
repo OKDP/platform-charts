@@ -59,3 +59,6 @@ local/
 # no-kubocd migration; CI runs `helm dependency build`).
 Chart.lock
 **/charts/*.tgz
+
+# Upstream charts downloaded from vendor.yaml by scripts/vendor-charts.sh.
+/charts/*/*/vendor/

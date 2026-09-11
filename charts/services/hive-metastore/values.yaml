@@ -1,0 +1,21 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# CPU request in vCPU. The limit is twice the request.
+cpu: 0.5
+# Memory request in GiB. The limit is twice the request.
+memoryGi: 0.5
+
+# database-server connection hosting the metastore schema (required).
+# Its credentials Secret holds the keys username and password.
+db: ""
+# s3 connection of the object store hosting the warehouse (required).
+storage: ""
+# Secret with keys accessKey/secretKey: this metastore's own S3 identity (required).
+s3SecretRef: ""
+# S3 bucket used as the warehouse directory.
+warehouseBucket: hive
