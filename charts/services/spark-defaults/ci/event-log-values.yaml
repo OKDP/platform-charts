@@ -1,0 +1,8 @@
+# Upstream values through the dependency slot: event logs to S3.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+spark-defaults:
+  config:
+    spark.eventLog.enabled: true
+    spark.eventLog.dir: s3a://spark-events/event-logs

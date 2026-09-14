@@ -1,0 +1,11 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Values of the upstream spark-defaults chart (oci://quay.io/okdp/charts/spark-defaults),
+# a plain dependency. Not a console parameter: the KuboCD package exposed none.
+# `spark-defaults.config` holds the properties written to spark-defaults.conf.
+spark-defaults: {}
