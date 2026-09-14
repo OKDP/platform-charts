@@ -1,0 +1,15 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Create the Role spark-role and its RoleBinding spark-rolebinding.
+rbacCreate: true
+# Create the ServiceAccount the Spark jobs run as.
+serviceAccountCreate: true
+# Name of the ServiceAccount (created or existing).
+serviceAccountName: spark
+# Mount the ServiceAccount token in the pods.
+automountServiceAccountToken: true

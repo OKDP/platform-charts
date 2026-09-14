@@ -1,0 +1,6 @@
+# Only the ServiceAccount: RBAC is managed elsewhere.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+rbacCreate: false
+serviceAccountName: spark-jobs
