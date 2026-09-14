@@ -1,0 +1,7 @@
+# An existing ServiceAccount bound to the Role, no token automount.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+serviceAccountCreate: false
+serviceAccountName: jobs
+automountServiceAccountToken: false

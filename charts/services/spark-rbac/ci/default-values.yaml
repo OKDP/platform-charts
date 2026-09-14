@@ -1,0 +1,4 @@
+# Defaults: ServiceAccount spark, Role and RoleBinding.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}

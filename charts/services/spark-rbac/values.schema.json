@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spark-rbac",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml. This chart consumes none."
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "rbacCreate": {
+      "type": "boolean",
+      "title": "Create role",
+      "default": true,
+      "x-ui-group": "RBAC",
+      "x-ui-order": 1
+    },
+    "serviceAccountCreate": {
+      "type": "boolean",
+      "title": "Create service account",
+      "default": true,
+      "x-ui-group": "RBAC",
+      "x-ui-order": 2
+    },
+    "serviceAccountName": {
+      "type": "string",
+      "title": "Service account name",
+      "default": "spark",
+      "minLength": 1,
+      "x-ui-group": "RBAC",
+      "x-ui-order": 3,
+      "x-ui-columns": 2
+    },
+    "automountServiceAccountToken": {
+      "type": "boolean",
+      "title": "Automount token",
+      "default": true,
+      "x-ui-group": "RBAC",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    }
+  },
+  "additionalProperties": false
+}
