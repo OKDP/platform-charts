@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spark-defaults",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml. This chart consumes none."
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "spark-defaults": {
+      "type": "object",
+      "description": "Values of the upstream spark-defaults chart (dependency alias). Not a parameter: config holds the spark-defaults.conf properties."
+    }
+  },
+  "additionalProperties": false
+}

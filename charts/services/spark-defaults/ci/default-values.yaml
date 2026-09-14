@@ -1,0 +1,4 @@
+# The KuboCD package had no parameter: the upstream defaults.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
