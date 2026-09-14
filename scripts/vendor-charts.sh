@@ -23,9 +23,11 @@
 #       repository: https://trinodb.github.io/charts  # or oci://registry/path
 #       version: 1.42.1
 #       chart: trino                                  # optional, default: name
+#       drop: [charts/postgresql]                     # optional, paths removed after unpacking
 #
 # and gets vendor/<name>/ (the pristine `helm pull --untar`, nested library
-# charts unpacked too). vendor/ is committed: the chart renders offline, the
+# charts unpacked too, minus the `drop` paths: e.g. a disabled application
+# subchart, which okdp.vendor.render refuses to carry). vendor/ is committed: the chart renders offline, the
 # published chart is self-contained, and an upgrade shows up as a diff.
 #
 #   scripts/vendor-charts.sh <chart dir>...          (re)vendor
@@ -66,6 +68,12 @@ for chart in "$@"; do
         tar -xzf "${tgz}" -C "${pulled}/charts" && rm -f "${tgz}"
       done
     fi
+    # Paths the wrapper never renders (e.g. a disabled application subchart).
+    while IFS= read -r drop; do
+      [[ -n "${drop}" ]] || continue
+      [[ "${drop}" != /* && "${drop}" != *..* ]] || { echo "${manifest}: bad drop path ${drop}" >&2; exit 2; }
+      rm -rf "${pulled:?}/${drop}"
+    done < <(yq ".charts[${i}].drop // [] | .[]" "${manifest}")
     target="${chart}/vendor/${name}"
     if ${check}; then
       if diff -r "${pulled}" "${target}" >/dev/null 2>&1; then
