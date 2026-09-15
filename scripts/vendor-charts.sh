@@ -74,6 +74,8 @@ for chart in "$@"; do
       [[ "${drop}" != /* && "${drop}" != *..* ]] || { echo "${manifest}: bad drop path ${drop}" >&2; exit 2; }
       rm -rf "${pulled:?}/${drop}"
     done < <(yq ".charts[${i}].drop // [] | .[]" "${manifest}")
+    # Git does not keep empty directories: drop them so --check matches a checkout.
+    find "${pulled}" -mindepth 1 -type d -empty -delete
     target="${chart}/vendor/${name}"
     if ${check}; then
       if diff -r "${pulled}" "${target}" >/dev/null 2>&1; then
