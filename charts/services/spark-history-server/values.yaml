@@ -1,0 +1,23 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# CPU limit in vCPU (the request is 250m).
+cpu: 0.5
+# Memory limit in GiB (the request is 512Mi).
+memoryGi: 1
+
+# s3 connection of the object store holding the Spark event logs (required).
+storage: ""
+# Secret with keys accessKey/secretKey: this instance's own S3 identity (required).
+s3SecretRef: ""
+
+# OIDC group to Spark ACL mapping. Each key lists groups.
+roleMapping:
+  admin_groups: []
+  history_admin_groups: []
+  modify_groups: []
+  view_groups: []

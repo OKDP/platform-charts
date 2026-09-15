@@ -1,0 +1,12 @@
+# Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
+# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/spark-history-server
+charts:
+  - name: spark-history-server   # module main
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.0
+  - name: spark-web-proxy        # module proxy
+    repository: oci://quay.io/okdp/charts
+    version: 0.1.0
+  - name: oidc-dcr            # module oidc-dcr (global.okdp.oidc.clientProvisioning: dcr)
+    repository: oci://quay.io/adaltas
+    version: 0.3.3
