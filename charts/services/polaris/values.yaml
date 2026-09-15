@@ -1,0 +1,22 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Memory limit of the Polaris server in GiB (the request is 512Mi).
+memoryGi: 1
+
+# database-server connection (PostgreSQL) hosting the Polaris metastore (required).
+# Its credentials Secret holds the keys username and password.
+db: ""
+# s3 connection of the object store backing the catalogs (required).
+storage: ""
+# Secret with keys accessKey/secretKey: this instance's own S3 identity (required).
+s3SecretRef: ""
+# Polaris realm served by this instance, published in the iceberg-catalog connection.
+realm: default
+# Polaris principals to create in the realm, with their principal roles:
+# [{name: alice, roles: [catalog_admin]}].
+principals: []

@@ -1,0 +1,7 @@
+{{- /* Module console. dcr mode: its client id comes from its own DCR client's Secret. */}}
+{{- $rendered := include "okdp.vendor.render" (dict "ctx" . "chart" "polaris-console" "values" (include "okdp-polaris.values.console" . | fromYaml)) -}}
+{{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
+{{ include "okdp-polaris.consoleClientIdFrom" (dict "rendered" $rendered "secret" (include "okdp-polaris.consoleDcrSecret" .)) }}
+{{- else }}
+{{ $rendered }}
+{{- end }}

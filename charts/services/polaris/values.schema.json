@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "polaris",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["contract"],
+        "properties": {
+          "contract": {"type": "string"},
+          "description": {"type": "string"},
+          "secretRef": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory limit of the Polaris server in GiB. The request is 512Mi.",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "db": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the PostgreSQL server hosting the Polaris metastore database.",
+      "x-okdp-connection-ref": {"contract": "database-server"},
+      "x-ui-group": "Catalog",
+      "x-ui-order": 1
+    },
+    "realm": {
+      "type": "string",
+      "title": "Realm",
+      "description": "Polaris realm served by this instance. Clients select it with the Polaris-Realm header, and the catalog Connection publishes it.",
+      "default": "default",
+      "minLength": 1,
+      "x-ui-group": "Catalog",
+      "x-ui-order": 3
+    },
+    "principals": {
+      "type": "array",
+      "title": "Principals",
+      "description": "Polaris principals to create in the realm, with their principal roles, one entry per principal, for example [{\"name\": \"alice\", \"roles\": [\"catalog_admin\"]}]. Humans and service accounts authenticate through the platform identity provider and get the roles granted here.",
+      "default": [],
+      "x-ui-group": "Catalog",
+      "x-ui-widget": "yaml",
+      "x-ui-order": 4,
+      "x-ui-advanced": true,
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "roles": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store backing the catalogs.",
+      "x-okdp-connection-ref": {"contract": "s3"},
+      "x-ui-group": "Storage",
+      "x-ui-order": 1
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity (STS and catalog-side Iceberg metadata operations).",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2
+    }
+  },
+  "required": ["db", "storage", "s3SecretRef"],
+  "additionalProperties": false
+}

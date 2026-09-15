@@ -1,0 +1,4 @@
+# Exceptions to okdp-chart-guard.sh in the vendored upstream charts.
+- file: vendor/polaris/templates/servicemonitor.yaml
+  pattern: capabilities
+  reason: only with serviceMonitor.enabled, false upstream and never set by the wrapper

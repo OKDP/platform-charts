@@ -1,0 +1,3 @@
+{{- /* Modules bootstrap and principals: the same chart, one phase each (see _values.tpl). */}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "polaris-admin" "values" (include "okdp-polaris.values.bootstrap" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "polaris-admin" "values" (include "okdp-polaris.values.principals" . | fromYaml)) }}
