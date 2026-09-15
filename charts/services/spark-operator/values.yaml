@@ -1,0 +1,21 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Number of controller replicas.
+controllerReplicas: 1
+# Controller log level: debug, info, warn, error.
+controllerLogLevel: info
+# Reconcile concurrency of the controller.
+controllerWorkers: 10
+# Namespaces where Spark jobs can run. Empty, or containing "", allows all namespaces.
+jobNamespaces: []
+# Expose Prometheus metrics.
+metricsEnabled: true
+# Create a PodMonitor (needs the Prometheus operator CRDs and metricsEnabled).
+podMonitorEnabled: false
+# Admission webhook for validation and mutation.
+webhookEnabled: true

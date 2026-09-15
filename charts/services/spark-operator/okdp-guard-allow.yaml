@@ -1,0 +1,13 @@
+# Exceptions to okdp-chart-guard.sh in the vendored upstream charts.
+- file: vendor/spark-operator/templates/certmanager/certificate.yaml
+  pattern: capabilities
+  reason: only with certManager.enable, which the wrapper always sets to false
+- file: vendor/spark-operator/templates/certmanager/issuer.yaml
+  pattern: capabilities
+  reason: only with certManager.enable, which the wrapper always sets to false
+- file: vendor/spark-operator/templates/prometheus/podmonitor.yaml
+  pattern: capabilities
+  reason: >-
+    only with podMonitorEnabled; it fails the render when the PodMonitor API is
+    missing, never changes the output (Flux has the cluster's API versions, Argo
+    passes them to helm template)

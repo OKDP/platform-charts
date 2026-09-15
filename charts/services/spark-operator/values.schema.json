@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spark-operator",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml. This chart consumes none."
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "controllerReplicas": {
+      "type": "integer",
+      "title": "Replicas",
+      "default": 1,
+      "minimum": 1,
+      "x-ui-group": "Controller",
+      "x-ui-widget": "stepper",
+      "x-ui-order": 1
+    },
+    "controllerLogLevel": {
+      "type": "string",
+      "title": "Log level",
+      "default": "info",
+      "enum": ["debug", "info", "warn", "error"],
+      "x-ui-group": "Controller",
+      "x-ui-order": 2
+    },
+    "controllerWorkers": {
+      "type": "integer",
+      "title": "Workers",
+      "default": 10,
+      "minimum": 1,
+      "x-ui-group": "Controller",
+      "x-ui-widget": "stepper",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "jobNamespaces": {
+      "type": "array",
+      "title": "Job namespaces",
+      "description": "List of namespaces where Spark jobs can run. If empty string is included, all namespaces will be allowed",
+      "items": {"type": "string"},
+      "default": [],
+      "x-ui-group": "Controller",
+      "x-ui-order": 4
+    },
+    "webhookEnabled": {
+      "type": "boolean",
+      "title": "Admission webhook",
+      "description": "Enable admission webhook for validation and mutation",
+      "default": true,
+      "x-ui-group": "Controller",
+      "x-ui-order": 5,
+      "x-ui-advanced": true
+    },
+    "metricsEnabled": {
+      "type": "boolean",
+      "title": "Enable metrics",
+      "description": "Enable Prometheus metrics",
+      "default": true,
+      "x-ui-group": "Monitoring",
+      "x-ui-order": 1
+    },
+    "podMonitorEnabled": {
+      "type": "boolean",
+      "title": "Create PodMonitor",
+      "description": "Create PodMonitor for metrics collection",
+      "default": false,
+      "x-ui-group": "Monitoring",
+      "x-ui-order": 2,
+      "x-ui-condition": {"field": "metricsEnabled", "value": true}
+    }
+  },
+  "additionalProperties": false
+}

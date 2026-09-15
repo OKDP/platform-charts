@@ -1,0 +1,6 @@
+# Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
+# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/spark-operator
+charts:
+  - name: spark-operator      # module noname
+    repository: https://kubeflow.github.io/spark-operator
+    version: 2.5.2

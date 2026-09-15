@@ -1,0 +1,2 @@
+{{- /* Module noname. */}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-operator" "values" (include "okdp-spark-operator.values" . | fromYaml)) }}
