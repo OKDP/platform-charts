@@ -1,0 +1,21 @@
+# OIDC off, ACL groups set, bigger sizing, an external S3 without internalUrl.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+    certificateIssuers: {selfSigned: {name: letsencrypt}}
+    oidc:
+      enabled: false
+connections:
+  aws:
+    contract: s3
+    apiUrl: https://s3.eu-west-1.amazonaws.com
+    region: eu-west-1
+    pathStyle: false
+storage: aws
+s3SecretRef: shs-aws
+cpu: 2
+memoryGi: 4
+roleMapping:
+  admin_groups: [platform-admins]
+  history_admin_groups: [spark-admins, data-eng]
+  view_groups: [analysts]

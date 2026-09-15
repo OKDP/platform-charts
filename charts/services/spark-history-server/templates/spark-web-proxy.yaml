@@ -1,0 +1,2 @@
+{{- /* Module proxy (dependsOn main: it only proxies the history Service, which it retries). */}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-web-proxy" "values" (include "okdp-shs.values.proxy" . | fromYaml)) }}

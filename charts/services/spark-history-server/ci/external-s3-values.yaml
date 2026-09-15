@@ -1,0 +1,21 @@
+# The demo project: the platform S3 store as a connection file, OIDC on.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      scope: "openid profile email groups"
+      usePKCE: true
+connections:
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef: {name: creds-seaweedfs-s3}
+storage: demo-storage
+s3SecretRef: creds-spark-history-s3

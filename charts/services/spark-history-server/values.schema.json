@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spark-history-server",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["contract"],
+        "properties": {
+          "contract": {"type": "string"},
+          "description": {"type": "string"},
+          "secretRef": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU limit in vCPU. The request is 250m.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory limit in GiB. The request is 512Mi.",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 2,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "storage": {
+      "type": "string",
+      "title": "Event log store",
+      "description": "Connection to the S3-compatible object store holding the Spark event logs.",
+      "x-okdp-connection-ref": {"contract": "s3"},
+      "x-ui-group": "Storage",
+      "x-ui-order": 1
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2
+    },
+    "roleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "OIDC group to Spark ACL mapping (keys admin_groups, history_admin_groups, modify_groups, view_groups).",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 4,
+      "x-ui-advanced": true,
+      "properties": {
+        "admin_groups": {"type": "array", "items": {"type": "string"}},
+        "history_admin_groups": {"type": "array", "items": {"type": "string"}},
+        "modify_groups": {"type": "array", "items": {"type": "string"}},
+        "view_groups": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["storage", "s3SecretRef"],
+  "additionalProperties": false
+}
