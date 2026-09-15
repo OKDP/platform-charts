@@ -1,0 +1,4 @@
+# Defaults: every namespace, webhook and metrics on.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}

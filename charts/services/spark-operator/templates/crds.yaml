@@ -1,0 +1,24 @@
+{{- /*
+The CRDs of the vendored chart (vendor/spark-operator/crds/). okdp.vendor.render
+only renders templates/, and Helm installs the crds/ directory of the chart
+being installed, not of a vendored one, so they are rendered here as regular
+objects:
+- helm.sh/resource-policy: keep and Argo's Delete=false: uninstalling the
+  release must not delete the CRDs, and with them every SparkApplication of the
+  cluster (Helm never deletes crds/ either);
+- ServerSideApply=true for Argo: these CRDs exceed the 256 KiB
+  last-applied-configuration annotation of a client-side apply;
+- they are upgraded with the chart (the KuboCD module installed them once;
+  the upstream upgrade hook stays off).
+*/}}
+{{- range $path, $_ := .Files.Glob "vendor/spark-operator/crds/*.yaml" }}
+{{- $crd := $.Files.Get $path }}
+{{- if not (regexMatch "(?m)^metadata:\n  annotations:\n" $crd) }}
+{{- fail (printf "spark-operator: %s: unexpected layout, templates/crds.yaml expects metadata.annotations first" $path) }}
+{{- end }}
+{{- $crd = regexReplaceAll "(?m)^metadata:\n  annotations:\n" $crd "metadata:\n  annotations:\n    helm.sh/resource-policy: keep\n    argocd.argoproj.io/sync-options: Delete=false,ServerSideApply=true\n" }}
+{{- $crd = regexReplaceAll "(?m)^---\\s*\n" $crd "" }}
+---
+# Source: {{ $path }}
+{{ $crd | trim }}
+{{- end }}
