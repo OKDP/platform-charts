@@ -1,0 +1,24 @@
+# Default realm, no principal (no principals Job), bigger memory, another suffix.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: traefik}
+    certificateIssuers: {selfSigned: {name: letsencrypt}}
+    oidc:
+      issuerUri: https://sso.example.org/realms/data
+connections:
+  pg:
+    contract: database-server
+    engine: postgresql
+    host: pg.example.org
+    port: 5432
+    dbName: catalog
+    secretRef: {name: pg-catalog}
+  aws:
+    contract: s3
+    apiUrl: https://s3.eu-west-1.amazonaws.com
+    region: eu-west-1
+    pathStyle: false
+db: pg
+storage: aws
+s3SecretRef: polaris-aws
+memoryGi: 2
