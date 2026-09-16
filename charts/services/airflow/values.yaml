@@ -1,0 +1,30 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# database-server connection hosting the Airflow metadata database (required).
+# Checked only: Airflow reads the connection string from metadataSecret.
+db: ""
+# Secret with key `connection`: the full SQLAlchemy connection string (required).
+metadataSecret: ""
+
+# Memory limits in GiB, CPU limit in cores.
+schedulerMemoryGi: 1
+webserverMemoryGi: 1
+dagProcessorMemoryGi: 1
+dagProcessorCpuCores: 0.75
+
+# OIDC group -> list of Airflow roles, e.g. {"airflow-admins": ["Admin"]}.
+oidcRoleMapping: {}
+
+# s3 connection of the object store the DAGs read and write (required).
+storage: ""
+# Secret with keys accessKey/secretKey granting the DAGs access to the store (required).
+s3SecretRef: ""
+
+# Upstream dags.gitSync values (enabled, repo, branch, ref, depth, subPath,
+# period, credentialsSecret.name).
+dagsGitSync: {}

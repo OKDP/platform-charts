@@ -1,0 +1,25 @@
+apiVersion: v2
+name: airflow
+description: >-
+  Apache Airflow 3.2.1 - Workflow orchestration platform with Spark Operator integration.
+type: application
+# <upstream>-<okdp semver>; the okdp half is owned by release-please.
+version: 3.2.1-1.0.1
+appVersion: "3.2.1"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/apache/airflow
+annotations:
+  # Former KuboCD package roles/dependencies, kept for the catalog.
+  okdp.io/roles: airflow
+  okdp.io/depends-on: external-secrets,database-server,ingress,storage
+dependencies:
+  - name: okdp-lib
+    version: 0.1.0
+    # TODO(no-kubocd): switch to oci://quay.io/okdp/platform-charts
+    repository: file://../../../../okdp-lib

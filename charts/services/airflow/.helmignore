@@ -1,0 +1,20 @@
+# Upstream documentation of the vendored charts: not needed to render, and the
+# whole chart is stored in every Helm release Secret.
+vendor/*/README.md
+vendor/*/README.md.gotmpl
+vendor/*/CHANGELOG.md
+vendor/*/docs/
+vendor/*/test/
+vendor/*/release-please-config.json
+vendor/*/.release-please-manifest.json
+vendor/*/.github/
+.git/
+# Airflow sources shipped in its chart, not needed to render.
+vendor/airflow/dockerfiles/
+vendor/airflow/newsfragments/
+vendor/airflow/INSTALL
+vendor/airflow/RELEASE_NOTES.rst
+vendor/airflow/pyproject.toml
+vendor/airflow/reproducible_build.yaml
+vendor/airflow/values_schema.schema.json
+vendor/airflow/values.schema.json

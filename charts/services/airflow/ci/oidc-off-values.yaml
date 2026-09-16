@@ -1,0 +1,23 @@
+# OIDC off (Airflow's own login), no git-sync.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+    certificateIssuers: {selfSigned: {name: letsencrypt}}
+    oidc:
+      enabled: false
+connections:
+  pg:
+    contract: database-server
+    engine: postgresql
+    host: pg.example.org
+    port: 5432
+    dbName: airflow
+  minio:
+    contract: s3
+    apiUrl: https://minio.example.org
+    region: us-east-1
+    pathStyle: true
+db: pg
+metadataSecret: airflow-metadata
+storage: minio
+s3SecretRef: airflow-minio
