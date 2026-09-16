@@ -1,0 +1,203 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "superset",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "metadataDb": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the SQL database hosting the Superset metadata. Its credentials Secret holds the keys username and password.",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 1
+    },
+    "load_examples": {
+      "type": "boolean",
+      "title": "Load examples",
+      "description": "Whether to load superset examples",
+      "default": true,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 2
+    },
+    "examplesDb": {
+      "type": "string",
+      "title": "Examples database",
+      "description": "Connection to the PostgreSQL database receiving the Superset examples (used when Load examples is on).",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 3
+    },
+    "locale": {
+      "type": "string",
+      "title": "Chart locale",
+      "description": "CLDR locale used by charts to render numbers and dates, for instance en, fr, fr-CH or es. The UI language is not affected.",
+      "default": "en",
+      "x-ui-group": "Cluster",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    },
+    "currency": {
+      "type": "string",
+      "title": "Chart currency",
+      "description": "ISO 4217 code, for instance EUR. Defaults to the currency of the locale territory when the locale carries one.",
+      "default": "",
+      "x-ui-group": "Cluster",
+      "x-ui-order": 5,
+      "x-ui-advanced": true
+    },
+    "d3Format": {
+      "type": "object",
+      "title": "Number format overrides",
+      "description": "d3-format locale definition, applied over the one derived from locale. See https://github.com/d3/d3-format#formatLocale",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 6,
+      "x-ui-advanced": true
+    },
+    "d3TimeFormat": {
+      "type": "object",
+      "title": "Date format overrides",
+      "description": "d3-time-format locale definition, applied over the one derived from locale. See https://github.com/d3/d3-time-format#timeFormatLocale",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 7,
+      "x-ui-advanced": true
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU limit of the Superset web server.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory limit of the Superset web server.",
+      "default": 2,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 2,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "workers": {
+      "type": "integer",
+      "title": "Server workers",
+      "description": "Gunicorn workers of the web server.",
+      "default": 2,
+      "minimum": 1,
+      "x-ui-group": "Sizing",
+      "x-ui-widget": "stepper",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "oidcRoleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "Map of OIDC roles (groups) to lists of Superset roles.",
+      "default": {},
+      "properties": {},
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "x-ui-group": "Authentication",
+      "x-ui-order": 6,
+      "x-ui-advanced": true
+    },
+    "datasources": {
+      "type": "array",
+      "title": "Trino datasources",
+      "description": "One Superset database per item, on a Trino instance and one of its catalogs.",
+      "default": [],
+      "x-ui-group": "Datasources",
+      "x-ui-order": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "trino",
+          "catalog"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name in the Superset UI."
+          },
+          "trino": {
+            "type": "string",
+            "title": "Trino",
+            "description": "Trino connection, or a trino release of this project.",
+            "x-okdp-connection-ref": {
+              "contract": "trino"
+            }
+          },
+          "catalog": {
+            "type": "string",
+            "title": "Catalog",
+            "description": "Trino catalog to expose, as named on the Trino instance."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "metadataDb",
+    "examplesDb"
+  ],
+  "additionalProperties": false
+}

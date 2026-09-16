@@ -1,0 +1,24 @@
+# OIDC off (the local admin is created), no examples, no datasource, a
+# forward proxy, sizing parameters.
+global:
+  okdp:
+    ingress: {suffix: okdp.example.com, className: nginx}
+    oidc:
+      enabled: false
+      issuerUri: https://idp.example.com/realms/data
+    proxy: {httpProxy: "http://proxy:3128", httpsProxy: "http://proxy:3128", noProxy: ".svc"}
+    certificateIssuers: {selfSigned: {name: platform-issuer}}
+connections:
+  meta:
+    contract: database-server
+    engine: postgresql
+    host: pg.db.svc
+    port: 5432
+    dbName: superset
+    secretRef: {name: pg-superset}
+metadataDb: meta
+examplesDb: ""
+load_examples: false
+cpu: 1
+memoryGi: 3.5
+workers: 4

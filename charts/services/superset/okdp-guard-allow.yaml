@@ -1,0 +1,19 @@
+# Reviewed exceptions of the vendored charts (gh-workflows okdp-chart-guard.sh).
+# The wrapper's schema exposes none of the values named in disabledBy: they
+# are set by templates/_values.tpl only.
+- file: vendor/superset/templates/deployment.yaml
+  pattern: non-deterministic
+  reason: the force-reload pod annotation is randAlphaNum, emitted only with forceReload
+  disabledBy: supersetNode.forceReload=false
+- file: vendor/superset/templates/deployment-worker.yaml
+  pattern: non-deterministic
+  reason: the force-reload pod annotation is randAlphaNum, emitted only with forceReload
+  disabledBy: supersetWorker.forceReload=false
+- file: vendor/superset/templates/deployment-beat.yaml
+  pattern: non-deterministic
+  reason: the force-reload pod annotation is randAlphaNum, emitted only with forceReload (and the beat is disabled)
+  disabledBy: supersetCeleryBeat.forceReload=false
+- file: vendor/superset/templates/deployment-mcp.yaml
+  pattern: non-deterministic
+  reason: the force-reload pod annotation is randAlphaNum, emitted only with forceReload (and the MCP server is disabled)
+  disabledBy: supersetMcp.forceReload=false

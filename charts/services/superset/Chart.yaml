@@ -1,0 +1,27 @@
+apiVersion: v2
+name: superset
+description: >-
+  Apache Superset - Enterprise business intelligence platform for modern data teams.
+  Self-service analytics tool that enables users to create interactive dashboards, explore datasets,
+  and build data visualizations without coding. Integrates with popular databases and supports SQL Lab.
+type: application
+# <upstream>-<okdp semver>; the okdp half is owned by release-please.
+version: 6.0.0-1.0.0
+appVersion: "6.0.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/apache/superset
+annotations:
+  # Former KuboCD package roles/dependencies, kept for the catalog.
+  okdp.io/roles: dataviz
+  okdp.io/depends-on: database-server,ingress
+dependencies:
+  - name: okdp-lib
+    version: 0.1.0
+    # TODO(no-kubocd): switch to oci://quay.io/okdp/platform-charts
+    repository: file://../../../../okdp-lib
