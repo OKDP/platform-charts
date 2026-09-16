@@ -1,0 +1,15 @@
+# Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
+# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/jupyterhub
+charts:
+  - name: jupyterhub          # module main
+    repository: https://hub.jupyter.org/helm-chart/
+    version: 4.4.2
+  - name: spark-rbac          # module spark-rbac
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.1
+  - name: oidc-client         # module oidc-client (global.okdp.oidc.clientProvisioning: kubauth)
+    repository: file://../../../charts/oidc-client
+    version: 0.2.0
+  - name: oidc-dcr            # module oidc-dcr (global.okdp.oidc.clientProvisioning: dcr)
+    repository: oci://quay.io/adaltas
+    version: 0.3.3

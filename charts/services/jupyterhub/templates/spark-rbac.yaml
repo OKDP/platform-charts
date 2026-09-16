@@ -1,0 +1,2 @@
+{{- /* Module spark-rbac: the spark ServiceAccount and Role the notebooks and their executors use. */ -}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-rbac" "values" (include "okdp-jupyterhub.values.sparkRbac" . | fromYaml)) }}

@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "jupyterhub",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "Notebook (singleuser) pod CPU guarantee in vCPU. The limit is twice the guarantee.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Notebooks",
+      "x-ui-order": 1,
+      "x-ui-columns": 2
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Notebook (singleuser) pod memory guarantee in GiB. The limit is twice the guarantee.",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Notebooks",
+      "x-ui-order": 2,
+      "x-ui-columns": 2
+    },
+    "welcomeNotebook": {
+      "type": "string",
+      "title": "Welcome notebook",
+      "description": "Welcome.ipynb content copied into each user home.",
+      "default": "",
+      "x-ui-group": "Notebooks",
+      "x-ui-widget": "textarea",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store backing the jupyter-fs file browser.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 1
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this instance's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2
+    },
+    "fileBrowserLocations": {
+      "type": "array",
+      "title": "File browser locations",
+      "description": "jupyter-fs file browser locations (display name + s3 uri).",
+      "default": [],
+      "x-ui-group": "Storage",
+      "x-ui-order": 3,
+      "x-ui-advanced": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "uri"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "uri": {
+            "type": "string",
+            "title": "URI",
+            "x-ui-placeholder": "s3://bucket"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "oidcRoleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "Optional GenericOAuthenticator overrides (claim_groups_key, allowed_groups, admin_groups, ...). Without allowed_groups the hub answers 403 to everyone.",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Authentication",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "pyspark": {
+      "type": "array",
+      "title": "Enabled connections",
+      "description": "Names of the Spark connections below to wire into the PySpark kernel. Empty leaves the kernel without S3A or catalog settings.",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "x-ui-group": "Spark",
+      "x-ui-order": 1,
+      "x-ui-advanced": true
+    },
+    "sparkConnections": {
+      "type": "array",
+      "title": "Connections",
+      "description": "PySpark connections: final spark conf lines (one per line) and optionally their own S3 identity (Secret with accessKey/secretKey, referenced as $(S3_ACCESS_KEY)/$(S3_SECRET_KEY)).",
+      "default": [],
+      "x-ui-group": "Spark",
+      "x-ui-order": 2,
+      "x-ui-advanced": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "properties": {
+            "type": "string",
+            "title": "Spark properties",
+            "x-ui-widget": "textarea"
+          },
+          "s3SecretRef": {
+            "type": "string",
+            "title": "S3 credentials secret"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sparkDefaults": {
+      "type": "object",
+      "title": "Conf defaults",
+      "description": "Spark conf defaults injected into PYSPARK_SUBMIT_ARGS (final values).",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Spark",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    }
+  },
+  "required": [
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false
+}
