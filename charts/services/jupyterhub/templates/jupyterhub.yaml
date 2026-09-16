@@ -1,0 +1,9 @@
+{{- /*
+Module main: the jupyterhub chart. Its hub Secret is replaced by an
+ESO-generated Secret of the same name (templates/_hub-secret.tpl): the chart
+generates the proxy token, cookie secret and auth-state keys with lookup +
+randAlphaNum, which Argo CD (helm template) would redraw on every sync.
+*/ -}}
+{{- $rendered := include "okdp.vendor.render" (dict "ctx" . "chart" "jupyterhub" "values" (include "okdp-jupyterhub.values.jupyterhub" . | fromYaml)) -}}
+{{ include "okdp.vendor.withoutObject" (dict "rendered" $rendered "kind" "Secret" "name" (include "okdp-jupyterhub.hubSecret" .)) }}
+{{ include "okdp-jupyterhub.hubSecret.external" (dict "ctx" . "rendered" $rendered) }}

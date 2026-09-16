@@ -1,0 +1,53 @@
+# The demo project with the OAuth client registered by DCR (<release>-<namespace>-dcr,
+# the crypt key from the generated hub passwords).
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      userinfoUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/userinfo
+      displayName: keycloak
+      clientProvisioning: dcr
+      dcr: {registrationUrl: https://keycloak.okdp.sandbox/realms/master/clients-registrations/openid-connect, authMethod: anonymous}
+    proxy: {httpProxy: "", httpsProxy: "", noProxy: ""}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+    storageClass: {data: standard, workspace: standard}
+connections:
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef: {name: creds-seaweedfs-s3}
+storage: demo-storage
+s3SecretRef: creds-jupyterhub-s3
+fileBrowserLocations:
+  - {name: bronze, uri: s3://bronze}
+  - {name: silver, uri: s3://silver}
+pyspark: [lakehouse, silver, missing]
+sparkConnections:
+  - name: lakehouse
+    s3SecretRef: creds-examples-s3
+    properties: |
+      spark.hadoop.fs.s3a.endpoint={{ storage.endpoints.apiUrl }}
+      spark.hadoop.fs.s3a.access.key=$(S3_ACCESS_KEY)
+      spark.hadoop.fs.s3a.secret.key=$(S3_SECRET_KEY)
+      spark.hadoop.fs.s3a.path.style.access=true
+  - name: silver
+    properties: |
+      spark.sql.catalog.silver=org.apache.iceberg.spark.SparkCatalog
+      spark.sql.catalog.silver.uri=https://polaris-demo.{{ .Context.ingress.suffix }}/api/catalog
+      spark.sql.catalog.silver.oauth2-server-uri={{ idp.endpoints.tokenUrl }}
+sparkDefaults:
+  spark.eventLog.enabled: true
+  spark.eventLog.dir: s3a://spark-events/event-logs
+oidcRoleMapping:
+  allowed_groups: [platform_admin, data_engineer]
+  admin_groups: [platform_admin]
+welcomeNotebook: |
+  {"cells": [{"cell_type": "markdown", "metadata": {}, "source": ["[Sync](https://jupyterhub-demo.{{ .Context.ingress.suffix }}/hub/user-redirect/git-pull?repo=x) {{ literal }}"]}], "metadata": {}, "nbformat": 4, "nbformat_minor": 5}
