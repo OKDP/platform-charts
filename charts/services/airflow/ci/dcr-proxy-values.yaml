@@ -1,0 +1,41 @@
+# DCR client registration, a corporate proxy for git-sync, bigger sizing.
+global:
+  okdp:
+    ingress: {suffix: example.org, className: nginx}
+    certificateIssuers: {selfSigned: {name: letsencrypt}}
+    oidc:
+      issuerUri: https://sso.example.org/realms/data
+      authUrl: https://sso.example.org/realms/data/protocol/openid-connect/auth
+      tokenUrl: https://sso.example.org/realms/data/protocol/openid-connect/token
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://sso.example.org/realms/data/clients-registrations/openid-connect
+        authMethod: anonymous
+    proxy:
+      httpProxy: http://proxy.example.org:3128
+      httpsProxy: http://proxy.example.org:3128
+      noProxy: .svc,.cluster.local,10.0.0.0/8
+connections:
+  pg:
+    contract: database-server
+    engine: postgresql
+    host: pg.example.org
+    port: 5432
+    dbName: airflow
+  aws:
+    contract: s3
+    apiUrl: https://s3.eu-west-1.amazonaws.com
+    region: eu-west-1
+    pathStyle: false
+db: pg
+metadataSecret: airflow-metadata
+storage: aws
+s3SecretRef: airflow-aws
+schedulerMemoryGi: 2
+webserverMemoryGi: 2
+dagProcessorMemoryGi: 1.5
+dagProcessorCpuCores: 1
+dagsGitSync:
+  enabled: true
+  repo: https://git.example.org/data/dags.git
+  branch: main

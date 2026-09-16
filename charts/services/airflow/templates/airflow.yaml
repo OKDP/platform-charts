@@ -1,0 +1,3 @@
+{{- /* Module main. */}}
+{{- $out := include "okdp.vendor.render" (dict "ctx" . "chart" "airflow" "values" (include "okdp-airflow.values.airflow" . | fromYaml)) }}
+{{ include "okdp-airflow.argoOrder" (dict "ctx" . "rendered" $out) }}

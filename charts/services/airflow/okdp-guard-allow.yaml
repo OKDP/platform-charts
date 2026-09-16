@@ -1,0 +1,26 @@
+# Exceptions to okdp-chart-guard.sh in the vendored upstream charts. The
+# wrapper sets every disabledBy value in templates/_values.tpl; none is a
+# console parameter.
+- file: vendor/airflow/templates/secrets/fernetkey-secret.yaml
+  pattern: non-deterministic
+  reason: the Fernet key Secret is only rendered without fernetKeySecretName; the wrapper points it at the ESO-generated <release>-internal
+  disabledBy: fernetKeySecretName=<release>-internal
+- file: vendor/airflow/templates/secrets/api-secret-key-secret.yaml
+  pattern: non-deterministic
+  reason: only rendered without apiSecretKeySecretName; the wrapper points it at the ESO-generated <release>-internal
+  disabledBy: apiSecretKeySecretName=<release>-internal
+- file: vendor/airflow/templates/secrets/jwt-secret.yaml
+  pattern: non-deterministic
+  reason: only rendered without jwtSecretName; the wrapper points it at the ESO-generated <release>-internal
+  disabledBy: jwtSecretName=<release>-internal
+- file: vendor/airflow/templates/secrets/webserver-secret-key-secret.yaml
+  pattern: non-deterministic
+  reason: only rendered for Airflow 2 (airflowVersion < 3.0.0); the wrapper deploys 3.2.1
+  disabledBy: airflowVersion=3.2.1
+- file: vendor/airflow/templates/secrets/redis-secrets.yaml
+  pattern: non-deterministic
+  reason: >-
+    the random password is computed unconditionally but only emitted with
+    redis.enabled (the Redis password Secret and the broker URL), which the
+    wrapper keeps false: the rendered output is deterministic
+  disabledBy: redis.enabled=false

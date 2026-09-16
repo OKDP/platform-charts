@@ -1,0 +1,42 @@
+# The demo project: existing OIDC client, role mapping, git-sync with credentials.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      scope: "openid profile email groups"
+      insecureSkipVerify: true
+      clientProvisioning: existing
+connections:
+  demo-db-airflow:
+    contract: database-server
+    engine: postgresql
+    host: demo-pg-rw.demo.svc.cluster.local
+    port: 5432
+    dbName: airflow
+    secretRef: {name: demo-pg-airflow}
+  demo-storage:
+    contract: s3
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef: {name: creds-seaweedfs-s3}
+db: demo-db-airflow
+metadataSecret: demo-airflow-metadata
+storage: demo-storage
+s3SecretRef: creds-airflow-s3
+oidcRoleMapping:
+  airflow-admins: [Admin]
+  data-eng: [User, Op]
+dagsGitSync:
+  enabled: true
+  repo: https://github.com/OKDP/okdp-examples.git
+  ref: main
+  subPath: airflow/dags
+  period: 60s
+  credentialsSecret: {name: git-creds}
