@@ -52,10 +52,20 @@ for chart in "$@"; do
     repo=$(yq ".charts[${i}].repository" "${manifest}")
     version=$(yq ".charts[${i}].version" "${manifest}")
     upstream=$(yq ".charts[${i}].chart // .charts[${i}].name" "${manifest}")
+    drops=$(yq ".charts[${i}].drop // [] | .[]" "${manifest}")
     listed+=("${name}")
     dest="${work}/$(basename "${chart}")/${name}"
     mkdir -p "${dest}"
-    if [[ "${repo}" == oci://* ]]; then
+    if [[ "${repo}" == file://* ]]; then
+      src="${chart}/${repo#file://}"
+      got=$(yq '.version' "${src}/Chart.yaml")
+      if [[ "${got}" != "${version}" ]]; then
+        echo "FAIL ${src} is version ${got}, ${manifest} lists ${version}"
+        rc=1
+        continue
+      fi
+      cp -r "${src}" "${dest}/${upstream}"
+    elif [[ "${repo}" == oci://* ]]; then
       helm pull "${repo%/}/${upstream}" --version "${version}" --untar --untardir "${dest}" >/dev/null 2>&1
     else
       helm pull "${upstream}" --repo "${repo}" --version "${version}" --untar --untardir "${dest}" >/dev/null 2>&1
