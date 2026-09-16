@@ -1,0 +1,105 @@
+{{- /*
+Valkey: Superset's cache and Celery broker (the Valkey project image valkey/valkey,
+BSD-3-Clause). Replaces the bitnami redis chart the Superset chart bundles
+(a standalone master, the only use made of it): that chart reads its
+previous password with `lookup`, and the bitnami images it pins are no
+longer published. The Service keeps the name <release>-redis and the pods
+read it from the REDIS_* env (templates/env-secrets.yaml). No persistence:
+the cache and the Celery queue are rebuilt after a restart.
+*/ -}}
+{{- $name := include "okdp-superset-wrapper.redis" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "okdp.labels" (dict "ctx" . "component" "redis") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "okdp.selectorLabels" (dict "ctx" . "component" "redis") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "okdp.labels" (dict "ctx" . "component" "redis") | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: valkey
+          image: docker.io/valkey/valkey:9.1.2-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - valkey-server
+            - --requirepass
+            - $(REDIS_PASSWORD)
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "okdp-superset-wrapper.internalSecret" . }}
+                  key: redis-password
+            # valkey-cli reads it (probes).
+            - name: VALKEYCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "okdp-superset-wrapper.internalSecret" . }}
+                  key: redis-password
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "okdp.labels" (dict "ctx" . "component" "redis") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+  selector:
+    {{- include "okdp.selectorLabels" (dict "ctx" . "component" "redis") | nindent 4 }}

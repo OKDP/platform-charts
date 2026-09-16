@@ -1,0 +1,4 @@
+{{- /* Module oidc-dcr, enabled when the platform registers clients by DCR. */}}
+{{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
+{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-superset-wrapper.values.dcr" . | fromYaml)) }}
+{{- end }}

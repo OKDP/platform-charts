@@ -1,0 +1,46 @@
+# The demo project: metadata and examples databases as connection files, one
+# datasource on an internal trino release (demo-trino), one on an external
+# trino connection. OIDC on (existing OAuth clients).
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      displayName: keycloak
+      scope: "openid profile email groups"
+      usePKCE: true
+      clientProvisioning: existing
+    proxy: {httpProxy: "", httpsProxy: "", noProxy: ""}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
+connections:
+  demo-db-superset:
+    contract: database-server
+    engine: postgresql
+    host: demo-pg-rw.demo.svc.cluster.local
+    port: 5432
+    dbName: superset
+    secretRef: {name: demo-pg-superset}
+  demo-db-examples:
+    contract: database-server
+    engine: postgresql
+    host: demo-pg-rw.demo.svc.cluster.local
+    port: 5432
+    dbName: examples
+    secretRef: {name: demo-pg-examples}
+  shared-trino:
+    contract: trino
+    url: https://trino.example.com
+    uri: trino://trino@trino.example.com:443
+metadataDb: demo-db-superset
+examplesDb: demo-db-examples
+load_examples: true
+datasources:
+  - {name: lakehouse, trino: demo-trino, catalog: bronze}
+  - {name: shared, trino: shared-trino, catalog: sales}
+oidcRoleMapping:
+  platform_admin: [Admin]
+  data_engineer: [Alpha, sql_lab]
+locale: fr-FR
+currency: EUR
+d3Format: {thousands: " "}

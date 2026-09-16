@@ -1,0 +1,39 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+# Read here: ingress.{suffix,className}, certificateIssuers.selfSigned.name,
+# oidc.{issuerUri,enabled,displayName,scope,usePKCE}, proxy.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# database-server connection of the Superset metadata database (required).
+# Its credentials Secret holds the keys username and password.
+metadataDb: ""
+# database-server connection (PostgreSQL) receiving the Superset examples
+# (required; used when load_examples is true).
+examplesDb: ""
+# Whether to load the Superset examples.
+load_examples: true
+
+# Trino datasources, one Superset database per item:
+#   - name: lakehouse        # display name in Superset
+#     trino: demo-trino      # trino connection (a connection name, or a trino release in this namespace)
+#     catalog: bronze        # Trino catalog to expose
+datasources: []
+
+# Map of OIDC roles (groups) to lists of Superset roles.
+oidcRoleMapping: {}
+
+# CPU and memory limits of the Superset web server, and its gunicorn workers.
+cpu: 0.5
+memoryGi: 2
+workers: 2
+
+# Chart number and date formats: CLDR locale (en, fr, fr-CH...), ISO 4217
+# currency (defaults to the locale territory's), and d3-format /
+# d3-time-format locale definitions applied over the derived ones.
+locale: en
+currency: ""
+d3Format: {}
+d3TimeFormat: {}
