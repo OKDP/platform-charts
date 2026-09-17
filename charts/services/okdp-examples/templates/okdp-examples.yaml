@@ -1,0 +1,2 @@
+{{- /* Module main: the seed job (post-install/post-upgrade hook) and its scripts. */ -}}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "okdp-examples" "values" (include "okdp-examples-wrapper.values" . | fromYaml)) }}

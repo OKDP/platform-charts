@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "okdp-examples",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU request of the seed job in vCPU. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 1,
+      "x-ui-columns": 2
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory request of the seed job in GiB. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 2,
+      "x-ui-columns": 2
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "S3 store where the medallion buckets live.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Connections",
+      "x-ui-order": 1
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "S3 identity of the seed job. Secret with keys: accessKey, secretKey.",
+      "x-ui-group": "Connections",
+      "x-ui-order": 2
+    },
+    "trino": {
+      "type": "string",
+      "title": "Trino",
+      "description": "Trino instance carrying the bronze catalog.",
+      "x-okdp-connection-ref": {
+        "contract": "trino"
+      },
+      "x-ui-group": "Connections",
+      "x-ui-order": 3
+    },
+    "trinoOidcSecretRef": {
+      "type": "string",
+      "title": "Trino OAuth client secret",
+      "description": "OAuth client used against Trino. Secret with keys: client_id, client_secret.",
+      "x-ui-group": "Connections",
+      "x-ui-order": 4
+    },
+    "polaris": {
+      "type": "string",
+      "title": "Iceberg REST catalog",
+      "description": "Polaris instance where the silver and gold catalogs are provisioned.",
+      "x-okdp-connection-ref": {
+        "contract": "iceberg-catalog"
+      },
+      "x-ui-group": "Connections",
+      "x-ui-order": 5
+    },
+    "bronzeBucket": {
+      "type": "string",
+      "title": "Bronze bucket",
+      "default": "bronze",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 1,
+      "x-ui-columns": 3
+    },
+    "silverBucket": {
+      "type": "string",
+      "title": "Silver bucket",
+      "default": "silver",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 2,
+      "x-ui-columns": 3
+    },
+    "goldBucket": {
+      "type": "string",
+      "title": "Gold bucket",
+      "default": "gold",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 3,
+      "x-ui-columns": 3
+    },
+    "bronzePrefix": {
+      "type": "string",
+      "title": "Bronze prefix",
+      "default": "mobility/nyc_tlc",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 4,
+      "x-ui-columns": 2
+    },
+    "bronzeDataUrl": {
+      "type": "string",
+      "title": "Datasets URL",
+      "description": "Public NYC TLC parquet source.",
+      "default": "https://d37ci6vzurychx.cloudfront.net/trip-data",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 5,
+      "x-ui-columns": 2
+    },
+    "sparkEventsLogDir": {
+      "type": "string",
+      "title": "Spark events log dir",
+      "description": "Spark History log directory, created if missing.",
+      "default": "s3a://spark-events/event-logs",
+      "x-ui-group": "Lakehouse",
+      "x-ui-order": 6,
+      "x-ui-advanced": true
+    },
+    "polarisRealms": {
+      "type": "object",
+      "title": "Realms",
+      "description": "Realms model applied by polaris-admin: catalogs, roles, principals. One principal per realm must carry the catalog_admin role and a credentialsSecret.",
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Polaris",
+      "x-ui-order": 7,
+      "x-ui-advanced": true
+    }
+  },
+  "required": [
+    "storage",
+    "s3SecretRef",
+    "trino",
+    "trinoOidcSecretRef",
+    "polaris",
+    "polarisRealms"
+  ],
+  "additionalProperties": false
+}

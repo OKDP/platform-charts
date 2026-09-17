@@ -1,0 +1,39 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+# Read here: oidc.issuerUri, proxy.
+global:
+  okdp: {}
+
+# External connections, one values layer per projects/<project>/connections/<name>.yaml.
+connections: {}
+
+# Seed job requests; limits are twice the requests.
+cpu: 0.5
+memoryGi: 0.5
+
+# s3 connection of the store where the medallion buckets live (required).
+storage: ""
+# Secret with keys accessKey/secretKey: the seed job's S3 identity (required).
+s3SecretRef: ""
+# trino connection carrying the bronze catalog (required): a connection name,
+# or a trino release in this namespace.
+trino: ""
+# Secret with keys client_id/client_secret: the OAuth client used against Trino (required).
+trinoOidcSecretRef: ""
+# iceberg-catalog connection of the Polaris instance where the silver and gold
+# catalogs are provisioned (required): a connection name, or a polaris
+# release in this namespace.
+polaris: ""
+
+bronzeBucket: bronze
+silverBucket: silver
+goldBucket: gold
+bronzePrefix: mobility/nyc_tlc
+# Public NYC TLC parquet source.
+bronzeDataUrl: https://d37ci6vzurychx.cloudfront.net/trip-data
+# Spark History log directory, created if missing.
+sparkEventsLogDir: s3a://spark-events/event-logs
+
+# Realms model applied by polaris-admin: catalogs, roles, principals. One
+# principal per realm must carry the catalog_admin role and a
+# credentialsSecret {name, clientIdKey, clientSecretKey} (required).
+polarisRealms: {}

@@ -1,0 +1,6 @@
+# Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
+# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/okdp-examples
+charts:
+  - name: okdp-examples       # module main
+    repository: oci://quay.io/okdp/charts
+    version: 1.3.0
