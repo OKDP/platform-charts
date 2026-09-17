@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+spec:
+  # One replica: Git writes are serialised in-process.
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "okdp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Environment variables only refresh on pod restart.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "okdp.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "okdp.fullname" . }}
+      containers:
+        - name: server
+          image: {{ printf "%s:%s" .Values.imageRepository (.Values.imageTag | default .Chart.AppVersion) | quote }}
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: {{ include "okdp.fullname" . }}
+          {{- with include "okdp.proxy.envList" . | fromYamlArray }}
+          env:
+            {{- range . }}
+            - {name: {{ .name }}, value: {{ .value | quote }}}
+            - {name: {{ lower .name }}, value: {{ .value | quote }}}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: 8093
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          volumeMounts:
+            # The local clone of the deployments repository: a cache only,
+            # Git is the store.
+            - name: gitops-clone
+              mountPath: {{ include "okdp-cp-server.cloneDir" . }}
+            {{- if .Values.gitops.credentialsSecret }}
+            - name: gitops-credentials
+              mountPath: {{ include "okdp-cp-server.credentialsDir" . }}
+              readOnly: true
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: gitops-clone
+          emptyDir: {}
+        {{- if .Values.gitops.credentialsSecret }}
+        - name: gitops-credentials
+          secret:
+            secretName: {{ .Values.gitops.credentialsSecret }}
+            defaultMode: 0400
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # The console's ingress routes /api here (okdp-control-plane-ui backendService).
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8093
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "okdp.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}

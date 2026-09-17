@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "okdp-control-plane-server",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "imageRepository": {
+      "type": "string",
+      "title": "Image repository",
+      "description": "Server image repository.",
+      "default": "quay.io/okdp/images/okdp-control-plane-server",
+      "x-ui-group": "Image",
+      "x-ui-order": 1,
+      "x-ui-advanced": true
+    },
+    "imageTag": {
+      "type": "string",
+      "title": "Image tag",
+      "description": "Server image tag. Set explicitly so the deployed image is pinned rather than following the chart appVersion.",
+      "default": "0.9.0",
+      "x-ui-group": "Image",
+      "x-ui-order": 2,
+      "x-ui-advanced": true
+    },
+    "consoleHost": {
+      "type": "string",
+      "title": "Console host",
+      "description": "Console host, used verbatim as the single allowed origin. Defaults to okdp-ui.<ingress suffix>.",
+      "default": "",
+      "x-ui-group": "Server",
+      "x-ui-order": 1
+    },
+    "logLevel": {
+      "type": "string",
+      "title": "Log level",
+      "default": "info",
+      "enum": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ],
+      "x-ui-group": "Server",
+      "x-ui-order": 2
+    },
+    "insecureOciRegistries": {
+      "type": "string",
+      "title": "Insecure OCI registries",
+      "description": "Registry hosts reachable over plain HTTP, comma separated. A sandbox concern, empty anywhere else.",
+      "default": "",
+      "x-ui-group": "Server",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "gitops": {
+      "type": "object",
+      "title": "Deployments repository",
+      "description": "The Git repository the server commits the desired state to, and the engine reconciling it.",
+      "x-ui-group": "GitOps",
+      "x-ui-order": 1,
+      "required": [
+        "repoURL",
+        "engine"
+      ],
+      "properties": {
+        "repoURL": {
+          "type": "string",
+          "title": "Repository URL",
+          "description": "https://…, ssh://… or git@host:org/repo.git (GITOPS_REPO_URL).",
+          "x-ui-placeholder": "https://git.example.com/org/deployments.git"
+        },
+        "branch": {
+          "type": "string",
+          "title": "Branch",
+          "default": "main"
+        },
+        "path": {
+          "type": "string",
+          "title": "Path",
+          "description": "Directory holding the layout (platform/, projects/), empty for the root.",
+          "default": ""
+        },
+        "engine": {
+          "type": "string",
+          "title": "GitOps engine",
+          "enum": [
+            "flux",
+            "argocd"
+          ],
+          "default": "flux"
+        },
+        "releasesNamespace": {
+          "type": "string",
+          "title": "Releases namespace",
+          "description": "Namespace of the Flux HelmReleases and values ConfigMaps, including okdp-platform-values.",
+          "default": "okdp-releases"
+        },
+        "argocdNamespace": {
+          "type": "string",
+          "title": "Argo CD namespace",
+          "description": "Namespace of the Argo CD Applications.",
+          "default": "argocd"
+        },
+        "credentialsSecret": {
+          "type": "string",
+          "title": "Credentials secret",
+          "description": "Secret with write access to the repository (Flux GitRepository keys: username/password, bearerToken, or identity/known_hosts).",
+          "default": ""
+        },
+        "sshInsecureIgnoreHostKey": {
+          "type": "boolean",
+          "title": "Ignore the SSH host key",
+          "description": "Sandboxes only.",
+          "default": false
+        },
+        "author": {
+          "type": "object",
+          "title": "Commit author",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name",
+              "default": "OKDP control plane"
+            },
+            "email": {
+              "type": "string",
+              "title": "Email",
+              "default": "okdp-control-plane@okdp.io"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "title": "Resources",
+      "description": "Container resources (requests/limits).",
+      "default": {},
+      "x-ui-group": "Server",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    }
+  },
+  "required": [
+    "gitops"
+  ],
+  "additionalProperties": false
+}

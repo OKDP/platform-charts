@@ -1,0 +1,54 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+# Read here: ingress.suffix (default console host), proxy. The server itself
+# reads the rest of global.okdp (oidc...) at runtime from the ConfigMap
+# <gitops.releasesNamespace>/okdp-platform-values.
+global:
+  okdp: {}
+
+# External connections: none used, declared by the values contract.
+connections: {}
+
+# Server image. Set the tag explicitly so the deployed image is pinned.
+imageRepository: quay.io/okdp/images/okdp-control-plane-server
+imageTag: "0.9.0"
+
+# Console host, used verbatim as the single allowed origin (CORS).
+# Empty: okdp-ui.<global.okdp.ingress.suffix>.
+consoleHost: ""
+logLevel: info
+# Registry hosts reachable over plain HTTP, comma separated. A sandbox
+# concern, empty anywhere else.
+insecureOciRegistries: ""
+
+# The deployments Git repository: the only desired-state store. The server
+# commits instances, connections, projects and the catalog there, and the
+# GitOps engine reconciles them.
+gitops:
+  # Required. https://…, ssh://… or git@host:org/repo.git (GITOPS_REPO_URL)
+  repoURL: ""
+  # GITOPS_BRANCH
+  branch: main
+  # Directory of the repository holding the layout (platform/, projects/…),
+  # empty for the root (GITOPS_PATH).
+  path: ""
+  # flux or argocd: which objects carry the render/sync status (GITOPS_ENGINE),
+  # and which ones the ClusterRole lets the server read.
+  engine: flux
+  # Namespace of the Flux HelmReleases and values ConfigMaps, including
+  # okdp-platform-values (GITOPS_RELEASES_NAMESPACE).
+  releasesNamespace: okdp-releases
+  # Namespace of the Argo CD Applications (ARGOCD_NAMESPACE).
+  argocdNamespace: argocd
+  # Secret, in the release namespace, with write access to the repository,
+  # mounted at GITOPS_CREDENTIALS_DIR. Flux GitRepository keys: username +
+  # password (a token as password) or bearerToken for HTTPS; identity +
+  # known_hosts for SSH.
+  credentialsSecret: ""
+  # Accept any SSH host key. Sandboxes only (GITOPS_SSH_INSECURE_IGNORE_HOST_KEY).
+  sshInsecureIgnoreHostKey: false
+  # Commit author (GITOPS_AUTHOR_NAME, GITOPS_AUTHOR_EMAIL).
+  author:
+    name: OKDP control plane
+    email: okdp-control-plane@okdp.io
+
+resources: {}

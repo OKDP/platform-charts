@@ -1,0 +1,39 @@
+{{- /*
+Environment of the server (okdp-control-plane-server internal/config/config.go).
+*/ -}}
+{{- $g := .Values.gitops }}
+{{- if not $g.repoURL }}
+{{- fail "okdp-control-plane-server: gitops.repoURL is required: the deployments repository is the only desired-state store" }}
+{{- end }}
+{{- if not (has $g.engine (list "flux" "argocd")) }}
+{{- fail (printf "okdp-control-plane-server: gitops.engine %q must be flux or argocd" $g.engine) }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+data:
+  PORT: "8093"
+  PLATFORM_NAMESPACE: {{ .Release.Namespace | quote }}
+  ALLOWED_ORIGINS: {{ printf "https://%s" (include "okdp-cp-server.consoleHost" .) | quote }}
+  LOG_LEVEL: {{ .Values.logLevel | quote }}
+  GITOPS_REPO_URL: {{ $g.repoURL | quote }}
+  GITOPS_BRANCH: {{ $g.branch | quote }}
+  GITOPS_PATH: {{ $g.path | quote }}
+  GITOPS_ENGINE: {{ $g.engine | quote }}
+  GITOPS_RELEASES_NAMESPACE: {{ $g.releasesNamespace | quote }}
+  ARGOCD_NAMESPACE: {{ $g.argocdNamespace | quote }}
+  GITOPS_AUTHOR_NAME: {{ $g.author.name | quote }}
+  GITOPS_AUTHOR_EMAIL: {{ $g.author.email | quote }}
+  GITOPS_CREDENTIALS_DIR: {{ include "okdp-cp-server.credentialsDir" . | quote }}
+  GITOPS_CLONE_DIR: {{ include "okdp-cp-server.cloneDir" . | quote }}
+  {{- if $g.sshInsecureIgnoreHostKey }}
+  # Sandboxes only: any SSH host key is accepted.
+  GITOPS_SSH_INSECURE_IGNORE_HOST_KEY: "true"
+  {{- end }}
+  {{- if .Values.insecureOciRegistries }}
+  # Development sandboxes only: registry hosts reached over plain HTTP.
+  INSECURE_OCI_REGISTRIES: {{ .Values.insecureOciRegistries | quote }}
+  {{- end }}
