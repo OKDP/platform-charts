@@ -1,0 +1,9 @@
+# The sandbox: Flux, HTTPS token Secret, default console host.
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    proxy: {httpProxy: "", httpsProxy: "", noProxy: ""}
+gitops:
+  repoURL: https://git.okdp.sandbox/okdp/deployments.git
+  credentialsSecret: okdp-gitops-credentials
+insecureOciRegistries: registry.okdp.sandbox:5000

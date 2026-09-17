@@ -1,0 +1,20 @@
+# Argo CD, SSH deploy key, a subdirectory, an explicit console host, a
+# forward proxy, pinned resources.
+global:
+  okdp:
+    ingress: {suffix: example.com, className: nginx}
+    proxy: {httpProxy: "http://proxy:3128", httpsProxy: "http://proxy:3128", noProxy: ".svc,.cluster.local"}
+consoleHost: console.example.com
+logLevel: debug
+gitops:
+  repoURL: git@git.example.com:data/deployments.git
+  branch: production
+  path: clusters/prod
+  engine: argocd
+  argocdNamespace: gitops
+  credentialsSecret: deploy-key
+  sshInsecureIgnoreHostKey: true
+  author: {name: Console, email: console@example.com}
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {memory: 512Mi}
