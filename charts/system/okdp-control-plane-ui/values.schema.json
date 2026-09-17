@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "okdp-control-plane-ui",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values, from platform/platform-values.yaml (global.okdp)."
+    },
+    "connections": {
+      "type": "object",
+      "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "properties": {
+          "contract": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "secretRef": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "okdp-lib": {
+      "type": "object",
+      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+    },
+    "imageRepository": {
+      "type": "string",
+      "title": "Image repository",
+      "description": "Console image repository.",
+      "default": "quay.io/okdp/images/okdp-control-plane-ui",
+      "x-ui-group": "Image",
+      "x-ui-order": 1,
+      "x-ui-advanced": true
+    },
+    "imageTag": {
+      "type": "string",
+      "title": "Image tag",
+      "description": "Console image tag. Set explicitly so the deployed image is pinned rather than following the chart appVersion.",
+      "default": "0.9.0",
+      "x-ui-group": "Image",
+      "x-ui-order": 2,
+      "x-ui-advanced": true
+    },
+    "host": {
+      "type": "string",
+      "title": "Host",
+      "description": "Console host. Defaults to okdp-ui.<ingress suffix>.",
+      "default": "",
+      "x-ui-group": "Console",
+      "x-ui-order": 1
+    },
+    "oidcAuthority": {
+      "type": "string",
+      "title": "OIDC authority",
+      "description": "Issuer the console redirects to, injected at container start rather than baked into the bundle. Defaults to the platform issuer (global.okdp.oidc.issuerUri).",
+      "default": "",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 1
+    },
+    "oidcClientId": {
+      "type": "string",
+      "title": "OIDC client ID",
+      "description": "Defaults to the platform client (global.okdp.oidc.clientId), else okdp-ui.",
+      "default": "",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 2
+    },
+    "rolesClaim": {
+      "type": "string",
+      "title": "Roles claim",
+      "description": "Claim of the ID token carrying the caller's roles. Dotted paths are resolved. Keycloak keeps realm_access out of the ID token, hence groups.",
+      "default": "groups",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 3
+    },
+    "adminRole": {
+      "type": "string",
+      "title": "Admin role",
+      "description": "Role that opens the administration screens.",
+      "default": "platform_admin",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 4
+    },
+    "backendService": {
+      "type": "string",
+      "title": "Backend service",
+      "description": "In-cluster Service the ingress routes /api to. Defaults to the server release of the same platform: this release name with okdp-control-plane-ui replaced by okdp-control-plane-server.",
+      "default": "",
+      "x-ui-group": "Console",
+      "x-ui-order": 2,
+      "x-ui-advanced": true
+    },
+    "backendPort": {
+      "type": "integer",
+      "title": "Backend port",
+      "default": 8093,
+      "minimum": 1,
+      "maximum": 65535,
+      "x-ui-group": "Console",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "resources": {
+      "type": "object",
+      "title": "Resources",
+      "description": "Container resources (requests/limits).",
+      "default": {},
+      "x-ui-group": "Console",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    }
+  },
+  "additionalProperties": false
+}

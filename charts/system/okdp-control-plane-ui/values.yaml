@@ -1,0 +1,37 @@
+# Platform values (platform/platform-values.yaml). Never set per instance.
+# Read here: ingress.{suffix,className}, certificateIssuers.selfSigned.name,
+# oidc.{issuerUri,clientId} (defaults of oidcAuthority/oidcClientId), proxy.
+global:
+  okdp: {}
+
+# External connections: none used, declared by the values contract.
+connections: {}
+
+# Console image. Set the tag explicitly so the deployed image is pinned.
+imageRepository: quay.io/okdp/images/okdp-control-plane-ui
+imageTag: "0.9.0"
+
+# Console host. Empty: okdp-ui.<global.okdp.ingress.suffix>.
+host: ""
+
+# Issuer the console redirects to, injected at container start. Empty:
+# global.okdp.oidc.issuerUri.
+oidcAuthority: ""
+# OAuth client of the console. Empty: global.okdp.oidc.clientId, else okdp-ui.
+oidcClientId: ""
+# Claim of the ID token carrying the caller's roles (dotted paths resolved).
+# Keycloak keeps realm_access out of the ID token, hence groups.
+rolesClaim: groups
+# Role that opens the administration screens.
+adminRole: platform_admin
+
+# In-cluster Service the ingress routes /api to. Empty: the server release of
+# the same platform, i.e. this release name with its trailing
+# okdp-control-plane-ui replaced by okdp-control-plane-server (the platform
+# components okdp-control-plane-ui and okdp-control-plane-server of one
+# project give <project>-okdp-control-plane-ui and
+# <project>-okdp-control-plane-server). No KuboCD -main suffix any more.
+backendService: ""
+backendPort: 8093
+
+resources: {}

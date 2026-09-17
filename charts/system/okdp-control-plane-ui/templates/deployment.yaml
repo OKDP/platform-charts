@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "okdp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "okdp.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: console
+          image: {{ printf "%s:%s" .Values.imageRepository (.Values.imageTag | default .Chart.AppVersion) | quote }}
+          imagePullPolicy: IfNotPresent
+          # Written to /config.js by the entrypoint and read by the bundle at
+          # startup: one image, any cluster.
+          env:
+            - name: OIDC_AUTHORITY
+              value: {{ include "okdp-cp-ui.oidcAuthority" . | quote }}
+            - name: OIDC_CLIENT_ID
+              value: {{ include "okdp-cp-ui.oidcClientId" . | quote }}
+            - name: OIDC_ROLES_CLAIM
+              value: {{ .Values.rolesClaim | quote }}
+            - name: OIDC_ADMIN_ROLE
+              value: {{ .Values.adminRole | quote }}
+            {{- range include "okdp.proxy.envList" . | fromYamlArray }}
+            - {name: {{ .name }}, value: {{ .value | quote }}}
+            - {name: {{ lower .name }}, value: {{ .value | quote }}}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 4200
+              protocol: TCP
+          # The image serves only the static bundle (its nginx answers 404 on
+          # /api); the ingress routes /api to the control plane.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 4200
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "okdp.selectorLabels" . | nindent 4 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "okdp.fullname" . }}
+  labels:
+    {{- include "okdp.labels" . | nindent 4 }}
+  annotations:
+    {{- include "okdp.ingressAnnotations" . | nindent 4 }}
+spec:
+  {{- include "okdp.require" (dict "ctx" . "keys" (list "ingress.className")) }}
+  ingressClassName: {{ .Values.global.okdp.ingress.className }}
+  tls:
+    - hosts:
+        - {{ include "okdp-cp-ui.host" . | quote }}
+      secretName: {{ include "okdp.fullname" (dict "ctx" . "suffix" "tls") }}
+  rules:
+    - host: {{ include "okdp-cp-ui.host" . | quote }}
+      http:
+        paths:
+          # API calls go to the in-cluster control-plane Service: the browser
+          # stays same-origin (no CORS), the API has no host of its own.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "okdp-cp-ui.backendService" . }}
+                port:
+                  number: {{ .Values.backendPort }}
+          # Everything else is the single-page app.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "okdp.fullname" . }}
+                port:
+                  number: 4200

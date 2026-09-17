@@ -1,0 +1,16 @@
+# Explicit host, issuer, client and backend Service, a forward proxy.
+global:
+  okdp:
+    ingress: {suffix: example.com, className: traefik}
+    oidc: {}
+    proxy: {httpProxy: "http://proxy:3128", httpsProxy: "", noProxy: ".svc"}
+    certificateIssuers: {selfSigned: {name: platform-issuer}}
+host: console.example.com
+oidcAuthority: https://idp.example.com/realms/data
+oidcClientId: console
+rolesClaim: realm_access.roles
+adminRole: admin
+backendService: api
+backendPort: 9000
+resources:
+  limits: {memory: 128Mi}

@@ -1,0 +1,10 @@
+# The sandbox: everything from the platform values (issuer, client, host,
+# backend Service derived from the release name).
+global:
+  okdp:
+    ingress: {suffix: okdp.sandbox, className: nginx}
+    oidc:
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      clientId: okdp-ui
+    proxy: {httpProxy: "", httpsProxy: "", noProxy: ""}
+    certificateIssuers: {selfSigned: {name: default-issuer}}
