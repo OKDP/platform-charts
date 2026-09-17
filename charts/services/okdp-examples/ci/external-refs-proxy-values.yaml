@@ -1,0 +1,40 @@
+# External trino and iceberg-catalog connections, a store without internal
+# URL, two realms, a forward proxy, sizing.
+global:
+  okdp:
+    ingress: {suffix: okdp.example.com, className: nginx}
+    oidc:
+      issuerUri: https://idp.example.com/realms/data
+    proxy: {httpProxy: "http://proxy:3128", httpsProxy: "http://proxy:3128", noProxy: ".svc"}
+connections:
+  store:
+    contract: s3
+    apiUrl: https://s3.example.com
+  shared-trino:
+    contract: trino
+    url: https://trino.example.com
+    uri: trino://trino@trino.example.com:443
+  shared-polaris:
+    contract: iceberg-catalog
+    uri: https://polaris.example.com/api/catalog
+    realm: prod
+storage: store
+s3SecretRef: seed-s3
+trino: shared-trino
+trinoOidcSecretRef: seed-trino
+polaris: shared-polaris
+cpu: 1
+memoryGi: 1.5
+bronzeBucket: s3://raw
+polarisRealms:
+  realms:
+    - name: prod-eu.1
+      principals:
+        - name: admin
+          principalRoles: [catalog_admin]
+          credentialsSecret: {name: polaris-eu, clientIdKey: id, clientSecretKey: secret}
+    - name: dev
+      principals:
+        - name: admin
+          principalRoles: [catalog_admin, other]
+          credentialsSecret: {name: polaris-dev, clientIdKey: id, clientSecretKey: secret}
