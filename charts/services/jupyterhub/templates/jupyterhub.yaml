@@ -1,9 +1,12 @@
 {{- /*
-Module main: the jupyterhub chart. Its hub Secret is replaced by an
-ESO-generated Secret of the same name (templates/_hub-secret.tpl): the chart
-generates the proxy token, cookie secret and auth-state keys with lookup +
-randAlphaNum, which Argo CD (helm template) would redraw on every sync.
+Module main: the jupyterhub chart. The chart generates the proxy token, the
+cookie secret and the auth-state keys of its hub Secret with lookup +
+randAlphaNum, which Argo CD (helm template) would redraw on every sync. It is
+handed placeholders instead (templates/_values.tpl); the real values are in
+the ESO-generated Secret <release>-hub-generated (templates/hub-generated.yaml):
+the hub reads the cookie secret and the auth-state keys from it
+(hub.existingSecret), and the proxy token references of the hub and proxy
+Deployments are re-pointed to it here.
 */ -}}
 {{- $rendered := include "okdp.vendor.render" (dict "ctx" . "chart" "jupyterhub" "values" (include "okdp-jupyterhub.values.jupyterhub" . | fromYaml)) -}}
-{{ include "okdp.vendor.withoutObject" (dict "rendered" $rendered "kind" "Secret" "name" (include "okdp-jupyterhub.hubSecret" .)) }}
-{{ include "okdp-jupyterhub.hubSecret.external" (dict "ctx" . "rendered" $rendered) }}
+{{ include "okdp.vendor.secretKeyRef" (dict "rendered" $rendered "name" (include "okdp-jupyterhub.hubSecret" .) "key" "hub.config.ConfigurableHTTPProxy.auth_token" "to" (include "okdp-jupyterhub.hubGeneratedSecret" .)) }}

@@ -56,17 +56,25 @@ database), `oidc.authUrl|tokenUrl|userinfoUrl|displayName|clientProvisioning`,
 The upstream chart generates the proxy token, the cookie secret and the
 auth-state keys of its hub Secret with `lookup` + `randAlphaNum` (a new value
 at every `helm template`: Argo CD would never settle). The wrapper hands the
-chart a placeholder for the three, removes the chart's hub Secret
-`<release>-hub` from the output, and renders instead an ExternalSecret of the
-same name: its non-secret keys (`values.yaml`) are copied from the chart's
-render, the three passwords come from ESO `Password` generators, once.
-Exceptions in `okdp-guard-allow.yaml`.
+chart a placeholder for the three and generates the real ones once with ESO
+(`Password` generators, ExternalSecret `<release>-hub-generated`, all three
+keys declared up front since a `refreshInterval: "0"` Secret is never
+rewritten; kept on uninstall, `helm.sh/resource-policy: keep` and Argo
+`Delete=false`, and adopted again by the next install, so that a kept or
+restored hub database still decrypts its auth state). The hub reads the
+cookie secret and the auth-state keys from it
+first (`hub.existingSecret`), and the proxy token references of the hub and
+proxy Deployments are re-pointed to it (`okdp.vendor.secretKeyRef`). The
+chart's own hub Secret `<release>-hub` stays (Helm-managed: it carries the
+hub configuration, `values.yaml`, which follows every upgrade); its three
+password keys hold the unused placeholder. Exceptions in
+`okdp-guard-allow.yaml`.
 
 ## Changes from the KuboCD package
 
 - `connections` (PySpark connections) is renamed `sparkConnections`.
-- The hub Secret is ESO-generated: an upgrade from the KuboCD release gets new
-  cookie secret and auth-state keys (users sign in again).
+- The hub passwords are ESO-generated: an upgrade from the KuboCD release gets
+  a new cookie secret and new auth-state keys (users sign in again).
 
 ## Tests
 

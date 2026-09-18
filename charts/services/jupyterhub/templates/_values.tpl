@@ -95,7 +95,7 @@ lists without a matching sparkConnections item is skipped, as before.
 {{- $cryptKey := dict "name" $oauthSecret "key" "JUPYTERHUB_CRYPT_KEY" -}}
 {{- if $oidc.dcr.enabled -}}
   {{- $oauthSecret = include "okdp-jupyterhub.dcrSecret" . -}}
-  {{- $cryptKey = dict "name" (include "okdp-jupyterhub.hubSecret" .) "key" "hub.config.CryptKeeper.keys" -}}
+  {{- $cryptKey = dict "name" (include "okdp-jupyterhub.hubGeneratedSecret" .) "key" "hub.config.CryptKeeper.keys" -}}
 {{- end -}}
 {{- $placeholder := include "okdp-jupyterhub.generatedPlaceholder" . -}}
 {{- $pyspark := include "okdp-jupyterhub.pyspark" . | fromYamlArray -}}
@@ -149,8 +149,8 @@ hub:
           key: {{ $cryptKey.key }}
   config:
     # Placeholders: the chart would otherwise generate them with lookup +
-    # randAlphaNum. The real values are in the ESO-generated hub Secret, and
-    # the hub pops these keys from hub.config before applying it.
+    # randAlphaNum. The real values are in the ESO-generated Secret
+    # (existingSecret below), and the hub pops these keys from hub.config.
     ConfigurableHTTPProxy:
       auth_token: {{ $placeholder }}
     CryptKeeper:
@@ -180,6 +180,9 @@ hub:
       {{- toYaml $generic | nindent 6 }}
   # No JupyterHub service: their api tokens would be generated with lookup too.
   services: {}
+  # The hub reads the generated cookie secret and auth-state keys from it
+  # before its own Secret (z2jh get_secret_value).
+  existingSecret: {{ include "okdp-jupyterhub.hubGeneratedSecret" . }}
   networkPolicy:
     enabled: false
   extraConfig:
