@@ -30,6 +30,10 @@
 # subchart, which okdp.vendor.render refuses to carry). vendor/ is committed: the chart renders offline, the
 # published chart is self-contained, and an upgrade shows up as a diff.
 #
+# repository may also be file://<path>, relative to the wrapper chart: a chart
+# of this repository (charts/oidc-client) copied as is; its Chart.yaml
+# version must be the listed version.
+#
 #   scripts/vendor-charts.sh <chart dir>...          (re)vendor
 #   scripts/vendor-charts.sh --check <chart dir>...  fail if vendor/ differs from vendor.yaml
 set -euo pipefail
@@ -52,7 +56,6 @@ for chart in "$@"; do
     repo=$(yq ".charts[${i}].repository" "${manifest}")
     version=$(yq ".charts[${i}].version" "${manifest}")
     upstream=$(yq ".charts[${i}].chart // .charts[${i}].name" "${manifest}")
-    drops=$(yq ".charts[${i}].drop // [] | .[]" "${manifest}")
     listed+=("${name}")
     dest="${work}/$(basename "${chart}")/${name}"
     mkdir -p "${dest}"

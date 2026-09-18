@@ -6,7 +6,7 @@ charts:
     version: 0.22.8
     # Bundled bitnami charts, both disabled: postgresql (metadataDb is an
     # external database) and redis (templates/valkey.yaml replaces it).
-    drop: [postgresql, redis]
+    drop: [charts/postgresql, charts/redis]
   - name: oidc-dcr            # module oidc-dcr (global.okdp.oidc.clientProvisioning: dcr)
     repository: oci://quay.io/adaltas
     version: 0.3.3
