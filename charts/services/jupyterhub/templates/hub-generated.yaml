@@ -7,70 +7,14 @@ never rewritten, so every key is declared here from the start):
   hub.config.CryptKeeper.keys                  64 hex characters (32 bytes)
 
 The key names are the ones the hub looks up in its existing-secret mount
-(z2jh get_secret_value). Generator names use short suffixes: derived from
-these long keys (okdp.generatedSecret) they would collide once truncated to
-63 characters. Kept when the release goes away (Helm keep, Argo CD
+(z2jh get_secret_value). Kept when the release goes away (Helm keep, Argo CD
 Delete=false) and adopted again by the next install: the auth state of the hub
 database is encrypted with CryptKeeper.keys, and a database kept or restored
 across a reinstall must stay readable.
-*/ -}}
-{{- $name := include "okdp-jupyterhub.hubGeneratedSecret" . -}}
-{{- $keys := list
-      (dict "key" "hub.config.ConfigurableHTTPProxy.auth_token" "suffix" "hub-proxy" "sha256" false)
-      (dict "key" "hub.config.JupyterHub.cookie_secret" "suffix" "hub-cookie" "sha256" true)
-      (dict "key" "hub.config.CryptKeeper.keys" "suffix" "hub-crypt" "sha256" true) -}}
-{{- $data := dict -}}
-{{- $dataFrom := list -}}
-{{- range $k := $keys -}}
-  {{- $gen := include "okdp.fullname" (dict "ctx" $ "suffix" $k.suffix) -}}
-  {{- $alias := printf "okdp_%s" (replace "-" "_" $k.suffix) -}}
-  {{- if $k.sha256 -}}
-    {{- $_ := set $data $k.key (printf "{{ index . %q | sha256sum }}" $alias) -}}
-  {{- else -}}
-    {{- $_ := set $data $k.key (printf "{{ index . %q }}" $alias) -}}
-  {{- end -}}
-  {{- $dataFrom = append $dataFrom (dict "sourceRef" (dict "generatorRef" (dict "apiVersion" "generators.external-secrets.io/v1alpha1" "kind" "Password" "name" $gen)) "rewrite" (list (dict "regexp" (dict "source" "^password$" "target" $alias)))) }}
----
-apiVersion: generators.external-secrets.io/v1alpha1
-kind: Password
-metadata:
-  name: {{ $gen }}
-  namespace: {{ $.Release.Namespace }}
-  labels:
-    {{- include "okdp.labels" $ | nindent 4 }}
-  annotations:
-    helm.sh/resource-policy: keep
-    argocd.argoproj.io/sync-options: Delete=false
-spec:
-  length: 64
-  digits: 10
-  symbols: 0
-  noUpper: false
-  allowRepeat: true
-{{- end }}
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: {{ $name }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "okdp.labels" . | nindent 4 }}
-  annotations:
-    helm.sh/resource-policy: keep
-    argocd.argoproj.io/sync-options: Delete=false
-spec:
-  refreshInterval: "0"
-  target:
-    name: {{ $name }}
-    creationPolicy: Owner
-    template:
-      engineVersion: v2
-      type: Opaque
-      metadata:
-        labels:
-          {{- include "okdp.labels" . | nindent 10 }}
-      data:
-        {{- toYaml $data | nindent 8 }}
-  dataFrom:
-    {{- toYaml $dataFrom | nindent 4 }}
+*/}}
+{{ include "okdp.generatedSecret" (dict "ctx" . "name" (include "okdp-jupyterhub.hubGeneratedSecret" .) "type" "Opaque"
+     "keys" (list
+       (dict "key" "hub.config.ConfigurableHTTPProxy.auth_token" "length" 64 "digits" 10)
+       (dict "key" "hub.config.JupyterHub.cookie_secret" "length" 64 "digits" 10 "transform" "sha256")
+       (dict "key" "hub.config.CryptKeeper.keys" "length" 64 "digits" 10 "transform" "sha256"))
+     "annotations" (dict "helm.sh/resource-policy" "keep" "argocd.argoproj.io/sync-options" "Delete=false")) }}
