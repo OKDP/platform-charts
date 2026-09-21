@@ -10,6 +10,3 @@ vendor/*/.release-please-manifest.json
 vendor/*/.github/
 .git/
 vendor/*/ci/
-# Plain text named like a partial: Helm discards the top-level text of
-# partials, okdp.vendor.render prints it.
-vendor/jupyterhub/templates/proxy/autohttps/_README.txt
