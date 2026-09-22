@@ -51,7 +51,7 @@ jobs:
 
       # release-please owns only the OKDP half of the tag and writes it to
       # .release-please-manifest.json on its own branch. Join it with the
-      # upstream half already in each manifest, on that same branch, before
+      # upstream half already in each Chart.yaml, on that same branch, before
       # anyone reviews the release pull request.
       - name: Compose the OCI tags
         if: steps.release-please.outputs.prs_created == 'true'
@@ -63,40 +63,26 @@ jobs:
           bash .github/scripts/compose-oci-tag.sh
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -am "chore: compose the upstream version into the OCI tags" || exit 0
+          git commit -am "chore: compose the upstream version into the chart versions" || exit 0
           git push origin "${BRANCH}"
 
-  get-package-oci-prefix:
-    needs: [release-please]
-    if: needs.release-please.outputs.paths_released != '[]'
-    runs-on: ubuntu-latest
-    outputs:
-      oci_package_prefix: ${{ steps.prefix.outputs.oci_package_prefix }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Get OCI package prefix
-        id: prefix
-        uses: ./.github/actions/oci-package-prefix
-        with:
-          values_path: platform-packages-values.yaml
-
   publish:
-    needs: [release-please, get-package-oci-prefix]
+    needs: [release-please]
     if: needs.release-please.outputs.paths_released != '[]'
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/kubocd-package-template.yml
+    # TODO(no-kubocd): switch to @v1 (and drop tools_ref) once released.
+    uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
-      ci_registry: "ghcr.io"
-      registry: "quay.io"
+      tools_ref: no-kubocd
+      # okdp-lib is a file:// dependency on ../okdp-lib during the migration.
+      sibling_repositories: OKDP/okdp-lib@main
       publish_to_registry: "true"
+      oci_package_prefix: platform-charts
       # release-please has just minted versions that have never existed, so a
-      # tag already being on the registry means something is genuinely wrong.
+      # version already being on the registry means something is genuinely wrong.
       on_existing_tag: "fail"
       package_paths: ${{ needs.release-please.outputs.paths_released }}
-      oci_package_prefix: "${{ needs.get-package-oci-prefix.outputs.oci_package_prefix }}"
-      runs-on: "ubuntu-latest"
+      descriptor_optional: "oidc-client"
     secrets: inherit
