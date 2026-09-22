@@ -1,5 +1,5 @@
 #
-# Copyright 2025 The OKDP Authors.
+# Copyright 2026 The OKDP Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,42 +16,32 @@
 
 name: publish
 
+# Manual (re)publication of every chart to oci://quay.io/okdp/platform-charts,
+# at its Chart.yaml version. Versions already published are left alone.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
-# https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  get-package-oci-prefix:
-    runs-on: ubuntu-latest
-    outputs:
-      oci_package_prefix: ${{ steps.prefix.outputs.oci_package_prefix }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Get OCI package prefix
-        id: prefix
-        uses: ./.github/actions/oci-package-prefix
-        with:
-          values_path: platform-packages-values.yaml
-
   publish:
-    needs: [get-package-oci-prefix]
     if: github.repository_owner == 'OKDP'
-    uses: ./.github/workflows/kubocd-package-template.yml
+    permissions:
+      contents: read
+      packages: write
+    # TODO(no-kubocd): switch to @v1 (and drop tools_ref) once released.
+    uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
-      ci_registry: "ghcr.io"
-      registry: "quay.io"
+      tools_ref: no-kubocd
+      # okdp-lib is a file:// dependency on ../okdp-lib during the migration.
+      sibling_repositories: OKDP/okdp-lib@main
       publish_to_registry: "true"
-      oci_package_prefix: "${{ needs.get-package-oci-prefix.outputs.oci_package_prefix }}"
-      runs-on: "ubuntu-latest"
+      oci_package_prefix: platform-charts
+      on_existing_tag: "skip"
+      descriptor_optional: "oidc-client"
     secrets: inherit

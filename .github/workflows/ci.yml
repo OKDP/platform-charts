@@ -1,6 +1,5 @@
-
 #
-# Copyright 2025 The OKDP Authors.
+# Copyright 2026 The OKDP Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,44 +14,31 @@
 # limitations under the License.
 #
 
-name: ci 
+name: ci
 
+# Tests every changed chart (a change under .github/ selects every chart) and
+# pushes CI builds to oci://ghcr.io/okdp/platform-charts/charts. okdp-lib
+# lives in OKDP/okdp-lib: a change there does not re-test these charts.
 on:
   pull_request:
     branches:
       - main
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-
-      - "**/**"
-  
-      - "!README.md"
-      - "!**/README.md"
-      - "!docs/**"
-
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
   push:
     branches:
       - '**'
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-
-      - "**/**"
-
-      - "!README.md"
-      - "!**/README.md"
-      - "!docs/**"
-
+    paths-ignore:
+      - "README.md"
+      - "docs/**"
   workflow_dispatch:
-  
+
 permissions:
-  packages: write
-  contents: write
+  contents: read
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
-  # Only cancel in-progress jobs or runs for the current workflow - matches against branch & tags
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -74,30 +60,17 @@ jobs:
           printf 'changed: %s\n' "${CHANGED[@]:-<none>}"
           bash .github/scripts/shared-chart-consumers.sh "${CHANGED[@]:-}"
 
-  get-package-oci-prefix:
-    runs-on: ubuntu-latest
-    outputs:
-      oci_package_prefix: ${{ steps.prefix.outputs.oci_package_prefix }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Get OCI package prefix
-        id: prefix
-        uses: ./.github/actions/oci-package-prefix
-        with:
-          values_path: platform-packages-values.yaml
-
-  kubocd-packages-ci:
-    needs: [get-package-oci-prefix]
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+  charts:
     permissions:
       contents: read
       packages: write
-    uses: ./.github/workflows/kubocd-package-template.yml
+    # TODO(no-kubocd): switch to @v1 (and drop tools_ref) once released.
+    uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
-      ci_registry: "ghcr.io"
-      registry: "quay.io"
+      tools_ref: no-kubocd
+      # okdp-lib is a file:// dependency on ../okdp-lib during the migration.
+      sibling_repositories: OKDP/okdp-lib@main
       publish_to_registry: "false"
-      oci_package_prefix: "${{ needs.get-package-oci-prefix.outputs.oci_package_prefix }}"
-      runs-on: "ubuntu-latest"
+      # pull requests from forks cannot write packages: validate only
+      push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      descriptor_optional: "oidc-client"
