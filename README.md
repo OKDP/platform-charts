@@ -1,7 +1,7 @@
 [![ci](https://github.com/okdp/platform-charts/actions/workflows/ci.yml/badge.svg)](https://github.com/okdp/platform-charts/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/okdp/platform-charts)](https://github.com/okdp/platform-charts/releases/latest)&ensp;&ensp;
-[![KuboCD](https://img.shields.io/badge/kubocd-v0.3.2-green.svg)](https://github.com/kubocd/kubocd)&ensp;&ensp;
-[![Kubernetes](https://img.shields.io/badge/kubernetes-1.28+-blue.svg)](https://kubernetes.io/)&ensp;&ensp;
+[![Helm](https://img.shields.io/badge/helm-3%20%7C%204-blue.svg)](https://helm.sh/)&ensp;&ensp;
+[![Kubernetes](https://img.shields.io/badge/kubernetes-1.30+-blue.svg)](https://kubernetes.io/)&ensp;&ensp;
 [![License Apache2](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 <a href="https://okdp.io">
 <img src="https://okdp.io/logos/okdp-notext.svg" height="20px" style="margin: 0 2px;" />
@@ -9,121 +9,114 @@
 
 ## Overview
 
-This repository builds and publishes the OKDP platform packages used to operate platform services with [KuboCD](https://www.kubocd.io/).
+This repository builds and publishes the OKDP platform charts: one Helm chart per
+platform service. They build on the `okdp-lib` library chart, which lives in
+[`OKDP/okdp-lib`](https://github.com/OKDP/okdp-lib).
 
-It is **packages-only**: it owns the package definitions under `charts/`, the Helm charts under `charts/` that some of them bundle, and the CI that builds and publishes the result as OCI artifacts. It does **not** own the deployment layer (releases, contexts, Flux/KuboCD bootstrap). Deployment lives in [`OKDP/okdp-sandbox`](https://github.com/OKDP/okdp-sandbox), which consumes the packages published here.
-
-## KuboCD Concepts
-
-- **Package**: a versioned OCI artifact that bundles a KuboCD application descriptor and one or more Helm charts. The manifests under `charts/` define the packages published by this repository.
-- **Connection**: a typed endpoint identified by a contract. A package consumes one through a `connectionRef` parameter and publishes one through `outputs`. The contracts used here are `s3`, `database-server`, `hive`, `iceberg-catalog` and `trino`.
-
-Packages are deployed through KuboCD **Releases** that reference layered **Contexts**. Those deployment resources are maintained in [`OKDP/okdp-sandbox`](https://github.com/OKDP/okdp-sandbox), not here.
+It owns the charts only. Deploying them is done from a deployments Git repository,
+by FluxCD (HelmRelease) or Argo CD (ApplicationSet), directly or through the OKDP
+console, which commits to that repository. The reference layout lives in
+[`OKDP/okdp-sandbox`](https://github.com/OKDP/okdp-sandbox) (`gitops/`). Both engines
+render the same chart with the same values layers, so the result is identical.
 
 ## Structure
 
 ```
-charts/                 # Helm charts owned here, bundled into the packages that reference them
-├── internal-secrets/
-└── oidc-client/
 charts/
-├── system/             # Platform foundation packages
+└── oidc-client/         # helper chart (kubauth OIDC client), vendored by jupyterhub
+charts/
+├── system/              # platform control plane
 │   ├── okdp-control-plane-server/
 │   └── okdp-control-plane-ui/
-└── services/           # Data and application service packages
-    ├── airflow/
-    ├── hive-metastore/
-    ├── jupyterhub/
-    ├── okdp-examples/
-    ├── polaris/
-    ├── spark-defaults/
-    ├── spark-history-server/
-    ├── spark-operator/
-    ├── spark-rbac/
-    ├── superset/
-    └── trino/
-platform-packages-values.yaml   # OCI publish target (packageRepository), the source of truth used by CI
+└── services/            # data and application services
+    ├── airflow/  hive-metastore/  jupyterhub/  okdp-examples/  polaris/
+    ├── spark-defaults/  spark-history-server/  spark-operator/  spark-rbac/
+    └── superset/  trino/
+scripts/vendor-charts.sh # vendors upstream charts (canonical copy)
 ```
 
-Key paths:
+A service chart (`charts/<category>/<name>/`):
 
-- [`charts/system`](./charts/system): platform foundation packages.
-- [`charts/services`](./charts/services): data and application service packages.
-- [`charts`](./charts): Helm charts maintained in this repository. Packages pull them through `source.local.path` and the build bundles them into the OCI artifact.
-- [`platform-packages-values.yaml`](./platform-packages-values.yaml): the OCI repository packages are published to.
+```
+Chart.yaml            version <upstream>-<okdp semver>, appVersion <upstream>
+values.yaml           the service parameters (the former KuboCD parameters)
+values.schema.json    draft-07, with the x-ui-* / x-okdp-* hints the console reads
+vendor.yaml           upstream charts rendered with computed values
+vendor/<name>/        their pristine unpacked copy (committed)
+templates/            okdp-lib calls, computed values, descriptor
+ci/*-values.yaml      test values (each carries a global.okdp platform block)
+README.md
+```
 
-## Building Packages
+See the [`okdp-lib` README](https://github.com/OKDP/okdp-lib#readme) for the values contract
+(`global.okdp`, `connections`), the helpers, and how a KuboCD package translates.
 
-The OCI repository packages are published to is defined once in [`platform-packages-values.yaml`](./platform-packages-values.yaml) (`packageRepository`). Use the same value for local builds.
+## Values
 
-### Basic Build Command
+Every chart receives three layers, in this order: the platform values
+(`global.okdp`: ingress, OIDC, proxy, certificate issuers, storage classes), the
+connection files the instance lists (`connections.<name>`), then the instance's own
+parameters. A connection reference parameter names either a connection or another
+OKDP instance of the same project (`hive`, `iceberg-catalog`, `trino`).
+
+Every service chart renders a descriptor ConfigMap `<release>-okdp` (service,
+version, URL, usage, provided connections) that the console lists.
+
+## Working on a chart
+
+During the no-kubocd migration the charts depend on `okdp-lib` by
+`file://../../../../okdp-lib`: clone `OKDP/okdp-lib` next to this repository
+(`../okdp-lib`). CI does the same (`sibling_repositories`).
 
 ```bash
-# Build a system package
-kubocd package ./charts/system/okdp-control-plane-server/okdp-control-plane-server.yaml --ociRepoPrefix quay.io/okdp/platform-charts
+# upstream charts: (re)vendor, or check that vendor/ matches vendor.yaml
+scripts/vendor-charts.sh charts/services/trino
+scripts/vendor-charts.sh --check charts/services/trino
 
-# Build a service package
-kubocd package ./charts/services/superset/superset.yaml --ociRepoPrefix quay.io/okdp/platform-charts
+# render and lint
+helm dependency build charts/services/trino
+helm template demo-trino charts/services/trino -n demo -f charts/services/trino/ci/opa-opal-values.yaml
+helm lint charts/services/trino -f charts/services/trino/ci/opa-opal-values.yaml
 ```
 
-### Custom OCI Repository
+`vendor.yaml` entries take `name`, `repository` (`https://`, `oci://`, or
+`file://` for a chart of this repository), `version`, optional `chart` (upstream
+name) and optional `drop` (paths relative to the vendored chart root removed after
+unpacking, e.g. `charts/postgresql`). The script header documents them; the copies
+of `scripts/vendor-charts.sh` in the other OKDP chart repositories must stay
+identical to this one.
 
-```bash
-# Using a different OCI registry
-kubocd package ./charts/system/okdp-control-plane-ui/okdp-control-plane-ui.yaml --ociRepoPrefix myregistry.io/my-org/packages
+Chart rules (enforced by CI, see
+[`OKDP/gh-workflows`](https://github.com/OKDP/gh-workflows)): no `lookup`, no random
+or time function, no `.Release.IsInstall`/`IsUpgrade`, hooks limited to
+pre/post-install/upgrade (Argo CD renders with `helm template`). Generated
+passwords come from External Secrets Operator generators (`okdp.generatedSecret`).
+A justified exception in a vendored upstream chart goes in the chart's
+`okdp-guard-allow.yaml`.
 
-# Using a different prefix for packages
-kubocd package ./charts/services/jupyterhub/jupyterhub.yaml --ociRepoPrefix harbor.company.com/okdp-prod
-```
+## CI and publishing
 
-### Examples
+The workflows call the reusable
+[`okdp-chart-ci.yml`](https://github.com/OKDP/gh-workflows#okdp-chart-ci-okdp-chart-ciyml)
+of `OKDP/gh-workflows`: chart guard, schema check, `vendor-charts.sh --check`,
+`helm dependency build`, `helm lint`, `helm template` with every `ci/*-values.yaml`,
+`kubeconform`, then `helm package` + `helm push`.
 
-```bash
-# Build all system packages
-for pkg in charts/system/*/; do
-  kubocd package "$pkg"*.yaml --ociRepoPrefix quay.io/okdp/platform-charts
-done
+| Workflow | When | Charts | Pushed to |
+| --- | --- | --- | --- |
+| [`ci.yml`](.github/workflows/ci.yml) | push, pull request | changed (a change to a chart under `charts/` selects its consumers) | `oci://ghcr.io/okdp/platform-charts/charts`, version `0.0.0-ci.<branch>.g<sha>` |
+| [`release-please.yml`](.github/workflows/release-please.yml) | release pull request merged | released paths | `oci://quay.io/okdp/platform-charts/<chart>`, `Chart.yaml` version |
+| [`publish.yml`](.github/workflows/publish.yml) | manual | every chart, published versions skipped | same |
 
-# Build specific package
-kubocd package ./charts/services/jupyterhub/jupyterhub.yaml --ociRepoPrefix quay.io/okdp/platform-charts
-```
+Versions: a service chart is `<upstream>-<okdp semver>` (e.g. `480.0.0-1.0.1`).
+release-please owns the OKDP half in
+[`.release-please-manifest.json`](.release-please-manifest.json);
+[`compose-oci-tag.sh`](.github/scripts/compose-oci-tag.sh) writes the composite into
+`Chart.yaml` on the release branch. `charts/oidc-client` is released with its
+plain release-please version. While charts depend on it by `file://`, a pull
+request that changes it must also touch its consumers
+(`shared-chart-consumers.sh`), or they would not be re-released. `okdp-lib` is
+released from its own repository: a change there does not re-release these
+charts, bump their `okdp-lib` range or touch them to pick it up.
 
-### Build Output
-
-Packages are pushed to: `{ociRepoPrefix}/{package-name}:{tag}`
-
-Example: `quay.io/okdp/platform-charts/superset:6.0.0-p02`
-
-## GitHub CI and Publishing
-
-The GitHub workflows share the reusable [`kubocd-package-template.yml`](./.github/workflows/kubocd-package-template.yml) workflow for both CI validation and publishing.
-
-### CI Workflow
-
-[`ci.yml`](./.github/workflows/ci.yml) runs on pushes, pull requests, and manual dispatch. It:
-
-- reads the OCI package prefix from [`platform-packages-values.yaml`](./platform-packages-values.yaml);
-- builds **every** package manifest under `charts/` that contains `modules:`;
-- pushes CI test packages to the repository-scoped GitHub Container Registry path.
-
-Building covers every package, so packaging errors are caught repo-wide. Deployment of the published packages (Flux/KuboCD bootstrap, contexts, releases) and its end-to-end validation live in [`OKDP/okdp-sandbox`](https://github.com/OKDP/okdp-sandbox), not here.
-
-The KuboCD package CI job is skipped for fork pull requests because GitHub intentionally gives those runs a read-only token, which cannot push to GHCR.
-
-### CI Registry
-
-The `ci` workflow builds packages for CI validation and pushes them to the repository-scoped GitHub Container Registry path:
-
-```text
-ghcr.io/okdp/platform-charts/platform-charts/{package-name}:{tag}
-```
-
-### Release Publishing
-
-Published release packages use the public repository from [`platform-packages-values.yaml`](./platform-packages-values.yaml):
-
-```text
-quay.io/okdp/platform-charts/{package-name}:{tag}
-```
-
-[`publish.yml`](./.github/workflows/publish.yml) can be dispatched manually and publishes packages to Quay using `REGISTRY_USERNAME` and `REGISTRY_ROBOT_TOKEN`. [`release-please.yml`](./.github/workflows/release-please.yml) triggers it when Release Please creates a new release after a merged pull request.
+Fork pull requests are validated without pushing (their token cannot write packages).
