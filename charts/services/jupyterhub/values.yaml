@@ -1,7 +1,6 @@
 # Platform values (platform/platform-values.yaml). Never set per instance.
 # Read here: ingress.{suffix,className}, certificateIssuers.selfSigned.name,
-# storageClass.workspace, oidc.{authUrl,tokenUrl,userinfoUrl,displayName,
-# clientProvisioning,kubauth.namespace}, proxy.
+# storageClass.workspace, oidc.{authUrl,tokenUrl,userinfoUrl,displayName}, proxy.
 global:
   okdp: {}
 

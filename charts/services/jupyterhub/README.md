@@ -12,7 +12,6 @@ rendered by `okdp.vendor.render` with computed values (`templates/_values.tpl`):
 |---|---|---|
 | `main` | `vendor/jupyterhub` (z2jh 4.4.2) | always |
 | `spark-rbac` | `vendor/spark-rbac` (`oci://quay.io/okdp/charts` 1.0.1): ServiceAccount/Role `spark` | always |
-| `oidc-client` | `vendor/oidc-client` (copy of `charts/oidc-client` 0.2.0) | `global.okdp.oidc.clientProvisioning: kubauth` |
 | `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.3.3): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
 
 ## Parameters
@@ -41,15 +40,21 @@ become the connection's own variables when it has an `s3SecretRef`.
 Platform values read from `global.okdp`: `ingress.suffix`, `ingress.className`,
 `certificateIssuers.selfSigned.name`, `storageClass.workspace` (hub
 database), `oidc.authUrl|tokenUrl|userinfoUrl|displayName|clientProvisioning`,
-`oidc.kubauth.namespace` (kubauth mode), `proxy`.
+`oidc.dcr.registrationUrl|authMethod` (dcr), `proxy`.
 
 ## OAuth client
 
-- `existing` (and `dcr`, which this chart does not implement): Secret
-  `creds-<release>-oauth2` with `client_id`, `client_secret`,
+- `clientProvisioning: existing`: the client is created in Keycloak beforehand,
+  Secret `creds-<release>-oauth2` with `client_id`, `client_secret`,
   `JUPYTERHUB_CRYPT_KEY`.
-- `kubauth`: the oidc-client module generates `<release>-<namespace>-oidc-creds`
-  (same keys) and the OidcClient.
+- `clientProvisioning: dcr`: the Job `<release>-oidc-dcr` registers it
+  anonymously (`dcr.authMethod: anonymous`; redirect URI
+  `https://jupyterhub-<namespace>.<suffix>/hub/oauth_callback`, grants
+  `authorization_code` and `refresh_token`, scopes `profile email groups`) and
+  writes Secret `<release>-<namespace>-dcr` (`client_id`, `client_secret`); the
+  crypt key of the auth state is then the generated
+  `hub.config.CryptKeeper.keys` of `<release>-hub-generated`. The Job needs the CA
+  bundle Secret `certs-bundle`.
 
 ## Generated secrets
 
@@ -72,6 +77,8 @@ password keys hold the unused placeholder. Exceptions in
 
 ## Changes from the KuboCD package
 
+- The former OAuth client provisioning module is gone: the client is created
+  in Keycloak beforehand or registered by DCR (identity is Keycloak only).
 - `connections` (PySpark connections) is renamed `sparkConnections`.
 - The hub passwords are ESO-generated: an upgrade from the KuboCD release gets
   a new cookie secret and new auth-state keys (users sign in again).

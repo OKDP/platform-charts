@@ -20,8 +20,8 @@
 # <upstream version>-<OKDP version>, e.g. 480.0.0-1.0.1. The upstream half is
 # maintained by hand in Chart.yaml. The OKDP half is owned by release-please,
 # which has just written it into .release-please-manifest.json on its release
-# branch. Charts under charts/ (oidc-client) are OKDP's own: their
-# version is the release-please version itself.
+# branch. Charts under charts/, if any, are OKDP's own: their version is the
+# release-please version itself.
 #
 # release-please cannot write the composite itself: its `generic` updater's
 # version regex swallows the prerelease, so annotating the line would replace

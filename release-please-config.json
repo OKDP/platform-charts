@@ -4,13 +4,6 @@
   "include-v-in-tag": true,
   "draft-pull-request": true,
   "packages": {
-    "charts/oidc-client": {
-      "component": "oidc-client",
-      "release-type": "simple",
-      "include-component-in-tag": true,
-      "tag-separator": "/",
-      "changelog-path": "CHANGELOG.md"
-    },
     "charts/services/airflow": {
       "component": "airflow",
       "release-type": "simple",

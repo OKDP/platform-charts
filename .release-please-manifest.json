@@ -1,5 +1,4 @@
 {
-  "charts/oidc-client": "0.2.0",
   "charts/services/airflow": "1.0.0",
   "charts/services/hive-metastore": "1.0.0",
   "charts/services/jupyterhub": "1.0.0",

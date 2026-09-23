@@ -30,9 +30,20 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "okdp.fullname" . }}
-          {{- with include "okdp.proxy.envList" . | fromYamlArray }}
+          {{- $kc := .Values.keycloak.credentialsSecret }}
+          {{- $proxy := include "okdp.proxy.envList" . | fromYamlArray }}
+          {{- if or $kc.name $proxy }}
           env:
-            {{- range . }}
+            {{- if $kc.name }}
+            # Keycloak Admin API service account (user and group management).
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef: {name: {{ $kc.name | quote }}, key: {{ $kc.clientIdKey | default "client_id" | quote }}}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef: {name: {{ $kc.name | quote }}, key: {{ $kc.clientSecretKey | default "client_secret" | quote }}}
+            {{- end }}
+            {{- range $proxy }}
             - {name: {{ .name }}, value: {{ .value | quote }}}
             - {name: {{ lower .name }}, value: {{ .value | quote }}}
             {{- end }}

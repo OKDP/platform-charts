@@ -23,8 +23,6 @@ render the same chart with the same values layers, so the result is identical.
 
 ```
 charts/
-└── oidc-client/         # helper chart (kubauth OIDC client), vendored by jupyterhub
-charts/
 ├── system/              # platform control plane
 │   ├── okdp-control-plane-server/
 │   └── okdp-control-plane-ui/
@@ -58,6 +56,11 @@ Every chart receives three layers, in this order: the platform values
 connection files the instance lists (`connections.<name>`), then the instance's own
 parameters. A connection reference parameter names either a connection or another
 OKDP instance of the same project (`hive`, `iceberg-catalog`, `trino`).
+
+Identity is Keycloak only: `global.okdp.oidc.clientProvisioning` is `existing` (the
+OAuth client is created in Keycloak beforehand, its credentials in a Secret) or
+`dcr` (dynamic client registration: every chart that signs users in registers its
+client with its own oidc-dcr Job `<release>-oidc-dcr`, see `okdp.vendor.oidcDcr`).
 
 Every service chart renders a descriptor ConfigMap `<release>-okdp` (service,
 version, URL, usage, provided connections) that the console lists.
@@ -104,7 +107,7 @@ of `OKDP/gh-workflows`: chart guard, schema check, `vendor-charts.sh --check`,
 
 | Workflow | When | Charts | Pushed to |
 | --- | --- | --- | --- |
-| [`ci.yml`](.github/workflows/ci.yml) | push, pull request | changed (a change to a chart under `charts/` selects its consumers) | `oci://ghcr.io/okdp/platform-charts/charts`, version `0.0.0-ci.<branch>.g<sha>` |
+| [`ci.yml`](.github/workflows/ci.yml) | push, pull request | changed (a change under `.github/` selects every chart) | `oci://ghcr.io/okdp/platform-charts/charts`, version `0.0.0-ci.<branch>.g<sha>` |
 | [`release-please.yml`](.github/workflows/release-please.yml) | release pull request merged | released paths | `oci://quay.io/okdp/platform-charts/<chart>`, `Chart.yaml` version |
 | [`publish.yml`](.github/workflows/publish.yml) | manual | every chart, published versions skipped | same |
 
@@ -112,11 +115,8 @@ Versions: a service chart is `<upstream>-<okdp semver>` (e.g. `480.0.0-1.0.1`).
 release-please owns the OKDP half in
 [`.release-please-manifest.json`](.release-please-manifest.json);
 [`compose-oci-tag.sh`](.github/scripts/compose-oci-tag.sh) writes the composite into
-`Chart.yaml` on the release branch. `charts/oidc-client` is released with its
-plain release-please version. While charts depend on it by `file://`, a pull
-request that changes it must also touch its consumers
-(`shared-chart-consumers.sh`), or they would not be re-released. `okdp-lib` is
-released from its own repository: a change there does not re-release these
-charts, bump their `okdp-lib` range or touch them to pick it up.
+`Chart.yaml` on the release branch. `okdp-lib` is released from its own
+repository: a change there does not re-release these charts, bump their
+`okdp-lib` range or touch them to pick it up.
 
 Fork pull requests are validated without pushing (their token cannot write packages).

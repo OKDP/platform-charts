@@ -4,25 +4,6 @@ with .Context -> .Values.global.okdp, .Parameters -> .Values and the storage
 connection resolved by okdp.connection.
 */}}
 
-{{/* Module oidc-client, enabled when the platform provisions clients with kubauth. */}}
-{{- define "okdp-jupyterhub.values.oidcClient" -}}
-{{- $oidc := include "okdp.oidc" . | fromYaml -}}
-{{- $client := include "okdp-jupyterhub.kubauthClient" . -}}
-{{- if not ($oidc.kubauth.namespace | default "") -}}
-  {{- fail "jupyterhub: global.okdp.oidc.kubauth.namespace is required when global.okdp.oidc.clientProvisioning is kubauth. It is a platform value: set it in platform/platform-values.yaml (the first values layer)." -}}
-{{- end -}}
-clientName: {{ $client | quote }}
-oidcNamespace: {{ $oidc.kubauth.namespace | quote }}
-credentialsSecretName: {{ include "okdp-jupyterhub.oauthSecret" . | quote }}
-# Encrypts JupyterHub auth state.
-extraGeneratedKeys:
-  - JUPYTERHUB_CRYPT_KEY
-redirectURIs:
-  - {{ printf "%s/hub/oauth_callback" (include "okdp-jupyterhub.url" .) | quote }}
-displayName: {{ printf "JupyterHub (%s)" .Release.Name | quote }}
-description: {{ printf "OIDC client for JupyterHub %s in %s" .Release.Name .Release.Namespace | quote }}
-{{- end -}}
-
 {{/* Module spark-rbac: the spark ServiceAccount the notebooks run as. */}}
 {{- define "okdp-jupyterhub.values.sparkRbac" -}}
 rbac:

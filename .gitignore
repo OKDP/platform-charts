@@ -47,11 +47,6 @@ local/
 *oidc-secret*.yaml
 *OIDC*
 .OIDC*
-# Le chart oidc-client est du code, pas un secret: il ne fait que generer le
-# secret a l'execution. La regle *OIDC* ci-dessus l'attrape sur les systemes de
-# fichiers insensibles a la casse, ou il devenait invisible au commit.
-!charts/oidc-client/
-!charts/oidc-client/**
 *.bak
 *.draft
 
