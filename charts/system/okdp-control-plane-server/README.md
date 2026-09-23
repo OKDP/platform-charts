@@ -23,7 +23,7 @@ module rendered the published `quay.io/okdp/charts/okdp-control-plane-server`
 | `gitops.engine` | `flux` | `GITOPS_ENGINE` | `flux` or `argocd`; also selects the engine objects the ClusterRole reads. |
 | `gitops.releasesNamespace` | `okdp-releases` | `GITOPS_RELEASES_NAMESPACE` | Flux HelmReleases/values ConfigMaps, `okdp-platform-values`. |
 | `gitops.argocdNamespace` | `argocd` | `ARGOCD_NAMESPACE` | Argo CD Applications. |
-| `gitops.credentialsSecret` | `""` | `GITOPS_CREDENTIALS_DIR` (mount) | Secret with write access, Flux GitRepository keys (`username`/`password`, `bearerToken`, `identity`/`known_hosts`). |
+| `gitops.credentialsSecret` | `""` | `GITOPS_CREDENTIALS_DIR` (mount) | Secret with write access, Flux GitRepository keys (`username`/`password`, `bearerToken`, `identity`/`known_hosts`). Mounted `0440` with the pod `fsGroup: 65534` (the image user), so the non-root server can read it; prefer it to credentials in `repoURL`. |
 | `gitops.sshInsecureIgnoreHostKey` | `false` | `GITOPS_SSH_INSECURE_IGNORE_HOST_KEY` | Sandboxes only. |
 | `gitops.author.name` / `.email` | `OKDP control plane` / `okdp-control-plane@okdp.io` | `GITOPS_AUTHOR_NAME` / `_EMAIL` | Commit author. |
 | `consoleHost` | `okdp-ui.<ingress suffix>` | `ALLOWED_ORIGINS` (`https://<host>`) | Single allowed origin. |

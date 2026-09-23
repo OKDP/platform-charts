@@ -19,6 +19,10 @@ spec:
         {{- include "okdp.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "okdp.fullname" . }}
+      securityContext:
+        # The image runs as 65534:65534 (nobody). The Secret volume below is
+        # group-owned by fsGroup, so the server can read the Git credentials.
+        fsGroup: 65534
       containers:
         - name: server
           image: {{ printf "%s:%s" .Values.imageRepository (.Values.imageTag | default .Chart.AppVersion) | quote }}
@@ -68,7 +72,7 @@ spec:
         - name: gitops-credentials
           secret:
             secretName: {{ .Values.gitops.credentialsSecret }}
-            defaultMode: 0400
+            defaultMode: 0440
         {{- end }}
 ---
 apiVersion: v1
