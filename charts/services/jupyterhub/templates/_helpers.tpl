@@ -1,6 +1,6 @@
 {{/*
 Wrapper helpers. Prefixed okdp-jupyterhub. so they never collide with the
-partials of the vendored charts (jupyterhub.*, spark-rbac.*, oidc-client.*).
+partials of the vendored charts (jupyterhub.*, spark-rbac.*).
 */}}
 
 {{/* Public URL: https://jupyterhub-<namespace>.<ingress suffix>. */}}
@@ -9,25 +9,12 @@ partials of the vendored charts (jupyterhub.*, spark-rbac.*, oidc-client.*).
 {{- end -}}
 
 {{/*
-OAuth client of the kubauth mode: the clients live in one shared namespace,
-so the name carries the project namespace (two same-named releases of two
-projects would otherwise share a client).
-*/}}
-{{- define "okdp-jupyterhub.kubauthClient" -}}
-{{- printf "%s-%s" .Release.Name .Release.Namespace -}}
-{{- end -}}
-
-{{/*
 Secret with the OAuth client (client_id, client_secret, JUPYTERHUB_CRYPT_KEY):
-the one this chart generates in the kubauth mode (module oidc-client), else
-the creds-<release>-oauth2 convention of the existing mode.
+the creds-<release>-oauth2 convention of the existing mode, the client being
+created in Keycloak beforehand.
 */}}
 {{- define "okdp-jupyterhub.oauthSecret" -}}
-{{- if (include "okdp.oidc" . | fromYaml).kubauth.enabled -}}
-{{- printf "%s-oidc-creds" (include "okdp-jupyterhub.kubauthClient" .) -}}
-{{- else -}}
 {{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
 {{- end -}}
 
 {{/*

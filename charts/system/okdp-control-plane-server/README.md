@@ -29,6 +29,10 @@ module rendered the published `quay.io/okdp/charts/okdp-control-plane-server`
 | `consoleHost` | `okdp-ui.<ingress suffix>` | `ALLOWED_ORIGINS` (`https://<host>`) | Single allowed origin. |
 | `logLevel` | `info` | `LOG_LEVEL` | |
 | `insecureOciRegistries` | `""` | `INSECURE_OCI_REGISTRIES` | Plain-HTTP registries, sandboxes only. |
+| `keycloak.credentialsSecret.name` | `""` | `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` (`secretKeyRef`) | Secret with the Keycloak service-account client credentials. Empty: user and group management is off, no env rendered. |
+| `keycloak.credentialsSecret.clientIdKey` / `.clientSecretKey` | `client_id` / `client_secret` | | Keys of that Secret; the defaults match `global.okdp.identity.provisioning.keycloak.credentialsSecret`, so the same Secret can be reused. |
+| `keycloak.url` / `keycloak.realm` | `""` | `KEYCLOAK_URL` / `KEYCLOAK_REALM` | Keycloak base URL (no `/realms/...`) and realm. Empty: derived by the server from the platform OIDC issuer `<url>/realms/<realm>`. |
+| `keycloak.tlsInsecure` | `false` | `KEYCLOAK_TLS_INSECURE` | Skip the Keycloak certificate check. Sandboxes only (`global.okdp.oidc.insecureSkipVerify` also applies when the URL comes from the issuer). |
 | `imageRepository` / `imageTag` | `quay.io/okdp/images/okdp-control-plane-server` / `0.9.0` | | |
 | `resources` | `{}` | | |
 
@@ -40,6 +44,23 @@ Fixed: `PORT` 8093, `PLATFORM_NAMESPACE` = the release namespace,
 
 The Service `<release>` (port 8093) is what the console routes `/api` to.
 
+## User and group management
+
+The console's Identity pages (`/api/v1/identity`) manage users and groups of
+the platform Keycloak realm through its Admin REST API. The client whose
+credentials `keycloak.credentialsSecret` holds must be confidential, with
+service accounts enabled, and its service account must hold the
+`realm-management` client roles `view-users`, `query-users`, `manage-users`
+and `query-groups` (no `manage-clients`: the server registers no client).
+Without `keycloak.credentialsSecret.name` the identity routes answer `501`
+and `/api/capabilities` reports `identity.userManagement: false`.
+
+The `comment` and `uid` of a user are Keycloak user attributes: on Keycloak
+24+ the realm user profile must allow them (unmanaged attributes enabled, or
+both attributes declared), otherwise Keycloak silently drops them.
+
+No RBAC change: Keycloak is reached over HTTPS, not through cluster objects.
+
 ## RBAC
 
 ClusterRole, since project namespaces are created at run time.
@@ -47,13 +68,16 @@ Read-only: ConfigMaps (descriptors, `okdp-platform-values`), workloads
 (`apps`, `batch`), events, HelmReleases (`flux`) or Applications (`argocd`),
 pod metrics, CRDs. Written by the server itself: namespaces (projects),
 Secrets (connection credentials), pods/PVCs deletion (instance cleanup),
-kubauth users/groups/OIDC clients, ESO SecretStores/ExternalSecrets,
+ESO SecretStores/ExternalSecrets,
 SparkApplications. No `kubocd.kubotal.io` rule any more.
 
 ## Changes from the KuboCD package
 
 - Removed parameters: `kubocdNamespace`, `releaseInterval`, `releaseTimeout`
-  (the server has no KuboCD any more). New: `gitops.*`, `resources`.
+  (the server has no KuboCD any more). New: `gitops.*`, `keycloak.*`,
+  `resources`.
+- No identity-management rules: users, groups and OIDC clients live in
+  Keycloak, not in cluster objects.
 - Default image `0.9.0` (the Git-backed server); the KuboCD one was 0.8.0.
 
 ## Tests

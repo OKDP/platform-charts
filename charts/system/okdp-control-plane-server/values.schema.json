@@ -169,6 +169,64 @@
       },
       "additionalProperties": false
     },
+    "keycloak": {
+      "type": "object",
+      "title": "Keycloak user management",
+      "description": "Keycloak Admin REST API backing the console's user and group management. Off while credentialsSecret.name is empty. The service account needs the realm-management roles view-users, query-users, manage-users and query-groups.",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Keycloak URL",
+          "description": "Base URL, without /realms/... (KEYCLOAK_URL). Empty: derived from the platform OIDC issuer.",
+          "default": "",
+          "x-ui-order": 1,
+          "x-ui-placeholder": "https://keycloak.example.com"
+        },
+        "realm": {
+          "type": "string",
+          "title": "Realm",
+          "description": "Realm of the Admin API (KEYCLOAK_REALM). Empty: derived from the platform OIDC issuer.",
+          "default": "",
+          "x-ui-order": 2
+        },
+        "credentialsSecret": {
+          "type": "object",
+          "title": "Credentials secret",
+          "description": "Secret in the release namespace with the service-account client credentials. The default keys match identity.provisioning.keycloak.credentialsSecret, so the same Secret can be reused.",
+          "x-ui-order": 3,
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Secret name",
+              "description": "Empty: user management is off.",
+              "default": ""
+            },
+            "clientIdKey": {
+              "type": "string",
+              "title": "Client id key",
+              "default": "client_id"
+            },
+            "clientSecretKey": {
+              "type": "string",
+              "title": "Client secret key",
+              "default": "client_secret"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tlsInsecure": {
+          "type": "boolean",
+          "title": "Skip the TLS check",
+          "description": "Skip the Keycloak certificate check (KEYCLOAK_TLS_INSECURE). Sandboxes only.",
+          "default": false,
+          "x-ui-order": 4
+        }
+      },
+      "additionalProperties": false
+    },
     "resources": {
       "type": "object",
       "title": "Resources",

@@ -40,7 +40,7 @@
 # refuses to carry one), an upstream template it replaces.
 #
 # repository: file://<path>, relative to the wrapper chart: a chart of the same
-# repository (e.g. charts/oidc-client) copied as is; its Chart.yaml version
+# repository (e.g. charts/<helper>) copied as is; its Chart.yaml version
 # must be the listed version.
 #
 # vendor/ is committed (lock files of vendored charts included): the chart

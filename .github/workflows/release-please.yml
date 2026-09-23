@@ -84,5 +84,4 @@ jobs:
       # version already being on the registry means something is genuinely wrong.
       on_existing_tag: "fail"
       package_paths: ${{ needs.release-please.outputs.paths_released }}
-      descriptor_optional: "oidc-client"
     secrets: inherit

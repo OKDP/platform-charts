@@ -43,5 +43,4 @@ jobs:
       publish_to_registry: "true"
       oci_package_prefix: platform-charts
       on_existing_tag: "skip"
-      descriptor_optional: "oidc-client"
     secrets: inherit

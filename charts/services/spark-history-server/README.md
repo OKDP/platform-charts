@@ -43,13 +43,13 @@ plus `offline_access`). The CA bundle comes from Secret `certs-bundle` (key
   false (the package defaulted to false when the key was missing; the platform
   values set it). With OIDC off, the OAuth client Secret is no longer
   required.
+- `clientProvisioning: dcr` is supported (the package required
+  `creds-<release>-oauth2`).
 
 ## Known limitations (unchanged)
 
 - The OIDC filter cookie cipher key is a constant (the Spark properties file
   cannot read it from a Secret).
-- No `dcr`/`kubauth` client provisioning: the `creds-<release>-oauth2` Secret
-  must exist.
 - The ingress host is per namespace: one instance per namespace.
 
 ## Tests
