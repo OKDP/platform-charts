@@ -75,6 +75,8 @@ jobs:
       contents: read
       packages: write
     # TODO(no-kubocd): switch to @v1 (and drop tools_ref) once released.
+    # SECURITY (CI-01): @no-kubocd and tools_ref are mutable refs; pin both to
+    # the same 40-hex commit SHA once the branch stops moving.
     uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
       tools_ref: no-kubocd
@@ -86,4 +88,6 @@ jobs:
       # version already being on the registry means something is genuinely wrong.
       on_existing_tag: "fail"
       package_paths: ${{ needs.release-please.outputs.paths_released }}
-    secrets: inherit
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_ROBOT_TOKEN: ${{ secrets.REGISTRY_ROBOT_TOKEN }}
