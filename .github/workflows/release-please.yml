@@ -23,8 +23,7 @@ on:
       - main
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,6 +34,9 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'OKDP'
+    permissions:
+      contents: write        # release-please tags/releases, and the compose step pushes
+      pull-requests: write   # release-please opens/updates the release PR
     outputs:
       # JSON array of the package directories released by this run, "[]" when
       # this push only updated the release pull request.
