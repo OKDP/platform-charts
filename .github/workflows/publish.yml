@@ -35,6 +35,8 @@ jobs:
       contents: read
       packages: write
     # TODO(no-kubocd): switch to @v1 (and drop tools_ref) once released.
+    # SECURITY (CI-01): @no-kubocd and tools_ref are mutable refs; pin both to
+    # the same 40-hex commit SHA once the branch stops moving.
     uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
       tools_ref: no-kubocd
@@ -43,4 +45,6 @@ jobs:
       publish_to_registry: "true"
       oci_package_prefix: platform-charts
       on_existing_tag: "skip"
-    secrets: inherit
+    secrets:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_ROBOT_TOKEN: ${{ secrets.REGISTRY_ROBOT_TOKEN }}
