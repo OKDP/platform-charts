@@ -22,11 +22,23 @@ spec:
       securityContext:
         # The image runs as 65534:65534 (nobody). The Secret volume below is
         # group-owned by fsGroup, so the server can read the Git credentials.
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
         fsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: server
           image: {{ printf "%s:%s" .Values.imageRepository (.Values.imageTag | default .Chart.AppVersion) | quote }}
           imagePullPolicy: IfNotPresent
+          # Pod Security "restricted". The root filesystem is read-only: the
+          # server writes only its clone (gitops-clone) and HOME=/tmp (tmp).
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           envFrom:
             - configMapRef:
                 name: {{ include "okdp.fullname" . }}
@@ -67,6 +79,9 @@ spec:
             # Git is the store.
             - name: gitops-clone
               mountPath: {{ include "okdp-cp-server.cloneDir" . }}
+            # HOME of the image (Git and registry clients).
+            - name: tmp
+              mountPath: /tmp
             {{- if .Values.gitops.credentialsSecret }}
             - name: gitops-credentials
               mountPath: {{ include "okdp-cp-server.credentialsDir" . }}
@@ -78,6 +93,8 @@ spec:
           {{- end }}
       volumes:
         - name: gitops-clone
+          emptyDir: {}
+        - name: tmp
           emptyDir: {}
         {{- if .Values.gitops.credentialsSecret }}
         - name: gitops-credentials
