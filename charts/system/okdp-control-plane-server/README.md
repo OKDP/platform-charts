@@ -71,6 +71,14 @@ Secrets (connection credentials), pods/PVCs deletion (instance cleanup),
 ESO SecretStores/ExternalSecrets,
 SparkApplications. No `kubocd.kubotal.io` rule any more.
 
+## Security context
+
+The pod meets Pod Security `restricted`: it runs as 65534:65534 (the image
+user, `runAsNonRoot`, `fsGroup: 65534`), with `seccompProfile: RuntimeDefault`,
+no privilege escalation, every capability dropped and a read-only root
+filesystem. The server writes only its clone (emptyDir) and `HOME=/tmp`
+(emptyDir `tmp`).
+
 ## Changes from the KuboCD package
 
 - Removed parameters: `kubocdNamespace`, `releaseInterval`, `releaseTimeout`
