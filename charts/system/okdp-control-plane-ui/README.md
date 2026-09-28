@@ -26,6 +26,13 @@ Platform values read from `global.okdp`: `ingress.suffix`,
 `ingress.className`, `certificateIssuers.selfSigned.name`,
 `oidc.issuerUri`, `oidc.clientId`, `proxy`.
 
+## Security context
+
+The pod meets Pod Security `restricted`: it runs as 1001 (the image user,
+`runAsNonRoot`), with `seccompProfile: RuntimeDefault`, no privilege
+escalation and every capability dropped. The root filesystem stays writable:
+the entrypoint writes `config.js` and nginx its cache and pid file.
+
 ## Changes from the KuboCD package
 
 - `backendService` no longer defaults to `okdp-control-plane-server-main`

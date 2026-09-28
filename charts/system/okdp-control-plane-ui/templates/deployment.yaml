@@ -14,10 +14,25 @@ spec:
       labels:
         {{- include "okdp.labels" . | nindent 8 }}
     spec:
+      securityContext:
+        # The image runs nginx as 1001 (group root, which owns its runtime
+        # directories and config.js).
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: console
           image: {{ printf "%s:%s" .Values.imageRepository (.Values.imageTag | default .Chart.AppVersion) | quote }}
           imagePullPolicy: IfNotPresent
+          # Pod Security "restricted" (nginx listens on 4200, no capability
+          # needed). The root filesystem stays writable: the entrypoint writes
+          # /usr/share/nginx/html/config.js and nginx its cache and pid.
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: [ALL]
           # Written to /config.js by the entrypoint and read by the bundle at
           # startup: one image, any cluster.
           env:
