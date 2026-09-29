@@ -36,10 +36,10 @@ contract's "only standard tooling" rule to be revisited.
 | `metadataDb` | (required) | `database-server` connection of the metadata database; its Secret holds `username`/`password`. |
 | `examplesDb` | (required) | `database-server` (PostgreSQL) connection receiving the examples, used when `load_examples`. |
 | `load_examples` | `true` | Load the Superset examples. |
-| `datasources[]` | `[]` | `{name, trino (trino connection), catalog}`: one Superset database per item. |
+| `datasources[]` | `[]` | `{name, trino (trino connection), catalog}`: one Superset database per item. `name`: `^[A-Za-z0-9][A-Za-z0-9 _.-]*$`; `catalog`: `^[A-Za-z0-9_.-]+$`. |
 | `oidcRoleMapping` | `{}` | OIDC group → list of Superset roles. Keys and roles may not contain `{{`, `}}` or line breaks. |
 | `cpu` / `memoryGi` / `workers` | `0.5` / `2` / `2` | Web server limits and gunicorn workers. |
-| `locale` / `currency` / `d3Format` / `d3TimeFormat` | `en` / `""` / `{}` / `{}` | Chart number and date formats. |
+| `locale` / `currency` / `d3Format` / `d3TimeFormat` | `en` / `""` / `{}` / `{}` | Chart number and date formats. `locale` is a CLDR locale id (`fr-FR`, `zh_Hant_TW`), `currency` an ISO 4217 code (`EUR`). `d3Format` / `d3TimeFormat` reach the Python config as base64-encoded JSON (data, never code). |
 
 A `trino` reference is a connection file of the project or the release name of
 a trino instance in the same namespace (its `uri`,

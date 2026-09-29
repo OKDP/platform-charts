@@ -24,8 +24,8 @@ It renders three upstream charts, vendored under `vendor/` (see
 | `db` | (required) | `database-server` connection (engine `postgresql`) hosting the metastore. Its Secret (`secretRef`) holds `username` and `password`. |
 | `storage` | (required) | `s3` connection backing the catalogs (`apiUrl`, `region`). |
 | `s3SecretRef` | (required) | Secret with `accessKey`/`secretKey`: this instance's own S3 identity (STS, metadata). |
-| `realm` | `default` | Realm served, published in the connection. |
-| `principals` | `[]` | `[{name, roles: [...]}]` created in the realm by the principals Job. |
+| `realm` | `default` | Realm served, published in the connection. `^[A-Za-z0-9_.-]+$` (the polaris-admin Jobs pass it to a shell). |
+| `principals` | `[]` | `[{name, roles: [...]}]` created in the realm by the principals Job. Names and roles match `^[A-Za-z0-9_.-]+$` (the Job interpolates them into a shell script). |
 | `memoryGi` | `1` | Server memory limit (GiB); request 512Mi. |
 
 Platform values read from `global.okdp`: `ingress.suffix`, `ingress.className`,
@@ -87,6 +87,8 @@ principals and console). Now everything is one release:
   (`helm.sh/resource-policy: keep`, Argo `Delete=false`), as `keep: true` did.
 - Console TLS Secret `<release>-polaris-console-tls` (was `polaris-console-tls`).
 - The `db` connection must be PostgreSQL (the render fails otherwise).
+- `realm`, `principals[].name` and `principals[].roles[]` are restricted to
+  `^[A-Za-z0-9_.-]+$`: the polaris-admin Jobs interpolate them into shell scripts.
 
 ## Tests
 

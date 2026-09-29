@@ -50,16 +50,17 @@
     "realm": {
       "type": "string",
       "title": "Realm",
-      "description": "Polaris realm served by this instance. Clients select it with the Polaris-Realm header, and the catalog Connection publishes it.",
+      "description": "Polaris realm served by this instance. Clients select it with the Polaris-Realm header, and the catalog Connection publishes it. Letters, digits, dot, underscore and hyphen only.",
       "default": "default",
       "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.-]+$",
       "x-ui-group": "Catalog",
       "x-ui-order": 3
     },
     "principals": {
       "type": "array",
       "title": "Principals",
-      "description": "Polaris principals to create in the realm, with their principal roles, one entry per principal, for example [{\"name\": \"alice\", \"roles\": [\"catalog_admin\"]}]. Humans and service accounts authenticate through the platform identity provider and get the roles granted here.",
+      "description": "Polaris principals to create in the realm, with their principal roles, one entry per principal, for example [{\"name\": \"alice\", \"roles\": [\"catalog_admin\"]}]. Names and roles: letters, digits, dot, underscore and hyphen only. Humans and service accounts authenticate through the platform identity provider and get the roles granted here.",
       "default": [],
       "x-ui-group": "Catalog",
       "x-ui-widget": "yaml",
@@ -69,8 +70,8 @@
         "type": "object",
         "required": ["name"],
         "properties": {
-          "name": {"type": "string", "minLength": 1},
-          "roles": {"type": "array", "items": {"type": "string"}}
+          "name": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_.-]+$"},
+          "roles": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_.-]+$"}}
         },
         "additionalProperties": false
       }
