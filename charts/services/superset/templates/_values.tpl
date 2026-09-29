@@ -131,6 +131,7 @@ PROXY_FIX_CONFIG = {
 }
 # Chart number and date formats. The locale tables are read from CLDR through
 # Babel, a Superset dependency, so that none has to be maintained in this package
+import base64
 import json
 
 D3_LOCALE = {{ .Values.locale | default "" | quote }}
@@ -208,8 +209,10 @@ if D3_LOCALE:
         )
         D3_FORMAT, D3_TIME_FORMAT = {}, {}
 
-D3_FORMAT.update(json.loads(r'''{{ .Values.d3Format | default dict | toJson }}'''))
-D3_TIME_FORMAT.update(json.loads(r'''{{ .Values.d3TimeFormat | default dict | toJson }}'''))
+# The overrides are data, never code: base64 of their JSON, so no value can
+# end the Python string (or reach the chart's tpl as a template).
+D3_FORMAT.update(json.loads(base64.b64decode("{{ .Values.d3Format | default dict | toJson | b64enc }}").decode("utf-8")))
+D3_TIME_FORMAT.update(json.loads(base64.b64decode("{{ .Values.d3TimeFormat | default dict | toJson | b64enc }}").decode("utf-8")))
 {{ end -}}
 
 {{/* Session cookie expiry (FLASK_APP_MUTATOR). Formerly in OKDP's wrapper chart. */}}
@@ -486,8 +489,8 @@ extraConfigs:
   import_datasources.yaml: |
     databases:
     {{- range $in.datasources }}
-      - database_name: {{ .name }}
-        sqlalchemy_uri: "{{ .uri }}/{{ .catalog }}"
+      - database_name: {{ .name | quote }}
+        sqlalchemy_uri: {{ printf "%s/%s" .uri .catalog | quote }}
         impersonate_user: true
         extra: |
           {
@@ -604,6 +607,14 @@ init:
     - name: wait-for-databases
       image: postgres:16-alpine
       env:
+        # Connection fields through the environment: the script expands
+        # nothing that comes from the values.
+        - name: META_HOST
+          value: {{ $meta.host | quote }}
+        - name: META_PORT
+          value: {{ $meta.port | quote }}
+        - name: META_DB
+          value: {{ $meta.dbName | quote }}
         - name: META_PW
           valueFrom:
             secretKeyRef:
@@ -615,6 +626,12 @@ init:
               name: {{ $meta.secretRef.name }}
               key: username
         {{- if .Values.load_examples }}
+        - name: EX_HOST
+          value: {{ $ex.host | quote }}
+        - name: EX_PORT
+          value: {{ $ex.port | quote }}
+        - name: EX_DB
+          value: {{ $ex.dbName | quote }}
         - name: EX_PW
           valueFrom:
             secretKeyRef:
@@ -630,12 +647,12 @@ init:
         - /bin/sh
         - -c
         - |
-          until PGPASSWORD="$META_PW" psql -h {{ $meta.host }} -p {{ $meta.port }} -U "$META_USER" -d {{ $meta.dbName }} -c '\q' 2>/dev/null; do
-            echo "waiting for database {{ $meta.dbName }}"; sleep 3
+          until PGPASSWORD="$META_PW" psql -h "$META_HOST" -p "$META_PORT" -U "$META_USER" -d "$META_DB" -c '\q' 2>/dev/null; do
+            echo "waiting for database $META_DB"; sleep 3
           done
           {{- if .Values.load_examples }}
-          until PGPASSWORD="$EX_PW" psql -h {{ $ex.host }} -p {{ $ex.port }} -U "$EX_USER" -d {{ $ex.dbName }} -c '\q' 2>/dev/null; do
-            echo "waiting for database {{ $ex.dbName }}"; sleep 3
+          until PGPASSWORD="$EX_PW" psql -h "$EX_HOST" -p "$EX_PORT" -U "$EX_USER" -d "$EX_DB" -c '\q' 2>/dev/null; do
+            echo "waiting for database $EX_DB"; sleep 3
           done
           {{- end }}
           echo "databases reachable"

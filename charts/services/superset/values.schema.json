@@ -75,7 +75,8 @@
       "default": "en",
       "x-ui-group": "Cluster",
       "x-ui-order": 4,
-      "x-ui-advanced": true
+      "x-ui-advanced": true,
+      "pattern": "^([A-Za-z]{2,3}([_-][A-Za-z0-9]{2,8})*)?$"
     },
     "currency": {
       "type": "string",
@@ -84,7 +85,8 @@
       "default": "",
       "x-ui-group": "Cluster",
       "x-ui-order": 5,
-      "x-ui-advanced": true
+      "x-ui-advanced": true,
+      "pattern": "^([A-Z]{3})?$"
     },
     "d3Format": {
       "type": "object",
@@ -185,7 +187,8 @@
           "name": {
             "type": "string",
             "title": "Name",
-            "description": "Display name in the Superset UI."
+            "description": "Display name in the Superset UI.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]*$"
           },
           "trino": {
             "type": "string",
@@ -201,7 +204,8 @@
           "catalog": {
             "type": "string",
             "title": "Catalog",
-            "description": "Trino catalog to expose, as named on the Trino instance."
+            "description": "Trino catalog to expose, as named on the Trino instance.",
+            "pattern": "^[A-Za-z0-9_.-]+$"
           }
         },
         "additionalProperties": false
