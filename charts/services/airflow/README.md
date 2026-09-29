@@ -21,8 +21,8 @@ with values computed from the parameters below (`templates/_values.tpl`):
 | `metadataSecret` | (required) | Secret with key `connection`: the full SQLAlchemy connection string. |
 | `storage` | (required) | `s3` connection the DAGs use (`AWS_ENDPOINT_URL_S3` = `internalUrl`, else `apiUrl`; `AWS_REGION`). |
 | `s3SecretRef` | (required) | Secret with `accessKey`/`secretKey` for the DAGs. |
-| `oidcRoleMapping` | `{}` | OIDC group -> Airflow roles, e.g. `{airflow-admins: [Admin]}`. |
-| `dagsGitSync` | `{}` | Upstream `dags.gitSync` values; `ref` is mirrored onto `branch`; `credentialsSecret.name` names the git credentials Secret. |
+| `oidcRoleMapping` | `{}` | OIDC group -> Airflow roles, e.g. `{airflow-admins: [Admin]}`. Keys and roles may not contain `{{`, `}}` or line breaks (the API server config goes through the upstream `tpl`). |
+| `dagsGitSync` | `{}` | Upstream `dags.gitSync` scalar values: `enabled`, `repo`, `branch`, `ref`, `rev`, `depth`, `maxFailures`, `subPath`, `period`, `wait`, `sshKeySecret`, `knownHosts`, `containerName`, `uid`, `httpPort` (other keys are refused: several reach the upstream `tpl` or are pasted as raw YAML); `ref` is mirrored onto `branch`; `credentialsSecret.name` names the git credentials Secret. |
 | `schedulerMemoryGi`, `webserverMemoryGi`, `dagProcessorMemoryGi` | `1` | Memory limits (GiB). |
 | `dagProcessorCpuCores` | `0.75` | DAG processor CPU limit. |
 

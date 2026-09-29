@@ -65,6 +65,9 @@
             "description": "Hive metastore connection backing this catalog.",
             "x-okdp-connection-ref": {
               "contract": "hive"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
             }
           },
           "storage": {
@@ -73,12 +76,18 @@
             "description": "S3 object store connection backing this catalog.",
             "x-okdp-connection-ref": {
               "contract": "s3"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
             }
           },
           "s3SecretRef": {
             "type": "string",
             "title": "S3 credentials secret",
-            "description": "S3 identity used against this store. Secret with keys: accessKey, secretKey. Defaults to the instance s3SecretRef."
+            "description": "S3 identity used against this store. Secret with keys: accessKey, secretKey. Defaults to the instance s3SecretRef.",
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
           }
         }
       },
@@ -111,6 +120,9 @@
             "description": "Iceberg REST catalog connection.",
             "x-okdp-connection-ref": {
               "contract": "iceberg-catalog"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
             }
           },
           "storage": {
@@ -119,28 +131,43 @@
             "description": "S3 object store connection backing this catalog.",
             "x-okdp-connection-ref": {
               "contract": "s3"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
             }
           },
           "warehouse": {
             "type": "string",
             "title": "Warehouse",
-            "description": "Polaris catalog used as the warehouse. Defaults to the realm published on the connection."
+            "description": "Polaris catalog used as the warehouse. Defaults to the realm published on the connection.",
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
           },
           "oidcSecretRef": {
             "type": "string",
             "title": "OAuth client secret",
-            "description": "OAuth client Trino uses against this catalog. Secret with keys: client_id, client_secret. Defaults to creds-<release>-oauth2."
+            "description": "OAuth client Trino uses against this catalog. Secret with keys: client_id, client_secret. Defaults to creds-<release>-oauth2.",
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
           },
           "oauth2Scope": {
             "type": "string",
             "title": "OAuth2 scope",
             "default": "PRINCIPAL_ROLE:ALL",
-            "description": "OAuth2 scope requested. Polaris rejects the connector default."
+            "description": "OAuth2 scope requested. Polaris rejects the connector default.",
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
           },
           "s3SecretRef": {
             "type": "string",
             "title": "S3 credentials secret",
-            "description": "S3 identity used against this store. Secret with keys: accessKey, secretKey. Defaults to the instance s3SecretRef."
+            "description": "S3 identity used against this store. Secret with keys: accessKey, secretKey. Defaults to the instance s3SecretRef.",
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
           }
         }
       },
@@ -153,7 +180,10 @@
       "title": "S3 credentials secret",
       "description": "Default S3 identity of this instance, used by any catalog that does not name its own. Secret with keys: accessKey, secretKey.",
       "x-ui-group": "Catalogs",
-      "x-ui-order": 3
+      "x-ui-order": 3,
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+      }
     },
     "numWorkers": {
       "type": "integer",
@@ -244,6 +274,9 @@
       "x-ui-condition": {
         "field": "enableOPAL",
         "value": true
+      },
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
     },
     "policyRepoMainBranch": {
@@ -258,6 +291,9 @@
       "x-ui-condition": {
         "field": "enableOPAL",
         "value": true
+      },
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
     },
     "OPAL_POLICY_SUBSCRIPTION_DIRS": {
@@ -271,6 +307,9 @@
       "x-ui-condition": {
         "field": "enableOPAL",
         "value": true
+      },
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
     },
     "OPAL_POLICY_REPO_MANIFEST_PATH": {
@@ -284,6 +323,9 @@
       "x-ui-condition": {
         "field": "enableOPAL",
         "value": true
+      },
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
     },
     "opaPolicyPath": {
@@ -297,6 +339,9 @@
       "x-ui-condition": {
         "field": "enableOPA",
         "value": true
+      },
+      "not": {
+        "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
     }
   },

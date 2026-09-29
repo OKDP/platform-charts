@@ -37,7 +37,7 @@ contract's "only standard tooling" rule to be revisited.
 | `examplesDb` | (required) | `database-server` (PostgreSQL) connection receiving the examples, used when `load_examples`. |
 | `load_examples` | `true` | Load the Superset examples. |
 | `datasources[]` | `[]` | `{name, trino (trino connection), catalog}`: one Superset database per item. |
-| `oidcRoleMapping` | `{}` | OIDC group → list of Superset roles. |
+| `oidcRoleMapping` | `{}` | OIDC group → list of Superset roles. Keys and roles may not contain `{{`, `}}` or line breaks. |
 | `cpu` / `memoryGi` / `workers` | `0.5` / `2` / `2` | Web server limits and gunicorn workers. |
 | `locale` / `currency` / `d3Format` / `d3TimeFormat` | `en` / `""` / `{}` / `{}` | Chart number and date formats. |
 

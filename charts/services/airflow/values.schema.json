@@ -105,12 +105,22 @@
       "additionalProperties": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+          }
         }
       },
       "x-ui-group": "Authentication",
       "x-ui-order": 4,
-      "x-ui-advanced": true
+      "x-ui-advanced": true,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+        }
+      }
     },
     "storage": {
       "type": "string",
@@ -132,9 +142,75 @@
     "dagsGitSync": {
       "type": "object",
       "title": "Git sync",
-      "description": "Chart dags.gitSync values. Unquoted true/false is a boolean, an unquoted number is an int/float, quote to force a string. credentialsSecret.name carries the git credentials Secret name.",
+      "description": "Chart dags.gitSync values (the scalar keys listed here). Unquoted true/false is a boolean, an unquoted number is an int/float, quote to force a string. ref is mirrored onto branch. credentialsSecret.name carries the git credentials Secret name.",
       "default": {},
-      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "branch": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "rev": {
+          "type": "string"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxFailures": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subPath": {
+          "type": "string"
+        },
+        "period": {
+          "type": "string"
+        },
+        "wait": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sshKeySecret": {
+          "type": "string"
+        },
+        "knownHosts": {
+          "type": "string"
+        },
+        "containerName": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "integer"
+        },
+        "httpPort": {
+          "type": "integer"
+        },
+        "credentialsSecret": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
       "x-ui-group": "DAGs",
       "x-ui-widget": "key-value-scalar",
       "x-ui-order": 1
