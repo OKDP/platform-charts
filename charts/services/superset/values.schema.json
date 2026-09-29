@@ -150,12 +150,22 @@
       "additionalProperties": {
         "type": "array",
         "items": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+          }
         }
       },
       "x-ui-group": "Authentication",
       "x-ui-order": 6,
-      "x-ui-advanced": true
+      "x-ui-advanced": true,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+        }
+      }
     },
     "datasources": {
       "type": "array",
@@ -183,6 +193,9 @@
             "description": "Trino connection, or a trino release of this project.",
             "x-okdp-connection-ref": {
               "contract": "trino"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
             }
           },
           "catalog": {

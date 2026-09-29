@@ -36,6 +36,11 @@ A connection reference is either a connection file of the project
 of a hive-metastore or polaris instance in the same namespace (e.g.
 `demo-hive`). `s3` references are always connection files.
 
+Free-text parameters (connection references, secret names, `warehouse`,
+`oauth2Scope`, the OPA/OPAL settings) may not contain `{{`, `}}` or line
+breaks: they end up in catalog properties that the upstream chart passes
+through `tpl`.
+
 S3 credentials of a catalog: its `s3SecretRef`, else the release
 `s3SecretRef`, else the `secretRef` of its s3 connection. The OAuth client of
 an Iceberg catalog: its `oidcSecretRef`, else `creds-<release>-oauth2`.
