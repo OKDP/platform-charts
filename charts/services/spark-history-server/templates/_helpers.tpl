@@ -38,3 +38,11 @@ the vendored charts (spark-history-server.*, spark-web-proxy.*).
 {{- define "okdp-shs.redirectUri" -}}
 {{- printf "%s/home" (include "okdp.url" (dict "ctx" . "name" "spark-web-proxy")) -}}
 {{- end -}}
+
+{{/*
+Secret of the OIDC filter's cookie encryption key (key cookie-cipher-secret-key):
+<release>-auth-cookie, generated once by ESO (cookie-secret.yaml).
+*/}}
+{{- define "okdp-shs.cookieSecret" -}}
+{{- include "okdp.fullname" (dict "ctx" . "suffix" "auth-cookie") -}}
+{{- end -}}
