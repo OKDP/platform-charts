@@ -42,7 +42,8 @@ config:
   spark.io.okdp.spark.authc.OidcAuthFilter.param.redirect-uri: {{ include "okdp-shs.redirectUri" . }}
   spark.io.okdp.spark.authc.OidcAuthFilter.param.scope: {{ include "okdp-shs.scope" . | replace " " "+" }}
   spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-max-age-minutes: 480
-  spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-cipher-secret-key: FC5E81345CED0E256DC42E410362FF6E
+  # cookie-cipher-secret-key: not a property, the filter falls back to the
+  # AUTH_COOKIE_ENCRYPTION_KEY env, read from the generated Secret (cookie-secret.yaml).
   spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-is-secure: true
   spark.io.okdp.spark.authc.OidcAuthFilter.param.use-pkce: {{ if hasKey $oidc "usePKCE" }}{{ $oidc.usePKCE }}{{ else }}true{{ end }}
   spark.history.ui.acls.enable: true
@@ -87,6 +88,11 @@ extraEnvs:
       secretKeyRef:
         name: {{ $oauthSecret }}
         key: client_secret
+  - name: AUTH_COOKIE_ENCRYPTION_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "okdp-shs.cookieSecret" . }}
+        key: cookie-cipher-secret-key
 {{- end }}
 extraVolumes:
   - name: cacerts

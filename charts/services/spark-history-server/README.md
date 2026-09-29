@@ -35,6 +35,13 @@ grants `authorization_code` and `refresh_token`, the platform scopes but `openid
 plus `offline_access`). The CA bundle comes from Secret `certs-bundle` (key
 `bundle.p12`), also read by the DCR Job.
 
+With OIDC, the filter's cookie encryption key is per instance: Secret
+`<release>-auth-cookie` (key `cookie-cipher-secret-key`, 32 characters, AES-256),
+generated once by an ESO `Password` generator and passed to the filter through
+the `AUTH_COOKIE_ENCRYPTION_KEY` environment variable (the filter reads it when
+the Spark property `cookie-cipher-secret-key` is unset). Deleting the Secret
+rotates the key and only signs every user out.
+
 ## Changes from the KuboCD package
 
 - The history Service is `<release>-spark-history-server` (was
@@ -45,11 +52,12 @@ plus `offline_access`). The CA bundle comes from Secret `certs-bundle` (key
   required.
 - `clientProvisioning: dcr` is supported (the package required
   `creds-<release>-oauth2`).
+- The OIDC filter cookie cipher key is generated per instance (it was a
+  constant shared by every installation). Upgrading signs the current users
+  out once.
 
 ## Known limitations (unchanged)
 
-- The OIDC filter cookie cipher key is a constant (the Spark properties file
-  cannot read it from a Secret).
 - The ingress host is per namespace: one instance per namespace.
 
 ## Tests
