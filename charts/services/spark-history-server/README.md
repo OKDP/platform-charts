@@ -25,7 +25,7 @@ with values computed from the parameters below (`templates/_values.tpl`):
 
 Platform values read from `global.okdp`: `ingress.suffix`, `ingress.className`,
 `certificateIssuers.selfSigned.name`, and when `oidc.enabled` (default true)
-`oidc.issuerUri`, `oidc.scope`, `oidc.usePKCE`, `oidc.clientProvisioning`,
+`oidc.issuerUri`, `oidc.scope`, `oidc.usePKCE`, `oidc.insecureSkipVerify`, `oidc.clientProvisioning`,
 `oidc.dcr.registrationUrl|authMethod` (dcr). The OAuth client of the history
 server's OIDC filter (keys `client_id`, `client_secret`) is read from Secret
 `creds-<release>-oauth2` (`clientProvisioning: existing`) or
@@ -42,6 +42,10 @@ the `AUTH_COOKIE_ENCRYPTION_KEY` environment variable (the filter reads it when
 the Spark property `cookie-cipher-secret-key` is unset). Deleting the Secret
 rotates the key and only signs every user out.
 
+S3 certificate checking (`-Dcom.amazonaws.sdk.disableCertChecking`) is turned
+off only when `global.okdp.oidc.insecureSkipVerify` is true; otherwise the S3
+endpoint is verified against the CA bundle (`JAVA_TOOL_OPTIONS` trust store).
+
 ## Changes from the KuboCD package
 
 - The history Service is `<release>-spark-history-server` (was
@@ -55,6 +59,8 @@ rotates the key and only signs every user out.
 - The OIDC filter cookie cipher key is generated per instance (it was a
   constant shared by every installation). Upgrading signs the current users
   out once.
+- S3 certificate checking follows `global.okdp.oidc.insecureSkipVerify` (it
+  was always off).
 
 ## Known limitations (unchanged)
 

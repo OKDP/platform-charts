@@ -62,7 +62,8 @@ oauth2-env:
   {{- with $oidc.scope }}
   AUTH_OAUTH_SCOPE: {{ . | quote }}
   {{- end }}
-  AUTH_OAUTH_SSL_CERTIFICATE_VERIFY: "false"
+  {{- /* Verified against REQUESTS_CA_BUNDLE (certs-bundle, mounted at /cacerts). */}}
+  AUTH_OAUTH_SSL_CERTIFICATE_VERIFY: {{ if $oidc.insecureSkipVerify }}"false"{{ else }}"true"{{ end }}
   AUTH_OAUTH_USE_PKCE: {{ if (hasKey $oidc "usePKCE" | ternary $oidc.usePKCE true) }}"S256"{{ else }}"None"{{ end }}
   SUPERSET_DOMAIN: {{ $in.host | quote }}
   {{- end }}
@@ -498,7 +499,7 @@ extraConfigs:
             "metadata_params": {},
             "connect_args": {
               "http_scheme": "https",
-              "verify": false
+              "verify": {{ not $oidc.insecureSkipVerify | toJson }}
             },
             "metadata_cache_timeout": {},
             "schemas_allowed_for_file_upload": []

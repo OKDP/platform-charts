@@ -49,7 +49,7 @@ references are always connection files.
 
 Platform values read from `global.okdp`: `ingress.suffix`, `ingress.className`,
 `certificateIssuers.selfSigned.name`,
-`oidc.issuerUri|enabled|displayName|scope|usePKCE|clientProvisioning`,
+`oidc.issuerUri|enabled|displayName|scope|usePKCE|insecureSkipVerify|clientProvisioning`,
 `oidc.dcr.registrationUrl|authMethod` (dcr), `proxy`.
 
 OAuth clients (when `global.okdp.oidc.enabled`), keys `client_id`/`client_secret`:
@@ -69,6 +69,11 @@ The Apache chart can only put `init.adminUser.password` in its script, so its
 own admin creation is off (`init.createAdmin: false`) and the wrapper's
 `init.command` creates the user from the `SUPERSET_ADMIN_PASSWORD` environment
 variable.
+
+TLS: the sign-in (`AUTH_OAUTH_SSL_CERTIFICATE_VERIFY`) and the Trino datasources
+(`connect_args.verify`) verify certificates against the CA bundle
+(`certs-bundle`, mounted at `/cacerts`, `REQUESTS_CA_BUNDLE`) unless
+`global.okdp.oidc.insecureSkipVerify` is true.
 
 ## Hooks
 
@@ -99,6 +104,8 @@ PostSync), idempotent. Its init container waits for the databases.
   An existing install keeps its `admin` user and password: reset it with
   `superset fab reset-password --username admin --password "$SUPERSET_ADMIN_PASSWORD"`
   in a Superset pod.
+- TLS verification follows `global.okdp.oidc.insecureSkipVerify` (it was
+  always off for the sign-in and the Trino datasources).
 
 ## Tests
 
