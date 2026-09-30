@@ -72,9 +72,12 @@ extraEnvs:
       secretKeyRef:
         name: {{ .Values.s3SecretRef }}
         key: secretKey
-  # Disable Certificate Checking
+  {{- if $oidc.insecureSkipVerify }}
+  # S3 certificate checking off (global.okdp.oidc.insecureSkipVerify); otherwise
+  # the endpoint is verified against the CA bundle of JAVA_TOOL_OPTIONS.
   - name: SPARK_HISTORY_OPTS
     value: "-Dcom.amazonaws.sdk.disableCertChecking=true"
+  {{- end }}
   - name: JAVA_TOOL_OPTIONS
     value: "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12 -Djavax.net.ssl.trustStorePassword="
 {{- if $oidc.enabled }}
