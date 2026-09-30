@@ -563,6 +563,13 @@ extraEnvRaw:
       secretKeyRef:
         name: {{ $trinoOauthSecret }}
         key: client_secret
+  {{- else }}
+  # Password of the local admin (no OIDC): the init Job creates it.
+  - name: SUPERSET_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "okdp-superset-wrapper.adminSecret" . }}
+        key: password
   {{- end }}
   # CA
   - name: REQUESTS_CA_BUNDLE
@@ -594,15 +601,28 @@ extraEnvRaw:
 # databases existing: the schema upgrade then fails on a database not
 # created yet, and the job burns its retries.
 init:
-  # Without OIDC there is no other way in, so the local admin stays.
-  createAdmin: {{ not $oidc.enabled }}
-  adminUser:
-    username: admin
-    firstname: Superset
-    lastname: Admin
-    email: admin@superset.com
-    password: admin
+  # Without OIDC there is no other way in, so a local admin is created, with a
+  # password generated per instance (Secret <release>-admin, admin-secret.yaml).
+  # The chart can only write init.adminUser.password into its script, so its
+  # own admin creation is off and the command below creates the admin from
+  # SUPERSET_ADMIN_PASSWORD (extraEnvRaw), if it does not exist yet.
+  createAdmin: false
   loadExamples: {{ .Values.load_examples }}
+  {{- if not $oidc.enabled }}
+  command:
+    - /bin/sh
+    - -c
+    - |
+      . {{ "{{" }} .Values.configMountPath {{ "}}" }}/superset_bootstrap.sh
+      . {{ "{{" }} .Values.configMountPath {{ "}}" }}/superset_init.sh
+      if superset fab list-users 2>/dev/null | grep -qF 'username:admin'; then
+        echo "Admin user already exists, skipping."
+      else
+        echo "Creating admin user..."
+        superset fab create-admin --username admin --firstname Superset \
+          --lastname Admin --email admin@superset.com --password "$SUPERSET_ADMIN_PASSWORD"
+      fi
+  {{- end }}
   initContainers:
     - name: wait-for-databases
       image: postgres:16-alpine

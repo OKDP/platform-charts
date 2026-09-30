@@ -20,6 +20,7 @@ rendered by `okdp.vendor.render` (`templates/superset.yaml`):
 | `main` (Apache chart) | `vendor/superset` (apache/superset 0.22.8, bundled bitnami charts dropped) | always |
 | `main` (bitnami redis subchart) | `templates/valkey.yaml`: Deployment + Service `<release>-redis` (Valkey 9.1, `valkey/valkey`, BSD-3-Clause; no persistence) | always |
 | `internal-secrets` | `okdp.generatedSecret` `<release>-internal` (`superset_secret_key`, `redis-password`) | always |
+| (new) local admin | `okdp.generatedSecret` `<release>-admin` (`password`) | `global.okdp.oidc.enabled: false` |
 | (new) `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.3.3): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
 
 The Apache Superset Helm chart is deprecated upstream (0.22.8 is marked
@@ -61,7 +62,13 @@ OAuth clients (when `global.okdp.oidc.enabled`), keys `client_id`/`client_secret
   `refresh_token`, the platform scopes but `openid`) into Secret
   `<release>-<namespace>-dcr`. The Job needs the CA bundle Secret `certs-bundle`.
 
-Without OIDC the init job creates the local `admin` user.
+Without OIDC the init job creates the local `admin` user (if it does not
+exist yet) with a password generated per instance by ESO: Secret
+`<release>-admin`, key `password` (kept on uninstall, like `<release>-internal`).
+The Apache chart can only put `init.adminUser.password` in its script, so its
+own admin creation is off (`init.createAdmin: false`) and the wrapper's
+`init.command` creates the user from the `SUPERSET_ADMIN_PASSWORD` environment
+variable.
 
 ## Hooks
 
@@ -88,6 +95,10 @@ PostSync), idempotent. Its init container waits for the databases.
   `superset_secret_key`.
 - The forceReload pod annotations (randAlphaNum) are pinned off
   (`okdp-guard-allow.yaml`).
+- Without OIDC the local admin password is generated (was `admin`/`admin`).
+  An existing install keeps its `admin` user and password: reset it with
+  `superset fab reset-password --username admin --password "$SUPERSET_ADMIN_PASSWORD"`
+  in a Superset pod.
 
 ## Tests
 
