@@ -13,6 +13,11 @@ the partials of the vendored charts (superset.*, okdp.superset.*).
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "internal") -}}
 {{- end -}}
 
+{{/* Generated secret of the local admin (key password), only without OIDC: <release>-admin. */}}
+{{- define "okdp-superset-wrapper.adminSecret" -}}
+{{- include "okdp.fullname" (dict "ctx" . "suffix" "admin") -}}
+{{- end -}}
+
 {{/* The Valkey cache and Celery broker (templates/valkey.yaml), named redis as the env it is read from. */}}
 {{- define "okdp-superset-wrapper.redis" -}}
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "redis") -}}
