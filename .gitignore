@@ -55,8 +55,5 @@ local/
 Chart.lock
 **/charts/*.tgz
 
-# Vendored upstream charts are committed pristine, lock files included.
-!**/vendor/**/Chart.lock
-
 # Upstream charts downloaded from vendor.yaml by scripts/vendor-charts.sh.
 /charts/*/*/vendor/

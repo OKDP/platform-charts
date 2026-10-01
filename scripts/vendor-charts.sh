@@ -43,12 +43,13 @@
 # repository (e.g. charts/<helper>) copied as is; its Chart.yaml version
 # must be the listed version.
 #
-# vendor/ is committed (lock files of vendored charts included): the chart
-# renders offline, the published chart is self-contained, and an upgrade shows
-# up as a diff. Git keeps no empty directory, hence their removal, so --check
-# passes on a fresh clone.
+# vendor/ is not committed (.gitignore): vendor.yaml pins each chart and is
+# the lock. Run this before rendering a wrapper chart locally, as with
+# `helm dependency build`; the chart CI (OKDP/gh-workflows okdp-chart-ci.yml)
+# runs it before the guard, the tests and `helm package`, so the published
+# chart carries vendor/ and installs offline.
 #
-#   scripts/vendor-charts.sh <chart dir>...          (re)vendor
+#   scripts/vendor-charts.sh <chart dir>...          download into vendor/
 #   scripts/vendor-charts.sh --check <chart dir>...  fail if vendor/ differs from vendor.yaml
 set -euo pipefail
 
@@ -123,7 +124,7 @@ for chart in "$@"; do
       rm -rf "${pulled:?}/${drop}"
     done < <(yq ".charts[${i}].drop // [] | .[]" "${manifest}")
     if ${bad}; then rc=1; continue; fi
-    # Git keeps no empty directory: drop them so --check matches a clone.
+    # Drop empty directories (dropped paths leave some): a stable layout.
     find "${pulled}" -mindepth 1 -type d -empty -delete
     target="${chart}/vendor/${name}"
     if ${check}; then

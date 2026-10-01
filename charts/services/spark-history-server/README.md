@@ -69,10 +69,10 @@ endpoint is verified against the CA bundle (`JAVA_TOOL_OPTIONS` trust store).
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/spark-history-server   # download vendor/ (not committed)
 helm dependency build charts/services/spark-history-server
 for f in charts/services/spark-history-server/ci/*-values.yaml; do
   helm lint charts/services/spark-history-server -f "$f"
   helm template demo-spark-history charts/services/spark-history-server -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/spark-history-server
 ```

@@ -30,7 +30,7 @@ charts/
     ├── airflow/  hive-metastore/  jupyterhub/  okdp-examples/  polaris/
     ├── spark-defaults/  spark-history-server/  spark-operator/  spark-rbac/
     └── superset/  trino/
-scripts/vendor-charts.sh # vendors upstream charts (canonical copy)
+scripts/vendor-charts.sh # downloads the vendored upstream charts (canonical copy)
 ```
 
 A service chart (`charts/<category>/<name>/`):
@@ -40,7 +40,7 @@ Chart.yaml            version <upstream>-<okdp semver>, appVersion <upstream>
 values.yaml           the service parameters (the former KuboCD parameters)
 values.schema.json    draft-07, with the x-ui-* / x-okdp-* hints the console reads
 vendor.yaml           upstream charts rendered with computed values
-vendor/<name>/        their pristine unpacked copy (committed)
+vendor/<name>/        their pristine unpacked copy (downloaded, not committed)
 templates/            okdp-lib calls, computed values, descriptor
 ci/*-values.yaml      test values (each carries a global.okdp platform block)
 README.md
@@ -72,9 +72,8 @@ During the no-kubocd migration the charts depend on `okdp-lib` by
 (`../okdp-lib`). CI does the same (`sibling_repositories`).
 
 ```bash
-# upstream charts: (re)vendor, or check that vendor/ matches vendor.yaml
+# upstream charts: download vendor/ (not committed) after a clone or a vendor.yaml change
 scripts/vendor-charts.sh charts/services/trino
-scripts/vendor-charts.sh --check charts/services/trino
 
 # render and lint
 helm dependency build charts/services/trino
@@ -101,7 +100,7 @@ A justified exception in a vendored upstream chart goes in the chart's
 
 The workflows call the reusable
 [`okdp-chart-ci.yml`](https://github.com/OKDP/gh-workflows#okdp-chart-ci-okdp-chart-ciyml)
-of `OKDP/gh-workflows`: chart guard, schema check, `vendor-charts.sh --check`,
+of `OKDP/gh-workflows`: `vendor-charts.sh` (downloads `vendor/`), chart guard, schema check,
 `helm dependency build`, `helm lint`, `helm template` with every `ci/*-values.yaml`,
 `kubeconform`, then `helm package` + `helm push`.
 

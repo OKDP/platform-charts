@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (templates/hive-metastore.yaml).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/hive-metastore
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/hive-metastore
 charts:
   - name: hive-metastore
     repository: oci://quay.io/okdp/charts

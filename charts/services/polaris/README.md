@@ -94,10 +94,10 @@ principals and console). Now everything is one release:
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/polaris   # download vendor/ (not committed)
 helm dependency build charts/services/polaris
 for f in charts/services/polaris/ci/*-values.yaml; do
   helm lint charts/services/polaris -f "$f"
   helm template demo-polaris charts/services/polaris -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/polaris
 ```

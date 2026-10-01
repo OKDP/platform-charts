@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/polaris
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/polaris
 charts:
   - name: polaris             # module main
     repository: https://downloads.apache.org/polaris/helm-chart/

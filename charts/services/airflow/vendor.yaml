@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/airflow
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/airflow
 charts:
   - name: airflow             # module main
     repository: https://airflow.apache.org

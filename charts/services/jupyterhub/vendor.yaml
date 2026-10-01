@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/jupyterhub
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/jupyterhub
 charts:
   - name: jupyterhub          # module main
     repository: https://hub.jupyter.org/helm-chart/
