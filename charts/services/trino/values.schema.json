@@ -343,7 +343,69 @@
       "not": {
         "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
       }
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "trino": {
+          "type": "object",
+          "title": "trino",
+          "description": "Values of the trino chart 1.42.2 (https://trinodb.github.io/charts), for example image, resources, nodeSelector, tolerations, server.config.query, extra catalogs. Refused: fullnameOverride, server.config.authenticationType, server.config.https, server.coordinatorExtraConfig, auth, accessControl, ingress.enabled/className/hosts/tls. Appended to the lists this chart sets: env, additionalConfigProperties, coordinator/worker additionalVolumes, additionalVolumeMounts and additionalJVMConfig.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "opa-kube-mgmt": {
+          "type": "object",
+          "title": "opa-kube-mgmt",
+          "description": "Values of the opa-kube-mgmt chart 11.0.12 (https://open-policy-agent.github.io/kube-mgmt/charts), rendered when enableOPA is set: image, resources, extraArgs, ... Refused: fullnameOverride, authz, useHttps, port, admissionController, prometheus, serviceMonitor, mgmt.enabled, rbac.create, serviceAccount.create. Appended: extraArgs.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 2,
+          "x-ui-condition": {
+            "field": "enableOPA",
+            "value": true
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }
