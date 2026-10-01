@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/spark-rbac
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/spark-rbac
 charts:
   - name: spark-rbac          # module main
     repository: oci://quay.io/okdp/charts

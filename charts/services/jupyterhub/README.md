@@ -86,10 +86,10 @@ password keys hold the unused placeholder. Exceptions in
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/jupyterhub   # download vendor/ (not committed)
 helm dependency build charts/services/jupyterhub
 for f in charts/services/jupyterhub/ci/*-values.yaml; do
   helm lint charts/services/jupyterhub -f "$f"
   helm template demo-jupyterhub charts/services/jupyterhub -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/jupyterhub
 ```

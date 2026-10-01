@@ -51,10 +51,10 @@ schema only when `metastore_db_properties` is missing.
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/hive-metastore   # download vendor/ (not committed)
 helm dependency build charts/services/hive-metastore
 for f in charts/services/hive-metastore/ci/*-values.yaml; do
   helm lint charts/services/hive-metastore -f "$f"
   helm template demo-hive charts/services/hive-metastore -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/hive-metastore
 ```

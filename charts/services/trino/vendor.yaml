@@ -1,5 +1,5 @@
 # Upstream charts rendered by okdp.vendor.render (the former KuboCD modules).
-# Refresh vendor/ with: scripts/vendor-charts.sh charts/services/trino
+# vendor/ is downloaded, not committed: scripts/vendor-charts.sh charts/services/trino
 charts:
   - name: trino               # module main
     repository: https://trinodb.github.io/charts

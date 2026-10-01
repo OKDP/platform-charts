@@ -53,10 +53,10 @@ Two instances in one cluster share the CRDs and fight over them, as before.
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/spark-operator   # download vendor/ (not committed)
 helm dependency build charts/services/spark-operator
 for f in charts/services/spark-operator/ci/*-values.yaml; do
   helm lint charts/services/spark-operator -f "$f"
   helm template demo-spark-operator charts/services/spark-operator -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/spark-operator
 ```

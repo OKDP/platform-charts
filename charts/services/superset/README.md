@@ -110,10 +110,10 @@ PostSync), idempotent. Its init container waits for the databases.
 ## Tests
 
 ```sh
+scripts/vendor-charts.sh charts/services/superset   # download vendor/ (not committed)
 helm dependency build charts/services/superset
 for f in charts/services/superset/ci/*-values.yaml; do
   helm lint charts/services/superset -f "$f"
   helm template demo-superset charts/services/superset -n demo -f "$f" >/dev/null
 done
-scripts/vendor-charts.sh --check charts/services/superset
 ```
