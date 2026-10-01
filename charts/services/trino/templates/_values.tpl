@@ -281,3 +281,58 @@ mapping:
     client_id: ".client_id"
     client_secret: ".client_secret"
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.<chart> in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: what the platform relies on (names used by the trino contract and
+the OPA URL, OIDC sign-in, the ingress host registered with the identity
+provider, OPA access control). Appended: the lists carrying the wrapper's
+Secrets, truststore and shared secret, so an instance adds to them.
+*/}}
+{{- define "okdp-trino.upstream.trino" -}}
+protect:
+  - fullnameOverride
+  - server.config.authenticationType
+  - server.config.https
+  - server.coordinatorExtraConfig
+  - auth
+  - accessControl
+  - ingress.enabled
+  - ingress.className
+  - ingress.hosts
+  - ingress.tls
+append:
+  - env
+  - additionalConfigProperties
+  - coordinator.additionalVolumes
+  - coordinator.additionalVolumeMounts
+  - coordinator.additionalJVMConfig
+  - worker.additionalVolumes
+  - worker.additionalVolumeMounts
+  - worker.additionalJVMConfig
+{{- end -}}
+
+{{/*
+upstream.opa-kube-mgmt. Protected besides names and the port Trino calls:
+admissionController (its template runs genCA/genSignedCert, accepted by
+okdp-guard-allow.yaml only while disabled), prometheus and serviceMonitor
+(.Capabilities.APIVersions, which differ between Flux and Argo CD), and the
+switches enableOPAL drives.
+*/}}
+{{- define "okdp-trino.upstream.opa" -}}
+protect:
+  - fullnameOverride
+  - authz
+  - useHttps
+  - port
+  - admissionController
+  - prometheus
+  - serviceMonitor
+  - mgmt.enabled
+  - rbac.create
+  - serviceAccount.create
+append:
+  - extraArgs
+{{- end -}}

@@ -55,6 +55,31 @@ Secrets expected in the namespace: `creds-<release>-oauth2`
 the oidc-dcr Job `<release>-oidc-dcr` writes `<release>-<namespace>-dcr`, same keys), the S3
 identities, and `certs-bundle` (`bundle.p12`, the CA trust store).
 
+## Upstream values
+
+Any value of the vendored `trino` and `opa-kube-mgmt` charts can be set per
+instance under `upstream.<chart>`, merged over the values computed from the
+parameters (okdp-lib `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  trino:
+    image: {repository: mirror.example.org/trinodb/trino}
+    worker: {tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]}
+    env: [{name: EXTRA_FLAG, value: "1"}]          # appended to the chart's env
+    catalogs: {memory: "connector.name=memory\n"}  # added to the generated catalogs
+  opa-kube-mgmt:
+    resources: {limits: {memory: 256Mi}}
+```
+
+The paths the platform relies on are refused, and the lists carrying the
+chart's Secrets are appended to rather than replaced: see
+`okdp-trino.upstream.trino` and `okdp-trino.upstream.opa` in
+`templates/_values.tpl` (also listed in the schema descriptions). An upstream
+value wins over the parameter it overlaps (`server.workers` over
+`numWorkers`). No key or value may contain `{{` (the schema and okdp-lib both
+refuse it). `opal` and `oidc-dcr` take no upstream values.
+
 ## Provided connection
 
 `<release>` (contract `trino`):

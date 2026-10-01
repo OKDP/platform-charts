@@ -42,3 +42,14 @@ policyRepoMainBranch: main
 OPAL_POLICY_SUBSCRIPTION_DIRS: trino_opa_policy
 OPAL_POLICY_REPO_MANIFEST_PATH: trino_opa_policy
 opaPolicyPath: v1/data/trino/allow
+
+# Values of the upstream charts, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-trino.upstream.*): any upstream
+# value can be set except the protected ones, e.g.
+#   upstream:
+#     trino:
+#       image: {repository: mirror.example.org/trinodb/trino}
+#       worker: {tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]}
+#     opa-kube-mgmt:
+#       resources: {limits: {memory: 256Mi}}
+upstream: {}
