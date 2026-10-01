@@ -87,6 +87,7 @@ principals and console). Now everything is one release:
   (`helm.sh/resource-policy: keep`, Argo `Delete=false`), as `keep: true` did.
 - Console TLS Secret `<release>-polaris-console-tls` (was `polaris-console-tls`).
 - The `db` connection must be PostgreSQL (the render fails otherwise).
+- The server logs at `INFO` (was `DEBUG`).
 - `realm`, `principals[].name` and `principals[].roles[]` are restricted to
   `^[A-Za-z0-9_.-]+$`: the polaris-admin Jobs interpolate them into shell scripts.
 

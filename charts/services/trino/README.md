@@ -28,7 +28,7 @@ The former KuboCD modules are vendored upstream charts (`vendor.yaml`,
 | `numWorkers` | `1` | Workers. |
 | `workerCpu` / `workerMemoryGi` | `0.5` / `2` | Worker requests; limits are twice the requests. |
 | `coordinatorMemoryGi` | `8` | Coordinator memory limit (request 1 GiB). |
-| `enableOPA` | `true` | OPA access control (`opaPolicyPath`, `enableOPADebugLogs`). |
+| `enableOPA` | `true` | OPA access control (`opaPolicyPath`, `enableOPADebugLogs`: OPA decision logs and Trino's `opa.log-requests`/`opa.log-responses`, off by default). |
 | `enableOPAL` | `false` | Feed OPA from a policy repository (`policyRepoUrl`, `policyRepoMainBranch`, `OPAL_POLICY_SUBSCRIPTION_DIRS`, `OPAL_POLICY_REPO_MANIFEST_PATH`); off, kube-mgmt loads policies from labelled ConfigMaps. |
 
 A connection reference is either a connection file of the project

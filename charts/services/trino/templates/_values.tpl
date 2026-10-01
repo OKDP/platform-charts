@@ -172,8 +172,8 @@ accessControl:
   properties: |
     access-control.name=opa
     opa.policy.uri=http://{{ include "okdp-trino.opaName" . }}.{{ .Release.Namespace }}:8181/{{ .Values.opaPolicyPath }}
-    opa.log-responses=true
-    opa.log-requests=true
+    opa.log-responses={{ .Values.enableOPADebugLogs }}
+    opa.log-requests={{ .Values.enableOPADebugLogs }}
 {{- end }}
 {{- end -}}
 

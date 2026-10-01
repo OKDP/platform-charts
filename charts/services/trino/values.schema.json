@@ -254,7 +254,7 @@
       "type": "boolean",
       "title": "Debug logs",
       "default": false,
-      "description": "Log OPA status and decision logs to the container console. Verbose, intended for debugging.",
+      "description": "Log OPA status and decision logs to the container console, and the requests Trino sends to OPA and its answers (opa.log-requests, opa.log-responses). Verbose, intended for debugging.",
       "x-ui-group": "Authorization",
       "x-ui-order": 8,
       "x-ui-advanced": true,

@@ -174,7 +174,7 @@ oidc:
       - regex: "^(?!PRINCIPAL_ROLE:)(?!polaris_)(.*)$"
         replacement: "PRINCIPAL_ROLE:$1"
 logging:
-  level: DEBUG
+  level: INFO
 cors:
   allowedOrigins:
     - {{ include "okdp.url" (dict "ctx" . "name" "polaris-console") | quote }}
