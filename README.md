@@ -10,8 +10,8 @@
 ## Overview
 
 This repository builds and publishes the OKDP platform charts: one Helm chart per
-platform service. They build on the `okdp-lib` library chart, which lives in
-[`OKDP/okdp-lib`](https://github.com/OKDP/okdp-lib).
+platform service. They build on the `okdp-lib-chart` library chart, which lives in
+[`OKDP/okdp-lib-chart`](https://github.com/OKDP/okdp-lib-chart).
 
 It owns the charts only. Deploying them is done from a deployments Git repository,
 by FluxCD (HelmRelease) or Argo CD (ApplicationSet), directly or through the OKDP
@@ -41,12 +41,12 @@ values.yaml           the service parameters (the former KuboCD parameters)
 values.schema.json    draft-07, with the x-ui-* / x-okdp-* hints the console reads
 vendor.yaml           upstream charts rendered with computed values
 vendor/<name>/        their pristine unpacked copy (downloaded, not committed)
-templates/            okdp-lib calls, computed values, descriptor
+templates/            okdp-lib-chart calls, computed values, descriptor
 ci/*-values.yaml      test values (each carries a global.okdp platform block)
 README.md
 ```
 
-See the [`okdp-lib` README](https://github.com/OKDP/okdp-lib#readme) for the values contract
+See the [`okdp-lib-chart` README](https://github.com/OKDP/okdp-lib-chart#readme) for the values contract
 (`global.okdp`, `connections`), the helpers, and how a KuboCD package translates.
 
 ## Values
@@ -67,9 +67,8 @@ version, URL, usage, provided connections) that the console lists.
 
 ## Working on a chart
 
-During the no-kubocd migration the charts depend on `okdp-lib` by
-`file://../../../../okdp-lib`: clone `OKDP/okdp-lib` next to this repository
-(`../okdp-lib`). CI does the same (`sibling_repositories`).
+The charts depend on `okdp-lib-chart` from the Helm repository
+`https://repo.alliage.io/repository/okdp` (`helm dependency build` fetches it).
 
 ```bash
 # upstream charts: download vendor/ (not committed) after a clone or a vendor.yaml change
@@ -114,8 +113,8 @@ Versions: a service chart is `<upstream>-<okdp semver>` (e.g. `480.0.0-1.0.1`).
 release-please owns the OKDP half in
 [`.release-please-manifest.json`](.release-please-manifest.json);
 [`compose-oci-tag.sh`](.github/scripts/compose-oci-tag.sh) writes the composite into
-`Chart.yaml` on the release branch. `okdp-lib` is released from its own
+`Chart.yaml` on the release branch. `okdp-lib-chart` is released from its own
 repository: a change there does not re-release these charts, bump their
-`okdp-lib` range or touch them to pick it up.
+`okdp-lib-chart` range or touch them to pick it up.
 
 Fork pull requests are validated without pushing (their token cannot write packages).

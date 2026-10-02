@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib): no UI, no output. The former package usage. */}}
+{{/* Descriptor hooks (okdp-lib-chart): no UI, no output. The former package usage. */}}
 {{- define "okdp.instance.usage" -}}
 Spark Operator has been deployed successfully.
 

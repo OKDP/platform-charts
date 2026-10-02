@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib): a UI, no output. */}}
+{{/* Descriptor hooks (okdp-lib-chart): a UI, no output. */}}
 {{- define "okdp.instance.url" -}}
 {{- include "okdp.url" (dict "ctx" . "name" "airflow") -}}
 {{- end -}}

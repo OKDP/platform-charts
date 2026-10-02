@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib): no UI, no output. */}}
+{{/* Descriptor hooks (okdp-lib-chart): no UI, no output. */}}
 {{- define "okdp.instance.usage" -}}
 Kubernetes ServiceAccount and RBAC resources (Role and RoleBinding) required to run Apache Spark on Kubernetes.
 

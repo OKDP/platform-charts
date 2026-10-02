@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib): the console UI, one iceberg-catalog output. */}}
+{{/* Descriptor hooks (okdp-lib-chart): the console UI, one iceberg-catalog output. */}}
 {{- define "okdp.instance.url" -}}
 {{- include "okdp.url" (dict "ctx" . "name" "polaris-console") -}}
 {{- end -}}
