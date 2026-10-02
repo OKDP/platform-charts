@@ -22,7 +22,6 @@ annotations:
   okdp.io/roles: spark
   okdp.io/depends-on: identity,storage,ingress
 dependencies:
-  - name: okdp-lib
+  - name: okdp-lib-chart
     version: ">=0.1.0 <1.0.0"
-    # TODO(no-kubocd): switch to oci://quay.io/okdp/platform-charts
-    repository: file://../../../../okdp-lib
+    repository: oci://quay.io/okdp

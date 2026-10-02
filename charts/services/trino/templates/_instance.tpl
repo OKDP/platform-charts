@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib). */}}
+{{/* Descriptor hooks (okdp-lib-chart). */}}
 {{- define "okdp.instance.url" -}}
 {{- include "okdp.url" (dict "ctx" . "name" "trino") -}}
 {{- end -}}

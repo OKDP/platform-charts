@@ -1,4 +1,4 @@
-{{/* Descriptor hooks (okdp-lib): no UI, one hive output. */}}
+{{/* Descriptor hooks (okdp-lib-chart): no UI, one hive output. */}}
 {{- define "okdp.instance.usage" -}}
 Hive Metastore is a centralized metadata repository for data lakes and big data analytics.
 

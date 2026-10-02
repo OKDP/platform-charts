@@ -11,9 +11,9 @@
       "type": "object",
       "description": "External connections, one values layer per projects/<project>/connections/<name>.yaml. This chart consumes none."
     },
-    "okdp-lib": {
+    "okdp-lib-chart": {
       "type": "object",
-      "description": "Values slot Helm creates for the okdp-lib library dependency. Not a parameter."
+      "description": "Values slot Helm creates for the okdp-lib-chart library dependency. Not a parameter."
     },
     "controllerReplicas": {
       "type": "integer",

@@ -59,7 +59,7 @@ identities, and `certs-bundle` (`bundle.p12`, the CA trust store).
 
 Any value of the vendored `trino` and `opa-kube-mgmt` charts can be set per
 instance under `upstream.<chart>`, merged over the values computed from the
-parameters (okdp-lib `okdp.vendor.render`, option `upstream`):
+parameters (okdp-lib-chart `okdp.vendor.render`, option `upstream`):
 
 ```yaml
 upstream:
@@ -77,7 +77,7 @@ chart's Secrets are appended to rather than replaced: see
 `okdp-trino.upstream.trino` and `okdp-trino.upstream.opa` in
 `templates/_values.tpl` (also listed in the schema descriptions). An upstream
 value wins over the parameter it overlaps (`server.workers` over
-`numWorkers`). No key or value may contain `{{` (the schema and okdp-lib both
+`numWorkers`). No key or value may contain `{{` (the schema and okdp-lib-chart both
 refuse it). `opal` and `oidc-dcr` take no upstream values.
 
 ## Provided connection

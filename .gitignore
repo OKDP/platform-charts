@@ -50,8 +50,7 @@ local/
 *.bak
 *.draft
 
-# Helm dependency builds (okdp-lib is a file:// dependency during the
-# no-kubocd migration; CI runs `helm dependency build`).
+# Helm dependency builds (CI runs `helm dependency build`).
 Chart.lock
 **/charts/*.tgz
 

@@ -80,8 +80,6 @@ jobs:
     uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
       tools_ref: no-kubocd
-      # okdp-lib is a file:// dependency on ../okdp-lib during the migration.
-      sibling_repositories: OKDP/okdp-lib@main
       publish_to_registry: "true"
       oci_package_prefix: platform-charts
       # release-please has just minted versions that have never existed, so a

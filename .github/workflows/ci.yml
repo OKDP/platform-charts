@@ -17,8 +17,8 @@
 name: ci
 
 # Tests every changed chart (a change under .github/ selects every chart) and
-# pushes CI builds to oci://ghcr.io/okdp/platform-charts/charts. okdp-lib
-# lives in OKDP/okdp-lib: a change there does not re-test these charts.
+# pushes CI builds to oci://ghcr.io/okdp/platform-charts/charts. okdp-lib-chart
+# lives in OKDP/okdp-lib-chart: a change there does not re-test these charts.
 on:
   pull_request:
     branches:
@@ -53,8 +53,6 @@ jobs:
     uses: OKDP/gh-workflows/.github/workflows/okdp-chart-ci.yml@no-kubocd
     with:
       tools_ref: no-kubocd
-      # okdp-lib is a file:// dependency on ../okdp-lib during the migration.
-      sibling_repositories: OKDP/okdp-lib@main
       publish_to_registry: "false"
       # pull requests from forks cannot write packages: validate only
       push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
