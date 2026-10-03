@@ -10,15 +10,8 @@ connections resolved by okdp.connection.
 {{- $oidc := include "okdp.oidc" . | fromYaml -}}
 {{- $host := include "okdp-trino.host" . -}}
 {{- $catalogs := include "okdp-trino.catalogs" . | fromYamlArray -}}
-{{- $oauthSecret := include "okdp-trino.oauthSecret" . -}}
-{{- $clientSecret := dict "name" $oauthSecret "id" "client_id" "secret" "client_secret" -}}
-{{- if $oidc.dcr.enabled -}}
-  {{- $_ := set $clientSecret "name" (include "okdp-trino.dcrSecret" .) -}}
-{{- end -}}
+{{- $clientSecret := dict "name" (include "okdp.oidc.clientSecret" .) "id" "client_id" "secret" "client_secret" -}}
 fullnameOverride: {{ include "okdp-trino.fullname" . }}
-image:
-  repository: trinodb/trino
-  tag: "480"
 {{- if $catalogs }}
 catalogs:
   {{- range $c := $catalogs }}
@@ -75,23 +68,8 @@ env:
   {{- end }}
 coordinator:
   resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
     limits:
-      cpu: "2"
       memory: {{ printf "%vGi" .Values.coordinatorMemoryGi | quote }}
-  additionalVolumes:
-    - name: cacerts
-      secret:
-        secretName: certs-bundle
-  additionalVolumeMounts:
-    - name: cacerts
-      mountPath: /cacerts
-      readOnly: true
-  additionalJVMConfig:
-    - "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12"
-    - "-Djavax.net.ssl.trustStorePassword=${ENV:TRUSTSTORE_PASSWORD}"
 worker:
   resources:
     requests:
@@ -100,47 +78,10 @@ worker:
     limits:
       cpu: {{ mulf (float64 .Values.workerCpu) 2 | quote }}
       memory: {{ printf "%vGi" (mulf (float64 .Values.workerMemoryGi) 2) | quote }}
-  additionalVolumes:
-    - name: cacerts
-      secret:
-        secretName: certs-bundle
-  additionalVolumeMounts:
-    - name: cacerts
-      mountPath: /cacerts
-      readOnly: true
-  additionalJVMConfig:
-    - "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12"
-    - "-Djavax.net.ssl.trustStorePassword=${ENV:TRUSTSTORE_PASSWORD}"
-ingress:
-  enabled: true
-  className: {{ .Values.global.okdp.ingress.className }}
-  annotations:
-    {{- include "okdp.ingressAnnotations" . | nindent 4 }}
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/use-regex: "true"
-  hosts:
-    - host: {{ $host }}
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - hosts:
-        - {{ $host }}
-      secretName: {{ include "okdp.fullname" (dict "ctx" . "suffix" "tls") }}
 server:
   workers: {{ .Values.numWorkers }}
-  node:
-    environment: sandbox
-  config:
-    authenticationType: oauth2
-    coordinator: "true"
-    node-scheduler.include-coordinator: "true"
-    discovery-server.enabled: "true"
-    path: /etc/trino
-    https:
-      enabled: false
-  workerExtraConfig: ""
+  # Keep ingress right after this block scalar: followed by a trimming action
+  # instead, it would lose its final newline (and the coordinator config change).
   coordinatorExtraConfig: |
     http-server.process-forwarded=true
     web-ui.authentication.type=oauth2
@@ -164,8 +105,19 @@ server:
     http-server.authentication.jwt.required-issuer={{ $oidc.issuerUri }}
     http-server.authentication.jwt.required-audience=account
     http-server.authentication.jwt.principal-field=client_id
-additionalConfigProperties:
-  - internal-communication.shared-secret=${ENV:TRINO_SHARED_SECRET}
+ingress:
+  className: {{ .Values.global.okdp.ingress.className }}
+  annotations:
+    {{- include "okdp.ingressAnnotations" . | nindent 4 }}
+  hosts:
+    - host: {{ $host }}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - {{ $host }}
+      secretName: {{ include "okdp.fullname" (dict "ctx" . "suffix" "tls") }}
 {{- if .Values.enableOPA }}
 accessControl:
   type: properties
@@ -185,14 +137,6 @@ webhook stays disabled.
 */}}
 {{- define "okdp-trino.values.opa" -}}
 fullnameOverride: {{ include "okdp-trino.opaName" . }}
-authz:
-  enabled: false
-image:
-  repository: openpolicyagent/opa
-  tag: 1.16.1
-  pullPolicy: IfNotPresent
-useHttps: false
-port: 8181
 {{- if .Values.enableOPADebugLogs }}
 extraArgs:
   - "--set=status.console=true"
@@ -200,19 +144,6 @@ extraArgs:
 {{- end }}
 mgmt:
   enabled: {{ not .Values.enableOPAL }}
-  startupProbe:
-    failureThreshold: 5
-    httpGet:
-      path: /health
-      port: 8181
-      scheme: HTTP
-    initialDelaySeconds: 20
-    successThreshold: 1
-    timeoutSeconds: 10
-  data:
-    enabled: true
-  policies:
-    enabled: true
 rbac:
   create: {{ not .Values.enableOPAL }}
 serviceAccount:
@@ -222,15 +153,6 @@ serviceAccount:
 {{/* Module opal: the OPAL server and client feeding OPA from a policy repository. */}}
 {{- define "okdp-trino.values.opal" -}}
 {{- $secrets := include "okdp-trino.opalSecrets" . | fromYaml -}}
-image:
-  client:
-    registry: docker.io
-    repository: permitio/opal-client-standalone
-    tag: 0.9.4
-  server:
-    registry: docker.io
-    repository: permitio/opal-server
-    tag: 0.9.4
 client:
   extraEnv:
     OPAL_POLICY_STORE_URL: http://{{ include "okdp-trino.opaName" . }}.{{ .Release.Namespace }}:8181
@@ -248,38 +170,6 @@ server:
     {{- range $k, $v := include "okdp.proxy.env" . | fromYaml }}
     {{ $k }}: {{ $v | quote }}
     {{- end }}
-{{- end -}}
-
-{{/* Module oidc-dcr: registers the OAuth client (clientProvisioning: dcr). */}}
-{{- define "okdp-trino.values.dcr" -}}
-{{- $oidc := include "okdp.oidc" . | fromYaml -}}
-{{- if ne ($oidc.dcr.authMethod | default "") "anonymous" -}}
-  {{- fail (printf "trino: global.okdp.oidc.dcr.authMethod %q is not supported: this chart registers anonymously" ($oidc.dcr.authMethod | default "")) -}}
-{{- end -}}
-{{- include "okdp.require" (dict "ctx" . "keys" (list "oidc.dcr.registrationUrl")) -}}
-ttl_seconds: 30
-registration_url: {{ $oidc.dcr.registrationUrl | quote }}
-request:
-  application_type: web
-  client_name: {{ printf "%s-%s" .Release.Name .Release.Namespace | quote }}
-  redirect_uris:
-    - {{ printf "https://%s/oauth2/callback" (include "okdp-trino.host" .) | quote }}
-  logo_uri: "https://landscape.cncf.io/logos/008125b82108f19aea6b0004ce5f255b72bab5b5e5c169a302d7bf845edb8e6b.svg"
-  grant_types:
-    - authorization_code
-    - refresh_token
-    - client_credentials
-  # Keycloak realm client scopes granted to the registered client.
-  scope: "web-origins acr roles profile groups basic email address phone organization offline_access microprofile-jwt"
-tls:
-  insecure: false
-  certificate: certs-bundle
-secret: {{ include "okdp-trino.dcrSecret" . }}
-mapping:
-  use_default: false
-  key_mapping:
-    client_id: ".client_id"
-    client_secret: ".client_secret"
 {{- end -}}
 
 {{/*

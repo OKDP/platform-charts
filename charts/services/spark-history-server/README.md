@@ -5,7 +5,8 @@ logs on S3) behind the OKDP Spark web proxy (`/sparkui` proxies running
 applications too). It **consumes** an `s3` connection and provides none.
 
 It renders two upstream charts, vendored under `vendor/` (see `vendor.yaml`),
-with values computed from the parameters below (`templates/_values.tpl`):
+with values computed from the parameters below (fixed ones in
+`vendor-values/<chart>.yaml`, computed ones in `templates/_values.tpl`):
 
 | Former module | Chart | Rendered as |
 |---|---|---|

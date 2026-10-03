@@ -6,8 +6,8 @@ optional OPA authorization. It **consumes** `hive`, `iceberg-catalog` and `s3`
 connections and **provides** a `trino` connection.
 
 The former KuboCD modules are vendored upstream charts (`vendor.yaml`,
-`vendor/`) rendered by `okdp.vendor.render` with computed values
-(`templates/_values.tpl`):
+`vendor/`) rendered by `okdp.vendor.render` (fixed values in
+`vendor-values/<chart>.yaml`, computed ones in `templates/_values.tpl`):
 
 | Former module | Now | Rendered when |
 |---|---|---|

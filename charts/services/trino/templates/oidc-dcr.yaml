@@ -1,4 +1,8 @@
 {{- /* Module oidc-dcr, enabled when the platform registers clients by DCR. */}}
 {{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-trino.values.dcr" . | fromYaml)) }}
+{{ include "okdp.oidc.dcr" (dict "ctx" .
+     "redirectUris" (list (printf "https://%s/oauth2/callback" (include "okdp-trino.host" .)))
+     "grantTypes" (list "authorization_code" "refresh_token" "client_credentials")
+     "scope" "web-origins acr roles profile groups basic email address phone organization offline_access microprofile-jwt"
+     "request" (dict "logo_uri" "https://landscape.cncf.io/logos/008125b82108f19aea6b0004ce5f255b72bab5b5e5c169a302d7bf845edb8e6b.svg")) }}
 {{- end }}

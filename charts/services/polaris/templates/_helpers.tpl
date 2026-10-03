@@ -28,19 +28,6 @@ partials of the vendored charts (polaris.*, polaris-admin.*, polaris-console.*).
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "root") -}}
 {{- end -}}
 
-{{/* Secret of the OAuth client (existing mode): creds-<release>-oauth2, the platform convention. */}}
-{{- define "okdp-polaris.oauthSecret" -}}
-{{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
-
-{{/*
-dcr mode: the Secrets the oidc-dcr jobs write the registered clients to, same
-keys as creds-<release>-oauth2: the server's (confidential, client_credentials)
-and the console's (public, authorization code with PKCE; client_id only).
-*/}}
-{{- define "okdp-polaris.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
-{{- end -}}
 {{- define "okdp-polaris.consoleDcrSecret" -}}
 {{- printf "%s-%s-console-dcr" .Release.Name .Release.Namespace -}}
 {{- end -}}

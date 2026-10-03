@@ -13,12 +13,6 @@ Values of the vendored hive-metastore chart (the former KuboCD module "main").
 # The Service name is the one the hive contract promises to internal
 # references: <release>-hive-metastore.
 fullNameOverride: {{ include "okdp.fullname" (dict "ctx" . "suffix" "hive-metastore") }}
-replicaCount: 1
-image:
-  repository: quay.io/okdp/hive-metastore
-  tag: 4.0.1
-  pullPolicy: IfNotPresent
-logLevel: INFO
 db:
   driverRef: {{ $db.driver }}
   driverName: {{ $db.engine }}
@@ -28,7 +22,6 @@ db:
   user:
     password:
       secretName: {{ $db.secretRef.name }}
-      propertyName: password
 extraEnvRaw:
   - name: HIVEMS_USER
     valueFrom:
@@ -37,19 +30,14 @@ extraEnvRaw:
         key: username
   - name: THRIFT_LISTENING_PORT
     value: "9083"
-cloud_storage: s3
 s3:
   url: {{ $s3.apiUrl }}
   # The upstream chart names it a directory, it is a bucket (no prefix).
   warehouseDirectory: {{ .Values.warehouseBucket }}
   accessKey:
     secretName: {{ .Values.s3SecretRef }}
-    propertyName: accessKey
   secretKey:
     secretName: {{ .Values.s3SecretRef }}
-    propertyName: secretKey
-gcs:
-  enabled: false
 resources:
   requests:
     cpu: {{ .Values.cpu | quote }}

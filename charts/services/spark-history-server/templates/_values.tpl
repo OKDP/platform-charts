@@ -15,27 +15,16 @@ connection resolved by okdp.connection.
 {{- end -}}
 {{- $s3 := include "okdp.connection" (dict "ctx" . "ref" .Values.storage "contract" "s3" "field" "storage") | fromYaml -}}
 {{- $roles := .Values.roleMapping | default dict -}}
-{{- $oauthSecret := include "okdp-shs.oauthSecret" . -}}
-{{- if $oidc.dcr.enabled }}{{ $oauthSecret = include "okdp-shs.dcrSecret" . }}{{ end -}}
-image:
-  repository: quay.io/okdp/spark
-  pullPolicy: IfNotPresent
-  tag: "spark-3.5.6-scala-2.12-java-17"
+{{- $oauthSecret := include "okdp.oidc.clientSecret" . -}}
 resources:
   limits:
     cpu: {{ .Values.cpu | quote }}
     memory: {{ printf "%vGi" .Values.memoryGi | quote }}
-  requests:
-    cpu: 250m
-    memory: 512Mi
 # The web proxy addresses the history server by this name.
 fullnameOverride: {{ include "okdp-shs.historyName" . }}
 config:
-  spark.history.fs.logDirectory: s3a://spark-events/event-logs
   spark.hadoop.fs.s3a.endpoint: {{ $s3.internalUrl | default $s3.apiUrl }}
   spark.hadoop.fs.s3a.path.style.access: {{ $s3.pathStyle | default false }}
-  spark.history.fs.cleaner.enabled: true
-  spark.history.fs.eventLog.rolling.maxFilesToRetain: 5
 {{- if $oidc.enabled }}
   spark.ui.filters: io.okdp.spark.authc.OidcAuthFilter
   spark.io.okdp.spark.authc.OidcAuthFilter.param.issuer-uri: {{ $oidc.issuerUri }}
@@ -97,43 +86,6 @@ extraEnvs:
         name: {{ include "okdp-shs.cookieSecret" . }}
         key: cookie-cipher-secret-key
 {{- end }}
-extraVolumes:
-  - name: cacerts
-    secret:
-      secretName: certs-bundle
-extraVolumeMounts:
-  - name: cacerts
-    mountPath: /cacerts
-{{- end -}}
-
-{{/* Module oidc-dcr: registers the OAuth client (clientProvisioning: dcr). */}}
-{{- define "okdp-shs.values.dcr" -}}
-{{- $oidc := include "okdp.oidc" . | fromYaml -}}
-{{- if ne ($oidc.dcr.authMethod | default "") "anonymous" -}}
-  {{- fail (printf "spark-history-server: global.okdp.oidc.dcr.authMethod %q is not supported: this chart registers anonymously" ($oidc.dcr.authMethod | default "")) -}}
-{{- end -}}
-{{- include "okdp.require" (dict "ctx" . "keys" (list "oidc.dcr.registrationUrl")) -}}
-ttl_seconds: 30
-registration_url: {{ $oidc.dcr.registrationUrl | quote }}
-request:
-  application_type: web
-  client_name: {{ printf "%s-%s" .Release.Name .Release.Namespace | quote }}
-  redirect_uris:
-    - {{ include "okdp-shs.redirectUri" . | quote }}
-  grant_types:
-    - authorization_code
-    - refresh_token
-  # openid is not a Keycloak client scope: Keycloak refuses it here.
-  scope: {{ without (splitList " " (include "okdp-shs.scope" .)) "openid" | join " " | quote }}
-tls:
-  insecure: false
-  certificate: certs-bundle
-secret: {{ include "okdp-shs.dcrSecret" . }}
-mapping:
-  use_default: false
-  key_mapping:
-    client_id: ".client_id"
-    client_secret: ".client_secret"
 {{- end -}}
 
 {{/* Module proxy: the spark-web-proxy chart, the UI entry point. */}}
@@ -141,23 +93,15 @@ mapping:
 {{- include "okdp.require" (dict "ctx" . "keys" (list "ingress.className")) -}}
 {{- $host := include "okdp-shs.host" . -}}
 fullnameOverride: {{ include "okdp-shs.proxyName" . }}
-image:
-  repository: quay.io/okdp/spark-web-proxy
-  pullPolicy: IfNotPresent
-  tag: "0.2.1"
 configuration:
   spark:
     history:
       service: {{ printf "%s.%s.svc.cluster.local" (include "okdp-shs.historyName" .) .Release.Namespace }}
-    ui:
-      proxyBase: /sparkui
     jobNamespaces:
       - {{ .Release.Namespace }}
 ingress:
-  enabled: true
   className: {{ .Values.global.okdp.ingress.className }}
   annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     {{- include "okdp.ingressAnnotations" . | nindent 4 }}
   hosts:
     - host: {{ $host }}

@@ -8,24 +8,6 @@ partials of the vendored charts (jupyterhub.*, spark-rbac.*).
 {{- include "okdp.url" . -}}
 {{- end -}}
 
-{{/*
-Secret with the OAuth client (client_id, client_secret, JUPYTERHUB_CRYPT_KEY):
-the creds-<release>-oauth2 convention of the existing mode, the client being
-created in Keycloak beforehand.
-*/}}
-{{- define "okdp-jupyterhub.oauthSecret" -}}
-{{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
-
-{{/*
-Secret the oidc-dcr job writes the registered client to (dcr mode), keys
-client_id and client_secret; JUPYTERHUB_CRYPT_KEY then comes from the
-generated hub passwords (hub.config.CryptKeeper.keys).
-*/}}
-{{- define "okdp-jupyterhub.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
-{{- end -}}
-
 {{/* Scopes the hub requests at login (the oidc-dcr registration must grant them, openid aside). */}}
 {{- define "okdp-jupyterhub.scope" -}}
 openid profile email groups

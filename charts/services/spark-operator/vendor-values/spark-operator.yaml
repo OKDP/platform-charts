@@ -1,0 +1,26 @@
+# Fixed values of the vendored spark-operator chart (vendor/spark-operator),
+# merged over its values.yaml and under the values computed by
+# templates/_values.tpl (okdp.vendor.render "valuesFile"). Plain YAML, not a
+# template.
+# CRDs are rendered by templates/crds.yaml, not by an upgrade hook.
+hook:
+  upgradeCrd: false
+controller:
+  rbac:
+    create: true
+  # The KuboCD values deleted fsGroup (null), leaving no pod securityContext.
+  # okdp.vendor.render merges maps, so null the whole map for the same output.
+  podSecurityContext: null
+webhook:
+  # The KuboCD values deleted fsGroup (null), leaving no pod securityContext.
+  # okdp.vendor.render merges maps, so null the whole map for the same output.
+  podSecurityContext: null
+spark:
+  # The ServiceAccount and RBAC of the jobs come from the spark-rbac chart.
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+# Never enabled: its templates check .Capabilities (see okdp-guard-allow.yaml).
+certManager:
+  enable: false

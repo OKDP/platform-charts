@@ -13,16 +13,6 @@ partials of the vendored charts (airflow.*, oidc-dcr.*).
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "internal") -}}
 {{- end -}}
 
-{{/* Secret of the OAuth client (existing mode): creds-<release>-oauth2, the platform convention. */}}
-{{- define "okdp-airflow.oauthSecret" -}}
-{{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
-
-{{/* Secret the oidc-dcr job writes the registered client to (dcr mode), same keys. */}}
-{{- define "okdp-airflow.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
-{{- end -}}
-
 {{/* Login scope, offline_access included (the oidc-dcr registration must grant it). */}}
 {{- define "okdp-airflow.scope" -}}
 {{- $oidc := include "okdp.oidc" . | fromYaml -}}

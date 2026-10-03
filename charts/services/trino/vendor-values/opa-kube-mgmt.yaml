@@ -1,0 +1,26 @@
+# Fixed values of the vendored opa-kube-mgmt chart (vendor/opa-kube-mgmt),
+# merged over its values.yaml and under the values computed by
+# templates/_values.tpl (okdp.vendor.render "valuesFile"). Plain YAML.
+# Never set admissionController.enabled: see templates/_values.tpl.
+authz:
+  enabled: false
+image:
+  repository: openpolicyagent/opa
+  tag: 1.16.1
+  pullPolicy: IfNotPresent
+useHttps: false
+port: 8181
+mgmt:
+  startupProbe:
+    failureThreshold: 5
+    httpGet:
+      path: /health
+      port: 8181
+      scheme: HTTP
+    initialDelaySeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 10
+  data:
+    enabled: true
+  policies:
+    enabled: true

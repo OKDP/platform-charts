@@ -1,0 +1,175 @@
+# Fixed values of the vendored jupyterhub chart (vendor/jupyterhub), merged over
+# its values.yaml and under the values computed by templates/_values.tpl
+# (okdp.vendor.render "valuesFile"). Plain YAML, not a template.
+hub:
+  resources:
+    requests:
+      cpu: "0.1"
+      memory: "0.5Gi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  config:
+    # https://oauthenticator.readthedocs.io/en/latest/how-to/refresh.html
+    JupyterHub:
+      authenticator_class: generic-oauth
+      load_roles:
+        - name: user
+          scopes:
+            - self
+            - admin:auth_state!user
+        - name: server
+          scopes:
+            - users:activity!user
+            - access:servers!server
+            - admin:auth_state!user
+    Authenticator:
+      auto_login: true
+      enable_auth_state: true
+      auth_refresh_age: 300
+      refresh_pre_spawn: true
+  # No JupyterHub service: their api tokens would be generated with lookup too.
+  services: {}
+  networkPolicy:
+    enabled: false
+  extraConfig:
+    extraConfig01.py: |
+      c.KubeSpawner.delete_grace_period = 120
+      c.ServerApp.allow_root = True
+  image:
+    pullPolicy: Always
+    pullSecrets: []
+    name: quay.io/jupyterhub/k8s-hub
+    tag: "4.4.2"
+  db:
+    type: sqlite-pvc
+    pvc:
+      storage: 1Gi
+
+rbac:
+  create: true
+
+cull:
+  enabled: false
+
+proxy:
+  service:
+    type: ClusterIP
+  chp:
+    resources:
+      requests:
+        cpu: "0.1"
+        memory: "0.125Gi"
+      limits:
+        cpu: "1"
+        memory: "0.5Gi"
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Notebook saves ship their embedded outputs: the nginx 1m default
+    # rejects them with a 413.
+    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+
+scheduling:
+  userScheduler:
+    enabled: false
+  userPlaceholder:
+    enabled: false
+
+singleuser:
+  image:
+    name: quay.io/okdp/jupyter/all-spark-notebook
+    tag: "spark-3.5.6-python-3.11-java-17-scala-2.12"
+
+  startTimeout: 600
+
+  extraEnv:
+    NB_USER: "$(JUPYTERHUB_USER)"
+    NB_UID: "1001"
+    NB_GID: "100"
+    CHOWN_HOME: "yes"
+    CHOWN_HOME_OPTS: "-R"
+    JUPYTER_ENABLE_LAB: "yes"
+    EDITOR: "vim"
+    GIT_SSL_NO_VERIFY: "false"
+    # Ignore InsecureRequestWarning warnings
+    PYTHONWARNINGS: "ignore:Unverified HTTPS request"
+    # The Spark images ship pyspark under SPARK_HOME rather than in
+    # site-packages: overriding PYTHONPATH outright hides it, and the
+    # PySpark kernel then fails on "No module named pyspark".
+    PYTHONPATH: "/etc/jupyter/auth:/usr/local/spark/python:/usr/local/spark/python/lib/py4j-0.10.9.7-src.zip"
+    AWS_CA_BUNDLE: /cacerts/ca.crt
+    REQUESTS_CA_BUNDLE: /cacerts/ca.crt
+    CURL_CA_BUNDLE: /cacerts/ca.crt
+    SSL_CERT_FILE: /cacerts/ca.crt
+    TRUSTSTORE_PASSWORD: ""
+
+  extraFiles:
+    notebook_oauth2:
+      mountPath: /etc/jupyter/auth/sitecustomize.py
+      stringData: |
+        import builtins
+        import os
+        import requests
+
+        def _fresh_access_token():
+          hub_token = os.environ["JUPYTERHUB_API_TOKEN"]
+          hub_api_url = os.environ["JUPYTERHUB_API_URL"]
+          user = os.environ["JUPYTERHUB_USER"]
+
+          r = requests.get(
+            f"{hub_api_url}/users/{user}",
+            headers={"Authorization": f"Bearer {hub_token}"},
+            timeout=10,
+          )
+          r.raise_for_status()
+
+          data = r.json()
+          auth_state = data.get("auth_state")
+          if auth_state is None:
+            raise RuntimeError(f"auth_state is null for user {user}")
+          token = auth_state.get("access_token")
+          if not token:
+            raise RuntimeError(f"No access_token in auth_state. Keys: {list(auth_state.keys())}")
+          return token
+
+        def _current_user():
+          user = os.environ.get("JUPYTERHUB_USER")
+          if not user:
+            raise RuntimeError("JUPYTERHUB_USER is not set")
+          return user
+
+        builtins.access_token = _fresh_access_token
+        builtins.me = _current_user
+
+  serviceAccountName: spark
+  storage:
+    homeMountPath: "/home/{username}"
+    dynamic:
+      storageClass: standard
+    type: dynamic
+    extraVolumes:
+      - name: cacerts
+        secret:
+          secretName: certs-bundle
+    extraVolumeMounts:
+      - name: cacerts
+        mountPath: /cacerts
+        readOnly: true
+  cloudMetadata:
+    blockWithIptables: false
+  uid: 0
+  fsGid: 100
+  extraPodConfig:
+    automount_service_account_token: true
+    terminationGracePeriodSeconds: 120
+  networkPolicy:
+    enabled: false
+
+prePuller:
+  hook:
+    enabled: false
+  continuous:
+    enabled: false

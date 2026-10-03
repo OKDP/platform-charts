@@ -1,0 +1,22 @@
+# Fixed values of the vendored hive-metastore chart (vendor/hive-metastore),
+# merged over its values.yaml and under the values computed by
+# templates/_values.tpl (okdp.vendor.render "valuesFile"). Plain YAML, not a
+# template.
+replicaCount: 1
+image:
+  repository: quay.io/okdp/hive-metastore
+  tag: 4.0.1
+  pullPolicy: IfNotPresent
+logLevel: INFO
+db:
+  user:
+    password:
+      propertyName: password
+cloud_storage: s3
+s3:
+  accessKey:
+    propertyName: accessKey
+  secretKey:
+    propertyName: secretKey
+gcs:
+  enabled: false

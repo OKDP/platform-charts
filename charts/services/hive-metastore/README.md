@@ -8,7 +8,8 @@ and a SQL database. It **provides** a `hive` connection and **consumes** a
 It renders the upstream chart
 [`oci://quay.io/okdp/charts/hive-metastore`](https://github.com/okdp/hive-metastore)
 1.4.0, vendored under `vendor/` (see `vendor.yaml`), with values computed from
-the parameters below (`templates/_values.tpl`).
+the parameters below (fixed ones in `vendor-values/hive-metastore.yaml`,
+computed ones in `templates/_values.tpl`).
 
 ## Parameters
 

@@ -1,5 +1,13 @@
 {{- /* Module oidc-dcr, enabled when the platform registers clients by DCR: the server's and the console's clients. */}}
 {{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-polaris.values.dcr" . | fromYaml)) }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-polaris.values.consoleDcr" . | fromYaml) "name" (include "okdp.fullname" (dict "ctx" . "suffix" "console-oidc-dcr"))) }}
+{{- /* The server's, confidential: it validates the bearer tokens (no user sign-in). */}}
+{{ include "okdp.oidc.dcr" (dict "ctx" . "grantTypes" (list "client_credentials")) }}
+{{- /* The console's, public (a browser application): authorization code with PKCE. */}}
+{{ include "okdp.oidc.dcr" (dict "ctx" . "public" true
+     "name" (include "okdp.fullname" (dict "ctx" . "suffix" "console-oidc-dcr"))
+     "clientName" (printf "%s-%s-console" .Release.Name .Release.Namespace)
+     "secret" (include "okdp-polaris.consoleDcrSecret" .)
+     "redirectUris" (list (printf "%s/auth/callback" (include "okdp.url" (dict "ctx" . "name" "polaris-console"))))
+     "grantTypes" (list "authorization_code" "refresh_token")
+     "scope" (include "okdp-polaris.consoleScope" .)) }}
 {{- end }}

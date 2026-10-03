@@ -18,11 +18,6 @@ of the vendored trino chart (trino.*).
 {{- printf "creds-%s-oauth2" .Release.Name -}}
 {{- end -}}
 
-{{/* Secret the oidc-dcr job writes the registered client to (dcr mode), same keys. */}}
-{{- define "okdp-trino.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
-{{- end -}}
-
 {{/* OPA server of this instance. */}}
 {{- define "okdp-trino.opaName" -}}
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "opa") -}}

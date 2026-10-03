@@ -1,0 +1,9 @@
+# Fixed values of the vendored spark-rbac chart (vendor/spark-rbac), merged
+# over its values.yaml (okdp.vendor.render "valuesFile"). Plain YAML, not a
+# template. The spark ServiceAccount the notebooks run as.
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  name: spark
+  automount: true

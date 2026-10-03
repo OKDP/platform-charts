@@ -1,0 +1,23 @@
+# Fixed values of the vendored spark-history-server chart
+# (vendor/spark-history-server), merged over its values.yaml and under the
+# values computed by templates/_values.tpl (okdp.vendor.render "valuesFile").
+# Plain YAML, not a template.
+image:
+  repository: quay.io/okdp/spark
+  pullPolicy: IfNotPresent
+  tag: "spark-3.5.6-scala-2.12-java-17"
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+config:
+  spark.history.fs.logDirectory: s3a://spark-events/event-logs
+  spark.history.fs.cleaner.enabled: true
+  spark.history.fs.eventLog.rolling.maxFilesToRetain: 5
+extraVolumes:
+  - name: cacerts
+    secret:
+      secretName: certs-bundle
+extraVolumeMounts:
+  - name: cacerts
+    mountPath: /cacerts

@@ -1,2 +1,2 @@
 {{- /* Module main. */}}
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-history-server" "values" (include "okdp-shs.values.history" . | fromYaml) "upstream" (include "okdp-shs.upstream.history" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-history-server" "valuesFile" "vendor-values/spark-history-server.yaml" "values" (include "okdp-shs.values.history" . | fromYaml) "upstream" (include "okdp-shs.upstream.history" . | fromYaml)) }}

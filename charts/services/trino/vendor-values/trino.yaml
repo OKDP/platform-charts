@@ -1,0 +1,56 @@
+# Fixed values of the vendored trino chart (vendor/trino), merged over its
+# values.yaml and under the values computed by templates/_values.tpl
+# (okdp.vendor.render "valuesFile"). Plain YAML, not a template.
+image:
+  repository: trinodb/trino
+  tag: "480"
+coordinator:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+  additionalVolumes:
+    - name: cacerts
+      secret:
+        secretName: certs-bundle
+  additionalVolumeMounts:
+    - name: cacerts
+      mountPath: /cacerts
+      readOnly: true
+  additionalJVMConfig:
+    - "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12"
+    - "-Djavax.net.ssl.trustStorePassword=${ENV:TRUSTSTORE_PASSWORD}"
+worker:
+  additionalVolumes:
+    - name: cacerts
+      secret:
+        secretName: certs-bundle
+  additionalVolumeMounts:
+    - name: cacerts
+      mountPath: /cacerts
+      readOnly: true
+  additionalJVMConfig:
+    - "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12"
+    - "-Djavax.net.ssl.trustStorePassword=${ENV:TRUSTSTORE_PASSWORD}"
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+server:
+  node:
+    environment: sandbox
+  config:
+    authenticationType: oauth2
+    coordinator: "true"
+    node-scheduler.include-coordinator: "true"
+    discovery-server.enabled: "true"
+    path: /etc/trino
+    https:
+      enabled: false
+  workerExtraConfig: ""
+additionalConfigProperties:
+  - internal-communication.shared-secret=${ENV:TRINO_SHARED_SECRET}

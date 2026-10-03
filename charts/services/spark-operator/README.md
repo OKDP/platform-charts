@@ -6,8 +6,8 @@ runs Spark applications on Kubernetes through the `SparkApplication`,
 
 It renders the upstream chart `spark-operator` 2.5.2
 (`https://kubeflow.github.io/spark-operator`), vendored under `vendor/` (see
-`vendor.yaml`), with values computed from the parameters below
-(`templates/_values.tpl`).
+`vendor.yaml`), with values computed from the parameters below (fixed ones in
+`vendor-values/spark-operator.yaml`, computed ones in `templates/_values.tpl`).
 
 ## Parameters
 

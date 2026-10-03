@@ -5,7 +5,8 @@ KubernetesExecutor, OIDC login (Flask AppBuilder) and DAGs from git-sync. It
 **consumes** a `database-server` and an `s3` connection and provides none.
 
 It renders two upstream charts, vendored under `vendor/` (see `vendor.yaml`),
-with values computed from the parameters below (`templates/_values.tpl`):
+with values computed from the parameters below (fixed ones in
+`vendor-values/airflow.yaml`, computed ones in `templates/_values.tpl`):
 
 | Former module | Chart | Rendered |
 |---|---|---|

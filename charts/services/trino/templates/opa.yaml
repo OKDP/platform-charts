@@ -1,4 +1,4 @@
 {{- /* Module opa, enabled by enableOPA. */}}
 {{- if .Values.enableOPA }}
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "opa-kube-mgmt" "values" (include "okdp-trino.values.opa" . | fromYaml) "upstream" (include "okdp-trino.upstream.opa" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "opa-kube-mgmt" "valuesFile" "vendor-values/opa-kube-mgmt.yaml" "values" (include "okdp-trino.values.opa" . | fromYaml) "upstream" (include "okdp-trino.upstream.opa" . | fromYaml)) }}
 {{- end }}

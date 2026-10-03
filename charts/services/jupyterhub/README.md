@@ -6,7 +6,8 @@ browser and PySpark kernels running Spark on Kubernetes. It **consumes** an
 `s3` connection and provides no connection.
 
 The former KuboCD modules are vendored charts (`vendor.yaml`, `vendor/`)
-rendered by `okdp.vendor.render` with computed values (`templates/_values.tpl`):
+rendered by `okdp.vendor.render` (fixed values in `vendor-values/<chart>.yaml`,
+computed ones in `templates/_values.tpl`):
 
 | Former module | Now | Rendered when |
 |---|---|---|

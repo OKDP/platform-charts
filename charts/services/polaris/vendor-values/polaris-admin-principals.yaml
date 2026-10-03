@@ -1,0 +1,17 @@
+# Fixed values of the principals render of the vendored polaris-admin chart
+# (vendor/polaris-admin), merged over its values.yaml and under the values
+# computed by templates/_values.tpl (okdp.vendor.render "valuesFile"). Plain
+# YAML, not a template.
+phase: principals
+principals:
+  image:
+    repository: curlimages/curl
+    tag: 8.18.0
+    pullPolicy: IfNotPresent
+  # The chart defaults this to a bundle path, and curl refuses a --cacert
+  # that does not exist. The in-cluster call is plain HTTP.
+  caCertPath: ""
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation

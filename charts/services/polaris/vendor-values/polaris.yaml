@@ -1,0 +1,65 @@
+# Fixed values of the vendored polaris chart (vendor/polaris), merged over its
+# values.yaml and under the values computed by templates/_values.tpl
+# (okdp.vendor.render "valuesFile"). Plain YAML, not a template.
+image:
+  repository: apache/polaris
+  pullPolicy: IfNotPresent
+  tag: "1.3.0-incubating"
+resources:
+  requests:
+    memory: 512Mi
+persistence:
+  type: relational-jdbc
+features:
+  DROP_WITH_PURGE_ENABLED: true
+  SUPPORTED_CATALOG_STORAGE_TYPES:
+    - S3
+  realmOverrides: {}
+realmContext:
+  type: default
+advancedConfig:
+  polaris.realm-context.header-name: "Polaris-Realm"
+  quarkus.http.cors.enabled: "true"
+authentication:
+  type: mixed
+oidc:
+  client:
+    id: null
+  # Map polaris internal principal and roles with OIDC principal and roles
+  principalMapper:
+    type: default
+    idClaimPath: null
+    nameClaimPath: "preferred_username"
+  # Mapped OIDC roles are visible, but they do not have the same effect as internal Polaris assignments.
+  # Issue: https://github.com/apache/polaris/issues/2373
+  # Active Polaris roles = (mapped external roles) ∩ (principal roles granted in Polaris)
+  principalRolesMapper:
+    type: default
+    rolesClaimPath: realm_access/roles
+    filter: "^(?!default-roles-.*|offline_access$|uma_authorization$).*$"
+    mappings:
+      # polaris_service_admin -> PRINCIPAL_ROLE:service_admin
+      - regex: "^polaris_(.*)$"
+        replacement: "PRINCIPAL_ROLE:$1"
+      # Fallback for normal roles, but do NOT touch values already prefixed by Polaris.
+      - regex: "^(?!PRINCIPAL_ROLE:)(?!polaris_)(.*)$"
+        replacement: "PRINCIPAL_ROLE:$1"
+logging:
+  level: INFO
+cors:
+  allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  allowedHeaders: ["Content-Type", "Authorization", "Polaris-Realm", "X-Request-ID"]
+  exposedHeaders: ["*"]
+  accessControlMaxAge: "PT10M"
+  accessControlAllowCredentials: true
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+extraVolumes:
+  - name: cacerts
+    secret:
+      secretName: certs-bundle
+extraVolumeMounts:
+  - name: cacerts
+    mountPath: /cacerts

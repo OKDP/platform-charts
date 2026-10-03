@@ -1,4 +1,7 @@
 {{- /* Module oidc-dcr, enabled when the platform registers clients by DCR. */}}
 {{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-airflow.values.dcr" . | fromYaml)) }}
+{{ include "okdp.oidc.dcr" (dict "ctx" .
+     "redirectUris" (list (printf "https://%s/auth/oauth-authorized/oidc" (include "okdp-airflow.host" .)))
+     "grantTypes" (list "authorization_code" "refresh_token" "client_credentials")
+     "scope" (include "okdp-airflow.scope" .)) }}
 {{- end }}

@@ -9,7 +9,8 @@ connections and provides none.
 
 The former KuboCD module `main` is the vendored chart
 `oci://quay.io/okdp/charts/okdp-examples` 1.3.0 (`vendor.yaml`, `vendor/`),
-rendered by `okdp.vendor.render` with computed values (`templates/_values.tpl`).
+rendered by `okdp.vendor.render` (fixed values in
+`vendor-values/okdp-examples.yaml`, computed ones in `templates/_values.tpl`).
 
 ## Parameters
 

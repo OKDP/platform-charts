@@ -41,6 +41,7 @@ values.yaml           the service parameters (the former KuboCD parameters)
 values.schema.json    draft-07, with the x-ui-* / x-okdp-* hints the console reads
 vendor.yaml           upstream charts rendered with computed values
 vendor/<name>/        their pristine unpacked copy (downloaded, not committed)
+vendor-values/        fixed values of each vendored chart (plain YAML, okdp.vendor.render "valuesFile")
 templates/            okdp-lib-chart calls, computed values, descriptor
 ci/*-values.yaml      test values (each carries a global.okdp platform block)
 README.md
@@ -83,7 +84,8 @@ helm lint charts/services/trino -f charts/services/trino/ci/opa-opal-values.yaml
 ### Auditing the values of the upstream charts
 
 Each vendored upstream chart is rendered with values computed by the wrapper
-(`_values.tpl`), merged over its `values.yaml`. `okdp.vendor.render` writes
+(`_values.tpl`), merged over its `values.yaml`: first the fixed values of
+`vendor-values/<chart>.yaml`, then the computed ones (`_values.tpl`). `okdp.vendor.render` writes
 the result, what the upstream chart actually received, to a ConfigMap
 `<release>-<chart>-values` (key `values.yaml`, label `okdp.io/vendor-values`),
 so it can be read and diffed like a plain Helm `values.yaml`:

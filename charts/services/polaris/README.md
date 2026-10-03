@@ -5,8 +5,9 @@ catalog, with its console. It **provides** an `iceberg-catalog` connection and
 **consumes** a `database-server` (PostgreSQL) and an `s3` connection.
 
 It renders three upstream charts, vendored under `vendor/` (see
-`vendor.yaml`), with values computed from the parameters below
-(`templates/_values.tpl`):
+`vendor.yaml`), with values computed from the parameters below (fixed ones in
+`vendor-values/<chart>.yaml`, one file per polaris-admin render, computed ones
+in `templates/_values.tpl`):
 
 | Former module | Chart | Rendered as |
 |---|---|---|

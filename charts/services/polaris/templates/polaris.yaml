@@ -1,2 +1,2 @@
 {{- /* Module main. */}}
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "polaris" "values" (include "okdp-polaris.values.polaris" . | fromYaml) "upstream" (include "okdp-polaris.upstream.polaris" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "polaris" "valuesFile" "vendor-values/polaris.yaml" "values" (include "okdp-polaris.values.polaris" . | fromYaml) "upstream" (include "okdp-polaris.upstream.polaris" . | fromYaml)) }}

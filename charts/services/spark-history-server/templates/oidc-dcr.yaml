@@ -1,4 +1,7 @@
 {{- /* Module oidc-dcr, enabled when the platform registers clients by DCR. */}}
 {{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-shs.values.dcr" . | fromYaml)) }}
+{{ include "okdp.oidc.dcr" (dict "ctx" .
+     "redirectUris" (list (include "okdp-shs.redirectUri" .))
+     "grantTypes" (list "authorization_code" "refresh_token")
+     "scope" (include "okdp-shs.scope" .)) }}
 {{- end }}

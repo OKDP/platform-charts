@@ -37,12 +37,7 @@ connections resolved by okdp.connection.
 {{- if $proxyEnv -}}
 {{- $_ := set $gitSyncValues "env" $proxyEnv -}}
 {{- end -}}
-{{- /* In dcr mode the registration job writes the credentials, under the same keys. */ -}}
-{{- $oauthSecret := include "okdp-airflow.oauthSecret" . -}}
-{{- if $oidc.dcr.enabled -}}{{- $oauthSecret = include "okdp-airflow.dcrSecret" . -}}{{- end -}}
-executor: KubernetesExecutor
-defaultAirflowTag: "3.2.1"
-airflowVersion: "3.2.1"
+{{- $oauthSecret := include "okdp.oidc.clientSecret" . -}}
 extraEnv: |
 {{- if $oidc.enabled }}
   - name: AIRFLOW_OIDC_CLIENT_ID
@@ -88,27 +83,10 @@ extraEnv: |
     value: "/cacerts/ca.crt"
   - name: CURL_CA_BUNDLE
     value: "/cacerts/ca.crt"
-# The CA bundle the variables above point at, mounted in every Airflow
-# container: a component without it fails any HTTPS call, and the CLI
-# itself talks to the API server over HTTPS.
-volumes:
-  - name: cacerts
-    secret:
-      secretName: certs-bundle
-volumeMounts:
-  - name: cacerts
-    mountPath: /cacerts
 apiServer:
   resources:
-    requests:
-      memory: 384Mi
-      cpu: 200m
     limits:
       memory: {{ printf "%vGi" .Values.webserverMemoryGi | quote }}
-      cpu: 1000m
-  startupProbe:
-    failureThreshold: 24
-    timeoutSeconds: 30
   {{- if $oidc.enabled }}
   apiServerConfig: |
     import os
@@ -152,35 +130,14 @@ apiServer:
   {{- end }}
 scheduler:
   resources:
-    requests:
-      memory: 384Mi
-      cpu: 200m
     limits:
       memory: {{ printf "%vGi" .Values.schedulerMemoryGi | quote }}
-      cpu: 1000m
-  startupProbe:
-    failureThreshold: 12
-    timeoutSeconds: 60
-triggerer:
-  enabled: true
-  # The default 20s probe times out on small nodes and kills a healthy triggerer.
-  livenessProbe:
-    timeoutSeconds: 60
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 50m
-    limits:
-      memory: 512Mi
-      cpu: 300m
 ingress:
   apiServer:
-    enabled: true
     ingressClassName: {{ .Values.global.okdp.ingress.className }}
     annotations:
       kubernetes.io/ingress.class: {{ .Values.global.okdp.ingress.className }}
       {{- include "okdp.ingressAnnotations" . | nindent 6 }}
-      nginx.ingress.kubernetes.io/proxy-body-size: "0"
     hosts:
       - name: {{ $host }}
         tls:
@@ -192,101 +149,18 @@ ingress:
 data:
   metadataSecretName: {{ .Values.metadataSecret }}
 dags:
-  mountPath: /opt/airflow/dags
-  persistence:
-    enabled: false
   gitSync:
     {{- toYaml $gitSyncValues | nindent 4 }}
 dagProcessor:
-  enabled: true
   resources:
-    requests:
-      memory: 256Mi
-      cpu: 200m
     limits:
       memory: {{ printf "%vGi" .Values.dagProcessorMemoryGi | quote }}
       cpu: {{ .Values.dagProcessorCpuCores | quote }}
-flower:
-  enabled: false
-pgbouncer:
-  enabled: false
-statsd:
-  enabled: false
-# Off: its password secret template calls randAlphaNum (okdp-guard-allow.yaml).
-redis:
-  enabled: false
-workers:
-  replicas: 0
-postgresql:
-  enabled: false
-webserver:
-  enabled: false
-createUserJob:
-  enabled: false
-  useHelmHooks: false
-migrateDatabaseJob:
-  enabled: true
-  # Not a Helm hook: under Flux (--wait) and Argo (PostSync after healthy) a
-  # post-install hook would wait for pods that wait for the migrations.
-  useHelmHooks: false
-  # A plain Job with ttlSecondsAfterFinished disappears after it succeeds:
-  # Argo would see the release out of sync and recreate it forever. Argo runs
-  # it as a Sync hook instead (recreated on every sync, migrations are
-  # idempotent); Helm and Flux ignore these annotations.
-  jobAnnotations:
-    argocd.argoproj.io/hook: Sync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
-  resources:
-    requests:
-      memory: 64Mi
-      cpu: 25m
-    limits:
-      memory: 256Mi
-      cpu: 200m
-config:
-  core:
-    load_examples: 'False'
-    auth_manager: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
-  fab:
-    enable_proxy_fix: "True"
-    cookie_secure: "True"
-    cookie_samesite: "Lax"
 # Generated once by ESO (templates/internal-secret.yaml): the chart's own
 # templates would mint them with randAlphaNum on every render.
 fernetKeySecretName: {{ include "okdp-airflow.internalSecret" . }}
 apiSecretKeySecretName: {{ include "okdp-airflow.internalSecret" . }}
 jwtSecretName: {{ include "okdp-airflow.internalSecret" . }}
-{{- end -}}
-
-{{/* Module oidc-dcr: registers the OAuth client (clientProvisioning: dcr). */}}
-{{- define "okdp-airflow.values.dcr" -}}
-{{- $oidc := include "okdp.oidc" . | fromYaml -}}
-{{- if ne ($oidc.dcr.authMethod | default "") "anonymous" -}}
-  {{- fail (printf "airflow: global.okdp.oidc.dcr.authMethod %q is not supported: this chart registers anonymously" ($oidc.dcr.authMethod | default "")) -}}
-{{- end -}}
-{{- include "okdp.require" (dict "ctx" . "keys" (list "oidc.dcr.registrationUrl")) -}}
-ttl_seconds: 30
-registration_url: {{ $oidc.dcr.registrationUrl | quote }}
-request:
-  application_type: web
-  client_name: {{ printf "%s-%s" .Release.Name .Release.Namespace | quote }}
-  redirect_uris:
-    - {{ printf "https://%s/auth/oauth-authorized/oidc" (include "okdp-airflow.host" .) | quote }}
-  grant_types:
-    - authorization_code
-    - refresh_token
-    - client_credentials
-  # openid is rejected by Keycloak here; offline_access must match the login scope.
-  scope: {{ without (splitList " " (include "okdp-airflow.scope" .)) "openid" | join " " | quote }}
-tls:
-  insecure: false
-  certificate: certs-bundle
-secret: {{ include "okdp-airflow.dcrSecret" . }}
-mapping:
-  use_default: false
-  key_mapping:
-    client_id: ".client_id"
-    client_secret: ".client_secret"
 {{- end -}}
 
 {{/*

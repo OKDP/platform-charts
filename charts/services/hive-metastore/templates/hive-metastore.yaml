@@ -1,1 +1,1 @@
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "hive-metastore" "values" (include "hive-metastore.upstream.values" . | fromYaml) "upstream" (include "hive-metastore.upstream" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "hive-metastore" "valuesFile" "vendor-values/hive-metastore.yaml" "values" (include "hive-metastore.upstream.values" . | fromYaml) "upstream" (include "hive-metastore.upstream" . | fromYaml)) }}

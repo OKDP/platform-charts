@@ -18,16 +18,6 @@ the vendored charts (spark-history-server.*, spark-web-proxy.*).
 {{- include "okdp.ingressHost" (dict "ctx" . "name" "spark-web-proxy") -}}
 {{- end -}}
 
-{{/* Secret of the OAuth client (existing mode): creds-<release>-oauth2, the platform convention. */}}
-{{- define "okdp-shs.oauthSecret" -}}
-{{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
-
-{{/* Secret the oidc-dcr job writes the registered client to (dcr mode), same keys. */}}
-{{- define "okdp-shs.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
-{{- end -}}
-
 {{/* Login scope, offline_access included (the oidc-dcr registration must grant it). */}}
 {{- define "okdp-shs.scope" -}}
 {{- $oidc := include "okdp.oidc" . | fromYaml -}}
