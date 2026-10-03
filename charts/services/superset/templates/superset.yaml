@@ -3,4 +3,4 @@ Module main: the Apache Superset chart (vendor/superset) with the values of
 okdp-superset-wrapper.values.superset. OKDP's former wrapper chart is folded
 into those values and templates/env-secrets.yaml.
 */ -}}
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "superset" "values" (include "okdp-superset-wrapper.values.superset" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "superset" "values" (include "okdp-superset-wrapper.values.superset" . | fromYaml) "upstream" (include "okdp-superset-wrapper.upstream.superset" . | fromYaml)) }}

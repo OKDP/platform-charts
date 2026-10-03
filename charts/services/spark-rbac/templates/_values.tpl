@@ -10,3 +10,16 @@ serviceAccount:
   name: {{ .Values.serviceAccountName | quote }}
   automount: {{ .Values.automountServiceAccountToken }}
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.spark-rbac in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: the ServiceAccount name, which the descriptor publishes and the
+Spark jobs of the namespace are configured with (serviceAccountName). Nothing
+is appended: the chart sets no list.
+*/}}
+{{- define "okdp-spark-rbac.upstream" -}}
+protect:
+  - serviceAccount.name
+{{- end -}}

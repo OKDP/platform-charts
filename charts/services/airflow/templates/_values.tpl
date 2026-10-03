@@ -288,3 +288,58 @@ mapping:
     client_id: ".client_id"
     client_secret: ".client_secret"
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.airflow in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: what the platform relies on. Names (okdp-airflow.argoOrder finds
+the migration Job by name, the descriptor and internal Secret derive from the
+release). OIDC sign-in (extraEnv carries the client Secret and S3 credentials
+as a templated string, which cannot be appended to: an instance adds variables
+with env, secret or extraEnvFrom instead), the ingress host registered with
+the identity provider, the metadata database and generated secrets (data,
+the *SecretName keys, never a literal key in the values). The switches
+okdp-guard-allow.yaml relies on (airflowVersion, redis.enabled, executor:
+the Celery executors need the Redis whose password is random), postgresql
+(dropped from vendor/), the migration Job run as an Argo Sync hook, and the
+create-user Job (a local admin with a password in the values). Appended:
+the CA bundle volume and mount, and the proxy variables of git-sync.
+*/}}
+{{- define "okdp-airflow.upstream.airflow" -}}
+protect:
+  - fullnameOverride
+  - nameOverride
+  - useStandardNaming
+  - airflowVersion
+  - executor
+  - extraEnv
+  - apiServer.apiServerConfig
+  - apiServer.apiServerConfigConfigMapName
+  - config.core.auth_manager
+  - ingress.enabled
+  - ingress.apiServer.enabled
+  - ingress.apiServer.ingressClassName
+  - ingress.apiServer.host
+  - ingress.apiServer.hosts
+  - ingress.apiServer.tls
+  - data
+  - fernetKey
+  - fernetKeySecretName
+  - apiSecretKey
+  - apiSecretKeySecretName
+  - jwtSecret
+  - jwtSecretName
+  - webserverSecretKey
+  - webserverSecretKeySecretName
+  - redis.enabled
+  - postgresql.enabled
+  - migrateDatabaseJob.enabled
+  - migrateDatabaseJob.useHelmHooks
+  - migrateDatabaseJob.jobAnnotations
+  - createUserJob.enabled
+append:
+  - volumes
+  - volumeMounts
+  - dags.gitSync.env
+{{- end -}}

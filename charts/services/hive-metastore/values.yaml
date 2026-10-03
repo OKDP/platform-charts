@@ -19,3 +19,13 @@ storage: ""
 s3SecretRef: ""
 # S3 bucket used as the warehouse directory.
 warehouseBucket: hive
+
+# Values of the upstream chart, merged over the ones computed from the
+# parameters above (templates/_values.tpl, hive-metastore.upstream): any
+# upstream value can be set except the protected ones, e.g.
+#   upstream:
+#     hive-metastore:
+#       image: {repository: mirror.example.org/okdp/hive-metastore}
+#       tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+#       extraEnvRaw: [{name: HADOOP_HEAPSIZE, value: "2048"}]
+upstream: {}

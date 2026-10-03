@@ -179,11 +179,69 @@
       "x-ui-group": "Spark",
       "x-ui-order": 4,
       "x-ui-advanced": true
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "jupyterhub": {
+          "type": "object",
+          "title": "jupyterhub",
+          "description": "Values of the jupyterhub chart 4.4.2 (https://hub.jupyter.org/helm-chart/), for example hub.image, hub.resources, hub.extraConfig, hub.config (Authenticator, GenericOAuthenticator role mapping), singleuser.image, singleuser.extraEnv, singleuser.nodeSelector, scheduling, culling. Refused: fullnameOverride, nameOverride, hub.config.ConfigurableHTTPProxy, hub.config.CryptKeeper, hub.config.JupyterHub.cookie_secret/hub_connect_url/authenticator_class, hub.config.Authenticator.enable_auth_state, hub.config.GenericOAuthenticator.client_id/client_secret/oauth_callback_url/authorize_url/token_url/userdata_url, hub.extraEnv.OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET/JUPYTERHUB_CRYPT_KEY, hub.existingSecret, hub.cookieSecret, hub.services, proxy.secretToken, ingress.enabled/ingressClassName/hosts/tls, prePuller.hook.enabled, singleuser.podNameTemplate, singleuser.serviceAccountName, singleuser.storage.dynamic.pvcNameTemplate/volumeNameTemplate, singleuser.extraEnv FS_S3_ENDPOINT_URL/FS_S3_ACCESS_KEY/FS_S3_SECRET_KEY/POD_IP, the <PREFIX>_S3_ACCESS_KEY/<PREFIX>_S3_SECRET_KEY of the pyspark connections and the platform proxy variables, singleuser.extraFiles jupyter_server_config_py/notebook_oauth2/welcome-notebook. Appended to the lists this chart sets: hub.config.JupyterHub.load_roles, singleuser.storage.extraVolumes/extraVolumeMounts, singleuser.profileList.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "spark-rbac": {
+          "type": "object",
+          "title": "spark-rbac",
+          "description": "Values of the spark-rbac chart 1.0.1 (oci://quay.io/okdp/charts), the spark ServiceAccount and Role of the notebooks: serviceAccount.annotations (workload identity), serviceAccount.automount, rbac.annotations. Refused: rbac.create, serviceAccount.create, serviceAccount.name.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 2,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": [
     "storage",
     "s3SecretRef"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }

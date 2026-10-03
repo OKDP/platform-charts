@@ -19,3 +19,14 @@ metricsEnabled: true
 podMonitorEnabled: false
 # Admission webhook for validation and mutation.
 webhookEnabled: true
+
+# Values of the upstream chart, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-spark-operator.upstream): any
+# upstream value can be set except the protected ones, e.g.
+#   upstream:
+#     spark-operator:
+#       image: {registry: mirror.example.org}
+#       controller:
+#         resources: {limits: {memory: 1Gi}}
+#         tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+upstream: {}

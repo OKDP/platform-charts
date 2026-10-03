@@ -372,3 +372,23 @@ catalog_admin role and its credentials Secret, as a YAML list of
 {{- end -}}
 {{- toYaml $out -}}
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.okdp-examples in
+its values.yaml, over the values computed above, except the protected paths.
+Protected: the object names, the seed Job's hook annotations (hooks are
+limited to pre/post-install/upgrade) and the realms file the 03-polaris step
+applies, generated from polarisRealms. Appended: the lists carrying the S3,
+Trino and Polaris credentials and the CA bundle, so an instance adds to them.
+*/}}
+{{- define "okdp-examples-wrapper.upstream" -}}
+protect:
+  - fullnameOverride
+  - job.annotations
+  - extraFiles.polaris-catalogs
+append:
+  - extraEnvRaw
+  - extraVolumes
+  - extraVolumeMounts
+{{- end -}}

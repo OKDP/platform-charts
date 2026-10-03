@@ -214,6 +214,31 @@
       "x-ui-group": "DAGs",
       "x-ui-widget": "key-value-scalar",
       "x-ui-order": 1
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "airflow": {
+          "type": "object",
+          "title": "airflow",
+          "description": "Values of the airflow chart 1.22.0 (https://airflow.apache.org), for example images, nodeSelector, tolerations, env, secret, extraEnvFrom, config, scheduler/apiServer/triggerer/dagProcessor resources, dags.gitSync. Refused: fullnameOverride, nameOverride, useStandardNaming, airflowVersion, executor, extraEnv (use env, secret or extraEnvFrom), apiServer.apiServerConfig/apiServerConfigConfigMapName, config.core.auth_manager, ingress.enabled, ingress.apiServer.enabled/ingressClassName/host/hosts/tls, data, fernetKey, apiSecretKey, jwtSecret, webserverSecretKey and their *SecretName, redis.enabled, postgresql.enabled, migrateDatabaseJob.enabled/useHelmHooks/jobAnnotations, createUserJob.enabled. Appended to the lists this chart sets: volumes, volumeMounts, dags.gitSync.env.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": [
@@ -222,5 +247,25 @@
     "storage",
     "s3SecretRef"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }

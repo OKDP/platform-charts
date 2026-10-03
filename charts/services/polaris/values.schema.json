@@ -90,8 +90,79 @@
       "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity (STS and catalog-side Iceberg metadata operations).",
       "x-ui-group": "Storage",
       "x-ui-order": 2
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "polaris": {
+          "type": "object",
+          "title": "polaris",
+          "description": "Values of the polaris chart 1.3.0-incubating (https://downloads.apache.org/polaris/helm-chart/), for example image, resources, replicaCount, nodeSelector, tolerations, advancedConfig, features, authentication.tokenBroker. Refused: fullnameOverride, service.ports, persistence, storage, realmContext, authentication.type/authenticator/realmOverrides, oidc, ingress.enabled/className/hosts/tls, serviceMonitor. Appended to the lists this chart sets: extraEnv, extraVolumes, extraVolumeMounts, cors.allowedOrigins.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "polaris-console": {
+          "type": "object",
+          "title": "polaris-console",
+          "description": "Values of the polaris-console chart 0.2.0 (oci://quay.io/okdp/charts/polaris-console): image, resources, replicaCount, extra extraEnv variables, ... Refused: fullnameOverride, env.polarisApiUrl/polarisRealm/oauthTokenUrl, extraEnv.VITE_OIDC_ISSUER_URL/VITE_OIDC_CLIENT_ID/VITE_OIDC_REDIRECT_URI/VITE_OIDC_SCOPE, ingress.enabled/className/hosts/tls.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 2,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "polaris-admin": {
+          "type": "object",
+          "title": "polaris-admin",
+          "description": "Values of the polaris-admin chart 1.0.0 (oci://quay.io/okdp/charts/polaris-admin), applied to both its Jobs (bootstrap and principals): bootstrap.image, principals.image, backoffLimit, ttlSecondsAfterFinished, extraEnv, extraVolumes, ... Refused: fullnameOverride, phase, realms, bootstrap.purge, bootstrap.database, bootstrap.annotations, principals.polaris.url, principals.annotations.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 3,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": ["db", "storage", "s3SecretRef"],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+      "noTemplate": {
+        "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+        "not": {
+          "type": "string",
+          "pattern": "\\{\\{"
+        },
+        "propertyNames": {
+          "not": {
+            "pattern": "\\{\\{"
+          }
+        },
+        "additionalProperties": {
+          "$ref": "#/definitions/noTemplate"
+        },
+        "items": {
+          "$ref": "#/definitions/noTemplate"
+        }
+      }
+    }
 }

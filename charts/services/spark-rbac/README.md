@@ -23,6 +23,27 @@ values under its own keys, which would have renamed every parameter.
 
 No platform value is read. No provided connection, no UI.
 
+## Upstream values
+
+Any value of the vendored `spark-rbac` chart can be set per instance under
+`upstream.spark-rbac`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  spark-rbac:
+    serviceAccount:
+      annotations: {eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/spark}
+    rbac:
+      annotations: {example.org/owner: data-team}
+```
+
+`serviceAccount.name` is refused: it is the `serviceAccountName` parameter,
+which the descriptor publishes to the Spark jobs (see `okdp-spark-rbac.upstream`
+in `templates/_values.tpl`). An upstream value wins over the parameter it
+overlaps (`serviceAccount.automount` over `automountServiceAccountToken`). No
+key or value may contain `{{` (the schema and okdp-lib-chart both refuse it).
+
 ## Notes
 
 - The Role and RoleBinding names are fixed by the upstream chart

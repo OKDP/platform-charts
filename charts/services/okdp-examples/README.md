@@ -35,6 +35,32 @@ principals refer to (`service-account-<client id>`), so they are created in
 Keycloak beforehand in both modes, not registered by DCR (a registered client
 gets a generated client id).
 
+## Upstream values
+
+Any value of the vendored `okdp-examples` chart can be set per instance under
+`upstream.okdp-examples`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  okdp-examples:
+    image: {repository: mirror.example.org/okdp/okdp-examples}
+    job: {backoffLimit: 4}
+    tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+    extraEnvRaw: [{name: EXTRA_FLAG, value: "1"}]           # appended to the chart's env
+    commands:                                               # an extra step
+      04-custom: {01-hello: echo hello}
+```
+
+The paths the platform relies on are refused (the object names, the Job's hook
+annotations, the realms file generated from `polarisRealms`), and the lists
+carrying the chart's Secrets and CA bundle are appended to rather than
+replaced: see `okdp-examples-wrapper.upstream` in `templates/_values.tpl` (also
+listed in the schema description). An upstream value wins over the parameter it
+overlaps (`resources` over `cpu`/`memoryGi`), and a `commands` step of the same
+group and name replaces the chart's. No key or value may contain `{{` (the
+schema and okdp-lib-chart both refuse it).
+
 ## Hooks
 
 The seed Job is a `post-install,post-upgrade` hook (Argo: PostSync, run on

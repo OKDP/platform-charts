@@ -163,6 +163,31 @@
       "x-ui-group": "Polaris",
       "x-ui-order": 7,
       "x-ui-advanced": true
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream chart this chart renders, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "okdp-examples": {
+          "type": "object",
+          "title": "okdp-examples",
+          "description": "Values of the okdp-examples chart 1.3.0 (oci://quay.io/okdp/charts/okdp-examples), for example image, job.backoffLimit, resources, nodeSelector, tolerations, extra commands or extraFiles. Refused: fullnameOverride, job.annotations, extraFiles.polaris-catalogs. Appended to the lists this chart sets: extraEnvRaw, extraVolumes, extraVolumeMounts.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": [
@@ -173,5 +198,25 @@
     "polaris",
     "polarisRealms"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }

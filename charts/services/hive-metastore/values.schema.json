@@ -95,6 +95,31 @@
       "x-ui-group": "Storage",
       "x-ui-order": 3,
       "x-ui-columns": 2
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream chart this chart renders, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "hive-metastore": {
+          "type": "object",
+          "title": "hive-metastore",
+          "description": "Values of the hive-metastore chart 1.4.0 (oci://quay.io/okdp/charts/hive-metastore), for example image, replicaCount, resources, nodeSelector, tolerations, configOverrides, networkPolicies, s3.proxy. Refused: fullNameOverride, serviceName, servicePort, db, s3.url, s3.accessKey, s3.secretKey, cloud_storage, initJob.annotations. Appended to the list this chart sets: extraEnvRaw.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": [
@@ -102,5 +127,25 @@
     "storage",
     "s3SecretRef"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }

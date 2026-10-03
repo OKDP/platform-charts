@@ -1,2 +1,2 @@
 {{- /* Module main. */}}
-{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-rbac" "values" (include "okdp-spark-rbac.values" . | fromYaml)) }}
+{{ include "okdp.vendor.render" (dict "ctx" . "chart" "spark-rbac" "values" (include "okdp-spark-rbac.values" . | fromYaml) "upstream" (include "okdp-spark-rbac.upstream" . | fromYaml)) }}

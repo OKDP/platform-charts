@@ -38,3 +38,13 @@ locale: en
 currency: ""
 d3Format: {}
 d3TimeFormat: {}
+
+# Values of the upstream superset chart, merged over the ones computed from
+# the parameters above (templates/_values.tpl, okdp-superset-wrapper.upstream.superset):
+# any upstream value can be set except the protected ones, e.g.
+#   upstream:
+#     superset:
+#       image: {repository: mirror.example.org/okdp/superset}
+#       supersetWorker: {replicas: {replicaCount: 2}}
+#       tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+upstream: {}

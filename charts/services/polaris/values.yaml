@@ -20,3 +20,16 @@ realm: default
 # Polaris principals to create in the realm, with their principal roles:
 # [{name: alice, roles: [catalog_admin]}].
 principals: []
+
+# Values of the upstream charts, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-polaris.upstream.*): any upstream
+# value can be set except the protected ones, e.g.
+#   upstream:
+#     polaris:
+#       image: {repository: mirror.example.org/apache/polaris}
+#       tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+#     polaris-console:
+#       resources: {limits: {memory: 256Mi}}
+#     polaris-admin:
+#       bootstrap: {backoffLimit: 3}
+upstream: {}

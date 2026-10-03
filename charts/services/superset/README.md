@@ -75,6 +75,37 @@ TLS: the sign-in (`AUTH_OAUTH_SSL_CERTIFICATE_VERIFY`) and the Trino datasources
 (`certs-bundle`, mounted at `/cacerts`, `REQUESTS_CA_BUNDLE`) unless
 `global.okdp.oidc.insecureSkipVerify` is true.
 
+## Upstream values
+
+Any value of the vendored `superset` chart can be set per instance under
+`upstream.superset`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  superset:
+    image: {repository: mirror.example.org/okdp/superset}
+    supersetWorker: {replicas: {replicaCount: 2}}
+    tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+    extraEnvRaw: [{name: EXTRA_FLAG, value: "1"}]     # appended to the chart's env
+    configOverrides:                                   # a block added to superset_config.py
+      row_limit: |
+        ROW_LIMIT = 100000
+```
+
+The paths the platform relies on are refused (names and env Secrets, the
+`configOverrides` blocks of the sign-in, the Trino OAuth2 and Valkey, the
+metadata database and cache connections, the local admin creation,
+`forceReload`, the ingress host), and the lists carrying the chart's Secrets
+and wait init containers are appended to rather than replaced: see
+`okdp-superset-wrapper.upstream.superset` in `templates/_values.tpl` (also
+listed in the schema description). An upstream value wins over the parameter
+it overlaps (`supersetNode.resources` over `cpu`/`memoryGi`,
+`extraConfigs` over `datasources`). `configOverrides` blocks are Python, run
+after the wrapper's: they can redefine any setting, the protection only keeps
+the wrapper's blocks in place. No key or value may contain `{{` (the schema
+and okdp-lib-chart both refuse it). `oidc-dcr` takes no upstream values.
+
 ## Hooks
 
 The Apache chart's init job (schema upgrade, roles, local admin without OIDC,

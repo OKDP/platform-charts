@@ -13,3 +13,12 @@ serviceAccountCreate: true
 serviceAccountName: spark
 # Mount the ServiceAccount token in the pods.
 automountServiceAccountToken: true
+
+# Values of the upstream chart, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-spark-rbac.upstream): any
+# upstream value can be set except the protected ones, e.g.
+#   upstream:
+#     spark-rbac:
+#       serviceAccount:
+#         annotations: {eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/spark}
+upstream: {}

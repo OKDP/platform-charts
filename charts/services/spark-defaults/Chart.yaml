@@ -19,7 +19,7 @@ annotations:
   okdp.io/roles: spark-defaults
 dependencies:
   - name: okdp-lib-chart
-    version: ">=0.1.0 <1.0.0"
+    version: ">=0.2.0 <1.0.0"
     repository: oci://quay.io/okdp
   # The former module main: its values were static (empty), so it stays a
   # plain Helm dependency (values slot `spark-defaults`, no alias: an alias

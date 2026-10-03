@@ -169,3 +169,72 @@ ingress:
         - {{ $host }}
       secretName: {{ include "okdp.fullname" (dict "ctx" . "suffix" "proxy-tls") }}
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.<chart> in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: the names the web proxy addresses (fullnameOverride, the Service
+name and port) and the ingress (the UI entry point is the web proxy, whose host
+is registered with the identity provider). Appended: the lists carrying the
+S3 identity, the OAuth client, the cookie key and the CA bundle, so an
+instance adds to them.
+The Spark properties under config carry dots in their names, out of reach of
+the dotted protect paths: this helper refuses the ones the platform sets (OIDC
+filter, ACLs, event log directory, S3 endpoint and credentials, UI port), and
+any key or value that could add a line to the properties file.
+*/}}
+{{- define "okdp-shs.upstream.history" -}}
+{{- $config := (index (.Values.upstream | default dict) "spark-history-server" | default dict).config -}}
+{{- if kindIs "map" $config -}}
+{{- $refused := list "spark.ui.filters" "spark.io.okdp.spark.authc." "spark.acls.enable" "spark.history.ui.acls." "spark.admin.acls" "spark.history.ui.admin.acls" "spark.modify.acls" "spark.ui.view.acls" "spark.user.groups.mapping" "spark.history.fs.logDirectory" "spark.history.ui.port" "spark.hadoop.fs.s3a.endpoint" "spark.hadoop.fs.s3a.path.style.access" "spark.hadoop.fs.s3a.access.key" "spark.hadoop.fs.s3a.secret.key" "spark.hadoop.fs.s3a.session.token" "spark.hadoop.fs.s3a.aws.credentials.provider" "spark.hadoop.fs.s3a.bucket." -}}
+{{- range $k, $v := $config -}}
+  {{- if not (regexMatch "^[A-Za-z0-9._-]+$" $k) -}}
+    {{- fail (printf "spark-history-server: upstream.spark-history-server.config: %q is not a Spark property name" $k) -}}
+  {{- end -}}
+  {{- if not (or (kindIs "string" $v) (kindIs "bool" $v) (kindIs "float64" $v) (kindIs "int64" $v) (kindIs "int" $v)) -}}
+    {{- fail (printf "spark-history-server: upstream.spark-history-server.config.%s must be a scalar (a Spark property value)" $k) -}}
+  {{- end -}}
+  {{- if regexMatch "[\\r\\n]" (toString $v) -}}
+    {{- fail (printf "spark-history-server: upstream.spark-history-server.config.%s: a Spark property value is a single line" $k) -}}
+  {{- end -}}
+  {{- range $r := $refused -}}
+    {{- if hasPrefix $r $k -}}
+      {{- fail (printf "spark-history-server: upstream.spark-history-server.config.%s: %s is set by the platform and cannot be changed" $k $r) -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+protect:
+  - fullnameOverride
+  - service.name
+  - service.port
+  - ingress
+append:
+  - extraEnvs
+  - extraVolumes
+  - extraVolumeMounts
+{{- end -}}
+
+{{/*
+upstream.spark-web-proxy. Protected besides the name: the history server it
+proxies (configuration.spark.history) and the Spark UI path the jobs are set
+up with (proxyBase), the job namespaces (each gets a Role letting the proxy
+list its pods: an instance must not reach other projects' namespaces) with the
+RBAC and service account behind them, and the ingress host and TLS registered
+with the identity provider.
+*/}}
+{{- define "okdp-shs.upstream.proxy" -}}
+protect:
+  - fullnameOverride
+  - configuration.spark.history
+  - configuration.spark.ui.proxyBase
+  - configuration.spark.jobNamespaces
+  - rbac.create
+  - serviceAccount.create
+  - ingress.enabled
+  - ingress.className
+  - ingress.hosts
+  - ingress.tls
+append: []
+{{- end -}}

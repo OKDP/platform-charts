@@ -58,3 +58,29 @@ resources:
     cpu: {{ mulf (float64 .Values.cpu) 2 | quote }}
     memory: {{ printf "%vGi" (mulf (float64 .Values.memoryGi) 2) | quote }}
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.hive-metastore in
+its values.yaml, over the values computed above, except the protected paths.
+Protected: the Service name and port the hive contract publishes
+(thrift://<release>-hive-metastore:9083), the database and S3 credentials
+wired from the db/storage connections and s3SecretRef, the storage backend the
+s3 connection implies, and the schema init Job's hook annotations (hooks are
+limited to pre/post-install/upgrade). Appended: extraEnvRaw, which carries the
+database user Secret and the Thrift port, so an instance adds to it.
+*/}}
+{{- define "hive-metastore.upstream" -}}
+protect:
+  - fullNameOverride
+  - serviceName
+  - servicePort
+  - db
+  - s3.url
+  - s3.accessKey
+  - s3.secretKey
+  - cloud_storage
+  - initJob.annotations
+append:
+  - extraEnvRaw
+{{- end -}}

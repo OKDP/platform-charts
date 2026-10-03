@@ -765,3 +765,73 @@ mapping:
     client_id: ".client_id"
     client_secret: ".client_secret"
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.superset in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: what the platform relies on: the names (fullnameOverride, the env
+and config Secrets the pods read), the configOverrides blocks carrying OIDC
+sign-in, the Trino OAuth2, the Valkey password, the examples and the proxy fix
+the redirect_uri depends on, the metadata database (its URI is built from the
+DB_* env of templates/env-secrets.yaml) and the cache connection to
+templates/valkey.yaml (the bundled postgresql and redis charts are dropped),
+the local admin creation (createAdmin writes the password into the init script;
+the wrapper creates it from a Secret), forceReload (randAlphaNum, allowed by
+okdp-guard-allow.yaml only while false), configOverridesFiles (their
+.Files.Get paths would resolve in the wrapper, not in vendor/superset) and the
+ingress host registered with the identity provider. configOverrides is Python
+appended to superset_config.py: an instance may add blocks, which run after
+the wrapper's and can redefine any setting; the protection keeps the
+wrapper's blocks in place, it is no sandbox. extraConfigs.import_datasources.yaml
+(a dotted key, which a path cannot name) follows `datasources` unless an
+instance replaces it. Appended: the lists carrying the wrapper's env Secrets,
+credentials, CA bundle and wait init containers, so an instance adds to them.
+*/}}
+{{- define "okdp-superset-wrapper.upstream.superset" -}}
+protect:
+  - fullnameOverride
+  - envFromSecret
+  - configFromSecret
+  - configOverrides.auth_registration
+  - configOverrides.oauth_enabled
+  - configOverrides.trino_oauth_enabled
+  - configOverrides.custom_sso_security_manager
+  - configOverrides.extra_config
+  - configOverrides.load_examples
+  - configOverrides.valkey_password
+  - configOverridesFiles
+  - config.resultsBackend
+  - database.uri
+  - database.driver
+  - cache.enabled
+  - cache.host
+  - cache.port
+  - cache.user
+  - cache.password
+  - cache.cacheUrl
+  - cache.celeryUrl
+  - cache.cacheDb
+  - cache.celeryDb
+  - postgresql
+  - redis
+  - init.createAdmin
+  - init.adminUser
+  - init.command
+  - supersetNode.forceReload
+  - supersetWorker.forceReload
+  - supersetCeleryBeat.forceReload
+  - supersetMcp.forceReload
+  - ingress.enabled
+  - ingress.ingressClassName
+  - ingress.hosts
+  - ingress.tls
+append:
+  - envFromSecrets
+  - extraEnvRaw
+  - extraVolumes
+  - extraVolumeMounts
+  - init.initContainers
+  - supersetNode.initContainers
+  - supersetWorker.initContainers
+{{- end -}}

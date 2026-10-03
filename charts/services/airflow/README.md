@@ -72,6 +72,33 @@ its wave is left unhealthy, and the retry recreates it. Under Flux the Job is a
 plain Job that waits for its Secrets as before; the deadline is above the
 default release timeout.
 
+## Upstream values
+
+Any value of the vendored `airflow` chart can be set per instance under
+`upstream.airflow`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  airflow:
+    images: {airflow: {repository: mirror.example.org/apache/airflow}}
+    nodeSelector: {node-role.kubernetes.io/data: ""}
+    env: [{name: AIRFLOW__CORE__PARALLELISM, value: "64"}]
+    volumes: [{name: plugins, configMap: {name: airflow-plugins}}]  # appended to the CA bundle
+    volumeMounts: [{name: plugins, mountPath: /opt/airflow/plugins}]
+    config: {scheduler: {dag_dir_list_interval: "60"}}
+```
+
+The paths the platform relies on are refused, and the lists carrying the
+chart's CA bundle and proxy variables are appended to rather than replaced: see
+`okdp-airflow.upstream.airflow` in `templates/_values.tpl` (also listed in the
+schema description). `extraEnv` is refused (a templated string carrying the
+OIDC client and S3 credentials): add variables with `env`, `secret` or
+`extraEnvFrom`. An upstream value wins over the parameter it overlaps
+(`apiServer.resources.limits.memory` over `webserverMemoryGi`). No key or value
+may contain `{{` (the schema and okdp-lib-chart both refuse it). `oidc-dcr`
+takes no upstream values.
+
 ## Changes from the KuboCD package
 
 - `<release>-internal` (was `creds-<release>-internal`), now also holding the

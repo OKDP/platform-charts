@@ -49,6 +49,38 @@ OAuth clients:
   `VITE_OIDC_CLIENT_ID` reads (the console chart's `extraEnv` takes values only:
   the wrapper re-points that env in the rendered Deployment).
 
+## Upstream values
+
+Any value of the vendored `polaris`, `polaris-console` and `polaris-admin`
+charts can be set per instance under `upstream.<chart>`, merged over the values
+computed from the parameters (okdp-lib-chart `okdp.vendor.render`, option
+`upstream`):
+
+```yaml
+upstream:
+  polaris:
+    image: {repository: mirror.example.org/apache/polaris}
+    tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+    extraEnv: [{name: EXTRA_FLAG, value: "1"}]        # appended to the chart's extraEnv
+    authentication:
+      tokenBroker: {secret: {name: polaris-token-keys}} # one key pair for every replica
+  polaris-console:
+    resources: {limits: {memory: 256Mi}}
+  polaris-admin:                                      # both Jobs: bootstrap and principals
+    bootstrap: {backoffLimit: 3}
+```
+
+The paths the platform relies on are refused, and the lists carrying the
+chart's Secrets are appended to rather than replaced: see
+`okdp-polaris.upstream.polaris`, `okdp-polaris.upstream.console` and
+`okdp-polaris.upstream.admin` in `templates/_values.tpl` (also listed in the
+schema descriptions). `upstream.polaris-admin` applies to both renders of that
+chart (`bootstrap.*` is read by the bootstrap Job only, `principals.*` by the
+principals Job only). An upstream value wins over the parameter it overlaps
+(`resources.limits.memory` over `memoryGi`). No key or value may contain `{{`
+(the schema and okdp-lib-chart both refuse it). `oidc-dcr` takes no upstream
+values.
+
 ## Provided connection
 
 `<release>` (contract `iceberg-catalog`):

@@ -46,6 +46,36 @@ S3 certificate checking (`-Dcom.amazonaws.sdk.disableCertChecking`) is turned
 off only when `global.okdp.oidc.insecureSkipVerify` is true; otherwise the S3
 endpoint is verified against the CA bundle (`JAVA_TOOL_OPTIONS` trust store).
 
+## Upstream values
+
+Any value of the vendored `spark-history-server` and `spark-web-proxy` charts
+can be set per instance under `upstream.<chart>`, merged over the values
+computed from the parameters (okdp-lib-chart `okdp.vendor.render`, option
+`upstream`):
+
+```yaml
+upstream:
+  spark-history-server:
+    image: {repository: mirror.example.org/okdp/spark}
+    tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+    extraEnvs: [{name: EXTRA_FLAG, value: "1"}]    # appended to the chart's env
+    config: {spark.history.retainedApplications: 100}
+  spark-web-proxy:
+    resources: {limits: {memory: 256Mi}}
+```
+
+The paths the platform relies on are refused, and the lists carrying the
+chart's Secrets and CA bundle are appended to rather than replaced: see
+`okdp-shs.upstream.history` and `okdp-shs.upstream.proxy` in
+`templates/_values.tpl` (also listed in the schema descriptions). Spark
+properties under `spark-history-server.config` have dots in their names, so
+the wrapper checks them itself: the ones it sets (OIDC filter, ACLs, event log
+directory, S3 endpoint and credentials, UI port) are refused, and each must be
+a single-line scalar with a plain property name (the `config` map is written as
+a properties file). An image other than the OKDP Spark image must carry the
+OKDP OIDC filter when OIDC is on. No key or value may contain `{{` (the schema
+and okdp-lib-chart both refuse it). `oidc-dcr` takes no upstream values.
+
 ## Changes from the KuboCD package
 
 - The history Service is `<release>-spark-history-server` (was

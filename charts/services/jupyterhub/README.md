@@ -75,6 +75,41 @@ hub configuration, `values.yaml`, which follows every upgrade); its three
 password keys hold the unused placeholder. Exceptions in
 `okdp-guard-allow.yaml`.
 
+## Upstream values
+
+Any value of the vendored `jupyterhub` and `spark-rbac` charts can be set per
+instance under `upstream.<chart>`, merged over the values computed from the
+parameters (okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  jupyterhub:
+    hub: {image: {name: mirror.example.org/jupyterhub/k8s-hub}}
+    cull: {enabled: true, timeout: 7200}
+    singleuser:
+      nodeSelector: {workload: notebooks}
+      extraEnv: {EXTRA_FLAG: "1"}                   # merged into the chart's env map
+      storage:
+        extraVolumes: [{name: shared, persistentVolumeClaim: {claimName: shared}}]  # appended
+        extraVolumeMounts: [{name: shared, mountPath: /shared}]
+      profileList: [{display_name: Minimal, kubespawner_override: {image: quay.io/jupyter/minimal-notebook}}]  # appended
+  spark-rbac:
+    serviceAccount: {annotations: {eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/spark}}
+```
+
+The paths the platform relies on are refused (names, the ESO-generated hub
+passwords, OIDC sign-in, the ingress host, the notebook env and files the
+platform wires, the spark ServiceAccount), and the lists carrying the hub roles,
+the CA bundle volume and the PySpark profile are appended to rather than
+replaced: see `okdp-jupyterhub.upstream.jupyterhub` and
+`okdp-jupyterhub.upstream.sparkRbac` in `templates/_values.tpl` (also listed in
+the schema descriptions). The env maps (`hub.extraEnv`, `singleuser.extraEnv`)
+and `hub.extraConfig` merge key by key. An upstream value wins over the
+parameter it overlaps (`hub.config.GenericOAuthenticator.allowed_groups` over
+`oidcRoleMapping`, `singleuser.cpu` over `cpu`). No key or value may contain
+`{{` (the schema and okdp-lib-chart both refuse it). `oidc-dcr` takes no
+upstream values.
+
 ## Changes from the KuboCD package
 
 - The former OAuth client provisioning module is gone: the client is created

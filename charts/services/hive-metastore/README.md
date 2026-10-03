@@ -25,6 +25,30 @@ Platform values read from `global.okdp`: none beyond what the descriptor needs.
 `db` and `storage` must be external connections (`connections.<name>`): the
 `database-server` and `s3` contracts have no internal naming convention.
 
+## Upstream values
+
+Any value of the vendored `hive-metastore` chart can be set per instance under
+`upstream.hive-metastore`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  hive-metastore:
+    image: {repository: mirror.example.org/okdp/hive-metastore}
+    tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+    extraEnvRaw: [{name: HADOOP_HEAPSIZE, value: "2048"}]   # appended to the chart's env
+    s3: {requestTimeout: 60000}
+```
+
+The paths the platform relies on are refused (the Service name and port the
+`hive` connection publishes, the database and S3 credentials, the storage
+backend, the schema Job's hook annotations), and `extraEnvRaw`, which carries
+the database user Secret, is appended to rather than replaced: see
+`hive-metastore.upstream` in `templates/_values.tpl` (also listed in the schema
+description). An upstream value wins over the parameter it overlaps
+(`resources` over `cpu`/`memoryGi`). No key or value may contain `{{` (the
+schema and okdp-lib-chart both refuse it).
+
 ## Provided connection
 
 `<release>` (contract `hive`):

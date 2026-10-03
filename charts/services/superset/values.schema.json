@@ -210,11 +210,56 @@
         },
         "additionalProperties": false
       }
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "superset": {
+          "type": "object",
+          "title": "superset",
+          "description": "Values of the superset chart 0.22.8 (https://apache.github.io/superset), for example image, resources, nodeSelector, tolerations, supersetWorker.replicas.replicaCount, extraEnv, new configOverrides blocks (Python appended to superset_config.py, after the chart's). Refused: fullnameOverride, envFromSecret, configFromSecret, configOverrides auth_registration/oauth_enabled/trino_oauth_enabled/custom_sso_security_manager/extra_config/load_examples/valkey_password, configOverridesFiles, config.resultsBackend, database.uri/driver, cache.enabled/host/port/user/password/cacheUrl/celeryUrl/cacheDb/celeryDb, postgresql, redis, init.createAdmin/adminUser/command, supersetNode/supersetWorker/supersetCeleryBeat/supersetMcp forceReload, ingress.enabled/ingressClassName/hosts/tls. Appended to the lists this chart sets: envFromSecrets, extraEnvRaw, extraVolumes, extraVolumeMounts, init.initContainers, supersetNode.initContainers, supersetWorker.initContainers.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
     }
   },
   "required": [
     "metadataDb",
     "examplesDb"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
 }

@@ -21,3 +21,14 @@ roleMapping:
   history_admin_groups: []
   modify_groups: []
   view_groups: []
+
+# Values of the upstream charts, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-shs.upstream.*): any upstream
+# value can be set except the protected ones, e.g.
+#   upstream:
+#     spark-history-server:
+#       image: {repository: mirror.example.org/okdp/spark}
+#       config: {spark.history.retainedApplications: 100}
+#     spark-web-proxy:
+#       resources: {limits: {memory: 256Mi}}
+upstream: {}

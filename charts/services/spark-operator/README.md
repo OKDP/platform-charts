@@ -25,6 +25,35 @@ No platform value is read. No provided connection, no UI. The ServiceAccount
 and RBAC of the jobs come from the `spark-rbac` service
 (`spark.serviceAccount.create` / `spark.rbac.create` stay false).
 
+## Upstream values
+
+Any value of the vendored `spark-operator` chart can be set per instance under
+`upstream.spark-operator`, merged over the values computed from the parameters
+(okdp-lib-chart `okdp.vendor.render`, option `upstream`):
+
+```yaml
+upstream:
+  spark-operator:
+    image: {registry: mirror.example.org}
+    controller:
+      resources: {limits: {memory: 1Gi}}
+      tolerations: [{key: dedicated, operator: Exists, effect: NoSchedule}]
+      volumes: [{name: ivy, emptyDir: {}}]                # appended to /tmp
+      volumeMounts: [{name: ivy, mountPath: /opt/ivy}]
+```
+
+The paths the platform relies on are refused (names, `hook`, `certManager`,
+`spark.jobNamespaces`, the job and operator ServiceAccounts and RBAC), and the
+controller and webhook `volumes` and `volumeMounts` are appended to rather than
+replaced (their vendored defaults carry the controller's `/tmp` and the
+webhook's serving certificates): see `okdp-spark-operator.upstream` in
+`templates/_values.tpl` (also listed in the schema descriptions). An upstream
+value wins over the parameter it overlaps (`controller.replicas` over
+`controllerReplicas`). Setting `controller.podSecurityContext` or
+`webhook.podSecurityContext` replaces the null the chart computes: the vendored
+`fsGroup: 185` does not come back unless written. No key or value may contain
+`{{` (the schema and okdp-lib-chart both refuse it).
+
 ## CRDs
 
 Helm installs the `crds/` directory of the chart being installed only, and

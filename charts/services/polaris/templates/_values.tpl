@@ -306,3 +306,85 @@ mapping:
 {{- include "okdp.require" (dict "ctx" . "keys" (list "oidc.dcr.registrationUrl")) -}}
 {{- toYaml $oidc -}}
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.<chart> in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: what the platform relies on (the Service name and port of the
+iceberg-catalog contract, the metastore database, the S3 identity, the realm
+the connection publishes and polaris-admin bootstraps, sign-in through the
+identity provider and its role mapping, the published ingress host) and
+serviceMonitor (.Capabilities.APIVersions, which differ between Flux and Argo
+CD; okdp-guard-allow.yaml accepts it only while disabled). authentication.tokenBroker
+and tokenService stay open (a key pair Secret shared by the replicas).
+advancedConfig merges: its keys contain dots, so they cannot be protected one
+by one. Appended: the lists carrying the wrapper's Secrets, CA bundle and the
+console origin, so an instance adds to them.
+*/}}
+{{- define "okdp-polaris.upstream.polaris" -}}
+protect:
+  - fullnameOverride
+  - service.ports
+  - persistence
+  - storage
+  - realmContext
+  - authentication.type
+  - authentication.authenticator
+  - authentication.realmOverrides
+  - oidc
+  - ingress.enabled
+  - ingress.className
+  - ingress.hosts
+  - ingress.tls
+  - serviceMonitor
+append:
+  - extraEnv
+  - extraVolumes
+  - extraVolumeMounts
+  - cors.allowedOrigins
+{{- end -}}
+
+{{/*
+upstream.polaris-console. Protected besides the name: what points it at this
+Polaris and its realm, the OIDC sign-in (VITE_OIDC_CLIENT_ID is re-pointed to
+the DCR Secret by templates/polaris-console.yaml) and the ingress host whose
+callback URL is registered with the identity provider. extraEnv is a map: an
+instance adds variables to it.
+*/}}
+{{- define "okdp-polaris.upstream.console" -}}
+protect:
+  - fullnameOverride
+  - env.polarisApiUrl
+  - env.polarisRealm
+  - env.oauthTokenUrl
+  - extraEnv.VITE_OIDC_ISSUER_URL
+  - extraEnv.VITE_OIDC_CLIENT_ID
+  - extraEnv.VITE_OIDC_REDIRECT_URI
+  - extraEnv.VITE_OIDC_SCOPE
+  - ingress.enabled
+  - ingress.className
+  - ingress.hosts
+  - ingress.tls
+{{- end -}}
+
+{{/*
+upstream.polaris-admin, applied to both renders (bootstrap and principals):
+bootstrap.* is read in the bootstrap phase only, principals.* in the
+principals phase only, the rest (image settings aside) by both. Protected:
+the name and phase, the realms (root credentials Secret, the realm and the
+principals parameters), the metastore database, the hook annotations that
+order the two Jobs, the URL of this Polaris, and bootstrap.purge (it would
+drop every realm's catalogs at each upgrade). The wrapper sets no list.
+*/}}
+{{- define "okdp-polaris.upstream.admin" -}}
+protect:
+  - fullnameOverride
+  - phase
+  - realms
+  - bootstrap.purge
+  - bootstrap.database
+  - bootstrap.annotations
+  - principals.polaris.url
+  - principals.annotations
+{{- end -}}

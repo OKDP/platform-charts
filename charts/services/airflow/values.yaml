@@ -28,3 +28,12 @@ s3SecretRef: ""
 # Upstream dags.gitSync values (enabled, repo, branch, ref, depth, subPath,
 # period, credentialsSecret.name).
 dagsGitSync: {}
+
+# Values of the upstream chart, merged over the ones computed from the
+# parameters above (templates/_values.tpl, okdp-airflow.upstream.airflow): any
+# upstream value can be set except the protected ones, e.g.
+#   upstream:
+#     airflow:
+#       images: {airflow: {repository: mirror.example.org/apache/airflow}}
+#       env: [{name: AIRFLOW__CORE__PARALLELISM, value: "64"}]
+upstream: {}

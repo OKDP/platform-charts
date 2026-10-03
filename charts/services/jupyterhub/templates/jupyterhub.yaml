@@ -8,5 +8,5 @@ the hub reads the cookie secret and the auth-state keys from it
 (hub.existingSecret), and the proxy token references of the hub and proxy
 Deployments are re-pointed to it here.
 */ -}}
-{{- $rendered := include "okdp.vendor.render" (dict "ctx" . "chart" "jupyterhub" "values" (include "okdp-jupyterhub.values.jupyterhub" . | fromYaml)) -}}
+{{- $rendered := include "okdp.vendor.render" (dict "ctx" . "chart" "jupyterhub" "values" (include "okdp-jupyterhub.values.jupyterhub" . | fromYaml) "upstream" (include "okdp-jupyterhub.upstream.jupyterhub" . | fromYaml)) -}}
 {{ include "okdp.vendor.secretKeyRef" (dict "rendered" $rendered "name" (include "okdp-jupyterhub.hubSecret" .) "key" "hub.config.ConfigurableHTTPProxy.auth_token" "to" (include "okdp-jupyterhub.hubGeneratedSecret" .)) }}

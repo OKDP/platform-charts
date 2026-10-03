@@ -523,3 +523,94 @@ mapping:
     client_id: ".client_id"
     client_secret: ".client_secret"
 {{- end -}}
+
+{{/*
+Instance-level upstream values (okdp.vendor.render option `upstream`): an
+instance sets any value of the vendored chart under upstream.<chart> in its
+values.yaml, over the values computed above, except the protected paths.
+Protected: what the platform relies on. The names (the hub Secrets, the hub
+connect URL and the per-instance pod, PVC and volume names derive from them).
+The hub passwords: the placeholders of hub.config, hub.existingSecret (the
+ESO-generated Secret), the legacy proxy.secretToken and hub.cookieSecret, and
+hub.services (its api tokens would be generated with lookup + rand), so that
+okdp.vendor.secretKeyRef still finds the proxy token references it re-points.
+OIDC sign-in: the authenticator class, the auth state the notebooks read their
+access token from, the endpoints and callback registered with the identity
+provider, the client env of the hub. The ingress host registered with the
+identity provider. The pre-pull hook (lookup). The notebook env and files the
+platform wires (jupyter-fs S3 identity, Spark driver host, PySpark connection
+identities, platform proxy, access_token helper) and the spark ServiceAccount
+of spark-rbac. hub.extraConfig is a map an instance adds snippets to; the
+wrapper's extraConfig01.py (a dotted key, out of reach of a dotted path) holds
+no platform setting and may be replaced.
+Appended: the hub roles (the notebooks' auth-state scope), the CA bundle
+volume of the notebooks, and the profiles (the PySpark one carries the
+platform Spark conf), so an instance adds to them.
+*/}}
+{{- define "okdp-jupyterhub.upstream.jupyterhub" -}}
+protect:
+  - fullnameOverride
+  - nameOverride
+  - hub.config.ConfigurableHTTPProxy
+  - hub.config.CryptKeeper
+  - hub.config.JupyterHub.cookie_secret
+  - hub.config.JupyterHub.hub_connect_url
+  - hub.config.JupyterHub.authenticator_class
+  - hub.config.Authenticator.enable_auth_state
+  - hub.config.GenericOAuthenticator.client_id
+  - hub.config.GenericOAuthenticator.client_secret
+  - hub.config.GenericOAuthenticator.oauth_callback_url
+  - hub.config.GenericOAuthenticator.authorize_url
+  - hub.config.GenericOAuthenticator.token_url
+  - hub.config.GenericOAuthenticator.userdata_url
+  - hub.extraEnv.OAUTH_CLIENT_ID
+  - hub.extraEnv.OAUTH_CLIENT_SECRET
+  - hub.extraEnv.JUPYTERHUB_CRYPT_KEY
+  - hub.existingSecret
+  - hub.cookieSecret
+  - hub.services
+  - proxy.secretToken
+  - ingress.enabled
+  - ingress.ingressClassName
+  - ingress.hosts
+  - ingress.tls
+  - prePuller.hook.enabled
+  - singleuser.podNameTemplate
+  - singleuser.serviceAccountName
+  - singleuser.storage.dynamic.pvcNameTemplate
+  - singleuser.storage.dynamic.volumeNameTemplate
+  - singleuser.extraEnv.FS_S3_ENDPOINT_URL
+  - singleuser.extraEnv.FS_S3_ACCESS_KEY
+  - singleuser.extraEnv.FS_S3_SECRET_KEY
+  - singleuser.extraEnv.POD_IP
+  {{- range $c := include "okdp-jupyterhub.pyspark" . | fromYamlArray }}
+  {{- if $c.s3SecretRef }}
+  - singleuser.extraEnv.{{ $c.envPrefix }}_S3_ACCESS_KEY
+  - singleuser.extraEnv.{{ $c.envPrefix }}_S3_SECRET_KEY
+  {{- end }}
+  {{- end }}
+  {{- range $k := keys (include "okdp.proxy.env" . | fromYaml) | sortAlpha }}
+  - singleuser.extraEnv.{{ $k }}
+  {{- end }}
+  - singleuser.extraFiles.jupyter_server_config_py
+  - singleuser.extraFiles.notebook_oauth2
+  - singleuser.extraFiles.welcome-notebook
+append:
+  - hub.config.JupyterHub.load_roles
+  - singleuser.storage.extraVolumes
+  - singleuser.storage.extraVolumeMounts
+  - singleuser.profileList
+{{- end -}}
+
+{{/*
+upstream.spark-rbac. Protected: the spark ServiceAccount the notebooks and
+their executors run as (singleuser.serviceAccountName and
+spark.kubernetes.authenticate.serviceAccountName name it) and its Role.
+Annotations (workload identity) and automount remain open.
+*/}}
+{{- define "okdp-jupyterhub.upstream.sparkRbac" -}}
+protect:
+  - rbac.create
+  - serviceAccount.create
+  - serviceAccount.name
+{{- end -}}
