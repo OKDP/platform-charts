@@ -23,4 +23,5 @@ annotations:
 dependencies:
   - name: okdp-lib-chart
     version: ">=0.3.0 <1.0.0"
-    repository: oci://quay.io/okdp/charts
+    # TODO: temporary registry, revert to oci://quay.io/okdp/charts once published there.
+    repository: https://repo.alliage.io/repository/okdp-charts

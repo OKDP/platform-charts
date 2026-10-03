@@ -68,8 +68,8 @@ version, URL, usage, provided connections) that the console lists.
 
 ## Working on a chart
 
-The charts depend on `okdp-lib-chart` from the OCI registry
-`oci://quay.io/okdp/charts/okdp-lib-chart` (`helm dependency build` fetches it).
+The charts depend on `okdp-lib-chart` from the Helm repository
+`https://repo.alliage.io/repository/okdp-charts` (`helm dependency build` fetches it). <!-- TODO: temporary registry, revert to quay.io/okdp once the OKDP charts are published there. -->
 
 ```bash
 # upstream charts: download vendor/ (not committed) after a clone or a vendor.yaml change
