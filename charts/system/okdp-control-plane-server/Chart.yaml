@@ -23,4 +23,4 @@ annotations:
 dependencies:
   - name: okdp-lib-chart
     version: ">=0.2.0 <1.0.0"
-    repository: oci://quay.io/okdp
+    repository: oci://quay.io/okdp/charts

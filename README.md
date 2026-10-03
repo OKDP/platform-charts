@@ -68,7 +68,7 @@ version, URL, usage, provided connections) that the console lists.
 ## Working on a chart
 
 The charts depend on `okdp-lib-chart` from the OCI registry
-`oci://quay.io/okdp/okdp-lib-chart` (`helm dependency build` fetches it).
+`oci://quay.io/okdp/charts/okdp-lib-chart` (`helm dependency build` fetches it).
 
 ```bash
 # upstream charts: download vendor/ (not committed) after a clone or a vendor.yaml change
