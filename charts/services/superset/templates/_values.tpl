@@ -90,30 +90,11 @@ trino-oauth2-env:
   {{- end }}
 {{- end -}}
 
-{{- define "okdp-superset-wrapper.authRegistration" -}}
-AUTH_USER_REGISTRATION = True
-AUTH_ROLE_PUBLIC = "Public"
-AUTH_USER_REGISTRATION_ROLE = "Public"
-AUTH_ROLES_SYNC_AT_LOGIN = True
-{{ end -}}
-
 {{- define "okdp-superset-wrapper.rolesMapping" -}}
 AUTH_ROLES_MAPPING = {
 {{- range $oidcRole, $supersetRoles := .Values.oidcRoleMapping | default dict }}
   {{ $oidcRole | quote }}: {{ $supersetRoles | toJson }},
 {{- end }}
-}
-{{ end -}}
-
-{{- define "okdp-superset-wrapper.featureFlags" -}}
-# https://github.com/apache/superset/blob/master/RESOURCES/FEATURE_FLAGS.md
-FEATURE_FLAGS = {
-  "DASHBOARD_RBAC": True,
-  "EMBEDDED_SUPERSET": True,
-  "EMBEDDABLE_CHARTS": True,
-  "ENABLE_TEMPLATE_PROCESSING": True,
-  "DASHBOARD_NATIVE_FILTERS": True,
-  "DASHBOARD_CROSS_FILTERS": True,
 }
 {{ end -}}
 
@@ -216,162 +197,6 @@ D3_FORMAT.update(json.loads(base64.b64decode("{{ .Values.d3Format | default dict
 D3_TIME_FORMAT.update(json.loads(base64.b64decode("{{ .Values.d3TimeFormat | default dict | toJson | b64enc }}").decode("utf-8")))
 {{ end -}}
 
-{{/* Session cookie expiry (FLASK_APP_MUTATOR). Formerly in OKDP's wrapper chart. */}}
-{{- define "okdp-superset-wrapper.sessionConfig" -}}
-# https://superset.apache.org/docs/configuration/configuring-superset/
-
-from flask import session
-from flask import Flask
-
-def make_session_permanent():
-    '''
-    Enable maxAge for the cookie 'session'
-    '''
-    session.permanent = True
-
-def FLASK_APP_MUTATOR(app: Flask) -> None:
-    app.before_request_funcs.setdefault(None, []).append(make_session_permanent)
-{{ end -}}
-
-{{/* OAuth2 sign-in: the keycloak (and dex) providers, read from the <release>-oauth2-env Secret and the client credentials. Formerly in OKDP's wrapper chart. */}}
-{{- define "okdp-superset-wrapper.oauthEnabled" -}}
-import os
-
-AUTH_OAUTH_ENABLED = eval(os.environ["AUTH_OAUTH_ENABLED"].title())
-if AUTH_OAUTH_ENABLED:
-  from flask_appbuilder.security.manager import AUTH_OAUTH
-
-  oauth2_providers = [
-      {   'name':'dex',
-          'token_key':'access_token',
-          'icon':'fa-address-card',
-          'remote_app': {
-              'client_id': os.environ["AUTH_OAUTH_CLIENT_ID"],
-              'client_secret': os.environ["AUTH_OAUTH_CLIENT_SECRET"],
-              'client_kwargs':{
-                  'scope': os.environ["AUTH_OAUTH_SCOPE"],
-                  'verify': eval(os.environ["AUTH_OAUTH_SSL_CERTIFICATE_VERIFY"].title()),
-                  'code_challenge_method': os.environ["AUTH_OAUTH_USE_PKCE"]
-              },
-              'api_base_url': '%s/' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'access_token_url': '%s/token' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'authorize_url': '%s/auth' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'jwks_uri': '%s/keys' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'redirect_uri': 'https://%s/oauth-authorized/dex' % os.environ["SUPERSET_DOMAIN"],
-          }
-      },
-      {   'name':'keycloak',
-          'token_key':'access_token',
-          'icon':'fa-key',
-          'remote_app': {
-              'client_id': os.environ["AUTH_OAUTH_CLIENT_ID"],
-              'client_secret': os.environ["AUTH_OAUTH_CLIENT_SECRET"],
-              'client_kwargs':{
-                  'scope': os.environ["AUTH_OAUTH_SCOPE"],
-                  'verify': eval(os.environ["AUTH_OAUTH_SSL_CERTIFICATE_VERIFY"].title()),
-                  'code_challenge_method': os.environ["AUTH_OAUTH_USE_PKCE"]
-              },
-              'api_base_url': '%s/' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'access_token_url': '%s/token' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'authorize_url': '%s/auth' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'jwks_uri': '%s/certs' % os.environ["AUTH_OAUTH_BASE_URL"],
-              'redirect_uri': 'https://%s/oauth-authorized/keycloak' % os.environ["SUPERSET_DOMAIN"],
-          }
-      }
-  ]
-  AUTH_OAUTH_PROVIDER = os.environ["AUTH_OAUTH_PROVIDER"]
-  OAUTH_PROVIDERS = list(filter(lambda e: e['name'] == AUTH_OAUTH_PROVIDER, oauth2_providers))
-  AUTH_TYPE = AUTH_OAUTH
-{{ end -}}
-
-{{/* OAuth2 of the Trino datasources (<release>-trino-oauth2-env). Formerly in OKDP's wrapper chart. */}}
-{{- define "okdp-superset-wrapper.trinoOauthEnabled" -}}
-import os
-
-TRINO_OAUTH_ENABLED = eval(os.environ["TRINO_OAUTH_ENABLED"].title())
-if TRINO_OAUTH_ENABLED:
-  superset_domain = os.environ["SUPERSET_DOMAIN"].strip().strip("/")
-  redirect_uri = f"https://{superset_domain}/api/v1/database/oauth2/"
-
-  DATABASE_OAUTH2_REDIRECT_URI = redirect_uri
-  DATABASE_OAUTH2_CLIENTS = {
-    "Trino": {
-        "id": os.environ["TRINO_OAUTH_CLIENT_ID"],
-        "secret": os.environ["TRINO_OAUTH_CLIENT_SECRET"],
-        "scope": os.getenv("TRINO_OAUTH_SCOPE", "openid profile email groups"),
-        "authorization_request_uri": f'{os.environ["TRINO_AUTH_OAUTH_BASE_URL"].rstrip("/")}/auth',
-        "token_request_uri": f'{os.environ["TRINO_AUTH_OAUTH_BASE_URL"].rstrip("/")}/token',
-    }
-  }
-{{ end -}}
-
-{{/* User info and role keys of the keycloak and dex providers. Formerly in OKDP's wrapper chart. */}}
-{{- define "okdp-superset-wrapper.securityManager" -}}
-# https://superset.apache.org/docs/configuration/configuring-superset/#custom-oauth2-configuration
-import logging as log
-from superset.security import SupersetSecurityManager
-
-class CustomSsoSecurityManager(SupersetSecurityManager):
-
-    def oauth_user_info(self, provider, response=None):
-        log.info("Oauth2 provider: {0}.".format(provider))
-        if provider == 'dex':
-            # As example, this line request a GET to base_url + '/' + userDetails with Bearer  Authentication,
-            # and expects that authorization server checks the token, and response with user details
-            me = self.appbuilder.sm.oauth_remotes[provider].get('userinfo').json()
-            log.info("Received userinfo {0} from oidc provider {1}".format(me, provider))
-            userinfo = {
-                  'username': me.get('preferred_username', me.get('email', me.get('name', ''))),
-                  'first_name': me.get('given_name', ''),
-                  'last_name': me.get('family_name', ''),
-                  'name': me.get('name', ''),
-                  'email': me.get('email', ''),
-                  'sub': me.get('sub', ''),
-                  'groups': me.get('groups', []),
-                  'role_keys': me.get('groups', []),
-            }
-            log.info("Effective role mapping: {0}".format(userinfo))
-            return userinfo
-        elif provider == 'keycloak':
-            # As example, this line request a GET to base_url + '/' + userDetails with Bearer  Authentication,
-            # and expects that authorization server checks the token, and response with user details
-            me = self.appbuilder.sm.oauth_remotes[provider].get('userinfo').json()
-            log.info("Received userinfo {0} from oidc provider {1}".format(me, provider))
-            userinfo = {
-                'username' : me.get('preferred_username', ''),
-                'first_name': me.get('given_name', ''),
-                'last_name': me.get('family_name', ''),
-                'name': me.get('name', ''),
-                'email' : me.get('email', ''),
-                'sub' : me.get('sub', ''),
-                'groups': me.get('groups', []),
-                'role_keys': me.get('roles', []) + me.get('groups', [])
-            }
-            log.info("Effective role mapping: {0}".format(userinfo))
-            return userinfo
-        else:
-            return {}
-
-CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
-{{ end -}}
-
-{{/* Examples database (SQLALCHEMY_EXAMPLES_URI of <release>-superset-env). Formerly in OKDP's wrapper chart. */}}
-{{- define "okdp-superset-wrapper.loadExamples" -}}
-import os
-sqlalchemy_examples_uri = os.path.expandvars(os.getenv('SQLALCHEMY_EXAMPLES_URI', ''))
-if sqlalchemy_examples_uri:
-  SQLALCHEMY_EXAMPLES_URI = sqlalchemy_examples_uri
-{{ end -}}
-
-{{/*
-The Valkey password of the async queries backends: the Apache chart writes
-the value of cache.password there, the password is only in the environment.
-*/}}
-{{- define "okdp-superset-wrapper.valkeyPassword" -}}
-GLOBAL_ASYNC_QUERIES_CACHE_BACKEND["CACHE_REDIS_PASSWORD"] = env("REDIS_PASSWORD", "")
-GLOBAL_ASYNC_QUERIES_RESULTS_BACKEND["password"] = env("REDIS_PASSWORD", "")
-{{ end -}}
-
 {{/*
 A wait init container of the Superset pods: the Apache default, reading the
 database (and cache) host and port from the env Secrets.
@@ -379,9 +204,12 @@ Takes {ctx, name, redis}.
 */}}
 {{- define "okdp-superset-wrapper.waitContainer" -}}
 {{- $ctx := .ctx -}}
+{{- /* Template code for the upstream chart, which passes initContainers to tpl: the Superset image. */ -}}
+{{- $image := "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}" -}}
+{{- $pullPolicy := "{{ .Values.image.pullPolicy }}" -}}
 name: {{ .name }}
-image: "{{ "{{" }} .Values.image.repository {{ "}}" }}:{{ "{{" }} .Values.image.tag | default .Chart.AppVersion {{ "}}" }}"
-imagePullPolicy: "{{ "{{" }} .Values.image.pullPolicy {{ "}}" }}"
+image: {{ $image | quote }}
+imagePullPolicy: {{ $pullPolicy | quote }}
 envFrom:
   - secretRef:
       name: {{ include "okdp-superset-wrapper.envSecret" (dict "ctx" $ctx "suffix" "db-env") }}
@@ -429,30 +257,14 @@ former wrapper defaults included. Keys left out keep the Apache defaults
 {{- $release := .Release.Name -}}
 {{- $fullname := include "okdp-superset-wrapper.fullname" . -}}
 {{- $internal := include "okdp-superset-wrapper.internalSecret" . -}}
-{{- $oauthSecret := include "okdp-superset-wrapper.oauthSecret" . -}}
-{{- $trinoOauthSecret := include "okdp-superset-wrapper.trinoOauthSecret" . -}}
-{{- if $oidc.dcr.enabled -}}
-  {{- $oauthSecret = include "okdp-superset-wrapper.dcrSecret" . -}}
-  {{- $trinoOauthSecret = $oauthSecret -}}
-{{- end -}}
+{{- $oauthSecret := include "okdp.oidc.clientSecret" . -}}
+{{- /* dcr mode: one client for the sign-in and the Trino datasources (both redirect URIs). */ -}}
+{{- $trinoOauthSecret := ternary $oauthSecret (include "okdp-superset-wrapper.trinoOauthSecret" .) $oidc.dcr.enabled -}}
 {{- $meta := $in.metadataDb -}}
 {{- $ex := $in.examplesDb -}}
 {{- $okdp := .Values.global.okdp -}}
 fullnameOverride: {{ $fullname }}
-image:
-  repository: quay.io/okdp/superset
-  tag: 6.0.0
-  pullPolicy: IfNotPresent
-supersetWebsockets:
-  image:
-    repository: quay.io/okdp/superset
-    tag: 6.0.0-websocket
-    pullPolicy: IfNotPresent
-
-# The env Secrets of templates/env-secrets.yaml. The chart's own
-# <release>-env Secret (database and cache settings from values) is not used.
-secretEnv:
-  create: false
+# The env Secrets of templates/env-secrets.yaml.
 envFromSecret: {{ include "okdp-superset-wrapper.envSecret" (dict "ctx" . "suffix" "superset-env") }}
 envFromSecrets:
   - {{ include "okdp-superset-wrapper.envSecret" (dict "ctx" . "suffix" "db-env") }}
@@ -460,31 +272,12 @@ envFromSecrets:
   - {{ include "okdp-superset-wrapper.envSecret" (dict "ctx" . "suffix" "redis-env") }}
   - {{ include "okdp-superset-wrapper.envSecret" (dict "ctx" . "suffix" "trino-oauth2-env") }}
 
-# Appended to superset_config.py, sorted by key.
+# Computed blocks of superset_config.py (the fixed ones: vendor-values/superset.yaml).
 configOverrides:
-  auth_registration: {{ include "okdp-superset-wrapper.authRegistration" . | quote }}
   oauth_to_superset_roles_mapping: {{ include "okdp-superset-wrapper.rolesMapping" . | quote }}
   extra_config: {{ include "okdp-superset-wrapper.extraConfig" . | quote }}
-  feature_flags: {{ include "okdp-superset-wrapper.featureFlags" . | quote }}
-  session_config: {{ include "okdp-superset-wrapper.sessionConfig" . | quote }}
-  oauth_enabled: {{ include "okdp-superset-wrapper.oauthEnabled" . | quote }}
-  trino_oauth_enabled: {{ include "okdp-superset-wrapper.trinoOauthEnabled" . | quote }}
-  custom_sso_security_manager: {{ include "okdp-superset-wrapper.securityManager" . | quote }}
-  load_examples: {{ include "okdp-superset-wrapper.loadExamples" . | quote }}
-  valkey_password: {{ include "okdp-superset-wrapper.valkeyPassword" . | quote }}
-
-# The cache and Celery broker of templates/valkey.yaml. Its password is read
-# from REDIS_PASSWORD at runtime (never a value): the URLs are built from the
-# environment; RESULTS_BACKEND is given as code, and valkey_password above
-# completes the async queries backends.
 cache:
   host: {{ include "okdp-superset-wrapper.redis" . | quote }}
-  port: 6379
-  cacheDb: 1
-  celeryDb: 0
-  defaultTimeout: 300
-config:
-  resultsBackend: "RedisCache(host=env('REDIS_HOST'), password=env('REDIS_PASSWORD'), port=int(env('REDIS_PORT', '6379')), key_prefix='superset_results')"
 
 extraConfigs:
   import_datasources.yaml: |
@@ -511,12 +304,6 @@ extraConfigs:
         expose_in_sqllab: true
         tables: []
     {{- end }}
-postgresql:
-  # An external database (metadataDb).
-  enabled: false
-redis:
-  # templates/valkey.yaml replaces the bundled bitnami redis.
-  enabled: false
 extraEnvRaw:
   # Superset secret key
   - name: SUPERSET_SECRET_KEY
@@ -607,15 +394,16 @@ init:
   # The chart can only write init.adminUser.password into its script, so its
   # own admin creation is off and the command below creates the admin from
   # SUPERSET_ADMIN_PASSWORD (extraEnvRaw), if it does not exist yet.
-  createAdmin: false
   loadExamples: {{ .Values.load_examples }}
   {{- if not $oidc.enabled }}
+  {{- /* Template code for the upstream chart, which passes init.command to tpl. */}}
+  {{- $configMountPath := "{{ .Values.configMountPath }}" }}
   command:
     - /bin/sh
     - -c
     - |
-      . {{ "{{" }} .Values.configMountPath {{ "}}" }}/superset_bootstrap.sh
-      . {{ "{{" }} .Values.configMountPath {{ "}}" }}/superset_init.sh
+      . {{ $configMountPath }}/superset_bootstrap.sh
+      . {{ $configMountPath }}/superset_init.sh
       if superset fab list-users 2>/dev/null | grep -qF 'username:admin'; then
         echo "Admin user already exists, skipping."
       else
@@ -681,20 +469,12 @@ init:
 extraEnv:
   SERVER_WORKER_AMOUNT: {{ .Values.workers | quote }}
 
-# forceReload stamps the pods with randAlphaNum: never set (okdp-guard-allow.yaml).
 # The wait init containers read the host and port of the database and the
 # cache from the env Secrets (the Apache defaults read envFromSecret).
 supersetWorker:
-  forceReload: false
   initContainers:
     - {{ include "okdp-superset-wrapper.waitContainer" (dict "ctx" . "name" "wait-for-postgres-redis" "redis" true) | nindent 6 }}
-supersetCeleryBeat:
-  forceReload: false
-supersetMcp:
-  forceReload: false
-
 supersetNode:
-  forceReload: false
   initContainers:
     - {{ include "okdp-superset-wrapper.waitContainer" (dict "ctx" . "name" "wait-for-postgres" "redis" false) | nindent 6 }}
   resources:
@@ -703,67 +483,16 @@ supersetNode:
       cpu: {{ .Values.cpu | quote }}
 
 ingress:
-  enabled: true
   ingressClassName: {{ $okdp.ingress.className }}
   annotations:
     kubernetes.io/ingress.class: {{ $okdp.ingress.className }}
     {{- include "okdp.ingressAnnotations" . | nindent 4 }}
-    acme.cert-manager.io/http01-edit-in-place: "true"
-    ## Extend timeout to allow long running queries.
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-  path: /
-  pathType: ImplementationSpecific
   hosts:
     - {{ $in.host }}
   tls:
     - hosts:
         - {{ $in.host }}
       secretName: {{ printf "%s-tls-secret" $release }}
-
-extraVolumes:
-  - name: cacerts
-    secret:
-      secretName: certs-bundle
-
-extraVolumeMounts:
-  - name: cacerts
-    mountPath: /cacerts
-{{- end -}}
-
-{{/* Module oidc-dcr: registers the OAuth client (clientProvisioning: dcr). */}}
-{{- define "okdp-superset-wrapper.values.dcr" -}}
-{{- $oidc := include "okdp.oidc" . | fromYaml -}}
-{{- if ne ($oidc.dcr.authMethod | default "") "anonymous" -}}
-  {{- fail (printf "superset: global.okdp.oidc.dcr.authMethod %q is not supported: this chart registers anonymously" ($oidc.dcr.authMethod | default "")) -}}
-{{- end -}}
-{{- include "okdp.require" (dict "ctx" . "keys" (list "oidc.dcr.registrationUrl")) -}}
-{{- $host := include "okdp.ingressHost" . -}}
-ttl_seconds: 30
-registration_url: {{ $oidc.dcr.registrationUrl | quote }}
-request:
-  application_type: web
-  client_name: {{ printf "%s-%s" .Release.Name .Release.Namespace | quote }}
-  redirect_uris:
-    # Sign-in (AUTH_OAUTH_PROVIDER) and the OAuth2 of the Trino datasources.
-    - {{ printf "https://%s/oauth-authorized/%s" $host ($oidc.displayName | default "keycloak") | quote }}
-    - {{ printf "https://%s/api/v1/database/oauth2/" $host | quote }}
-  grant_types:
-    - authorization_code
-    - refresh_token
-  # openid is not a Keycloak client scope: Keycloak refuses it here.
-  scope: {{ without (splitList " " $oidc.scope) "openid" | join " " | quote }}
-tls:
-  insecure: false
-  certificate: certs-bundle
-secret: {{ include "okdp-superset-wrapper.dcrSecret" . }}
-mapping:
-  use_default: false
-  key_mapping:
-    client_id: ".client_id"
-    client_secret: ".client_secret"
 {{- end -}}
 
 {{/*

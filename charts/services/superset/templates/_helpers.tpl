@@ -23,20 +23,8 @@ the partials of the vendored charts (superset.*, okdp.superset.*).
 {{- include "okdp.fullname" (dict "ctx" . "suffix" "redis") -}}
 {{- end -}}
 
-{{/* OAuth clients of the existing mode: creds-<release>-oauth2 (sign-in) and creds-<release>-oauth2-trino (Trino datasources). */}}
-{{- define "okdp-superset-wrapper.oauthSecret" -}}
-{{- printf "creds-%s-oauth2" .Release.Name -}}
-{{- end -}}
 {{- define "okdp-superset-wrapper.trinoOauthSecret" -}}
 {{- printf "creds-%s-oauth2-trino" .Release.Name -}}
-{{- end -}}
-
-{{/*
-Secret the oidc-dcr job writes the registered client to (dcr mode), same keys:
-one client for the sign-in and the Trino datasources (both redirect URIs).
-*/}}
-{{- define "okdp-superset-wrapper.dcrSecret" -}}
-{{- printf "%s-%s-dcr" .Release.Name .Release.Namespace -}}
 {{- end -}}
 
 {{/* An env Secret of templates/env-secrets.yaml: <release>-<suffix>. Takes {ctx, suffix}. */}}

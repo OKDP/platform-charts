@@ -1,4 +1,9 @@
 {{- /* Module oidc-dcr, enabled when the platform registers clients by DCR. */}}
 {{- if (include "okdp.oidc" . | fromYaml).dcr.enabled }}
-{{ include "okdp.vendor.oidcDcr" (dict "ctx" . "values" (include "okdp-superset-wrapper.values.dcr" . | fromYaml)) }}
+{{- $host := include "okdp.ingressHost" . }}
+{{ include "okdp.oidc.dcr" (dict "ctx" .
+     "redirectUris" (list
+       (printf "https://%s/oauth-authorized/%s" $host ((include "okdp.oidc" . | fromYaml).displayName | default "keycloak"))
+       (printf "https://%s/api/v1/database/oauth2/" $host))
+     "grantTypes" (list "authorization_code" "refresh_token")) }}
 {{- end }}

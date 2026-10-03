@@ -9,14 +9,15 @@ The former module `main` rendered OKDP's superset chart
 (`quay.io/okdp/charts/superset` 0.15.2-2.0,
 [source](https://github.com/okdp/charts/tree/main/charts/superset)), a
 wrapper around the Apache Superset chart. The wrapper is folded into this
-chart: its defaults and Python config overrides are in the computed values
-(`templates/_values.tpl`), its env Secrets in `templates/env-secrets.yaml`
+chart: its defaults and Python config overrides are in the values given to
+the Apache chart (fixed ones in `vendor-values/superset.yaml`, computed ones in
+`templates/_values.tpl`), its env Secrets in `templates/env-secrets.yaml`
 (same names and keys). Only the Apache chart is vendored (`vendor.yaml`) and
 rendered by `okdp.vendor.render` (`templates/superset.yaml`):
 
 | Former module | Now | Rendered when |
 |---|---|---|
-| `main` (OKDP wrapper) | `templates/env-secrets.yaml`: `<release>-db-env`, `-oauth2-env`, `-redis-env`, `-superset-env`, `-trino-oauth2-env`; its values in `templates/_values.tpl` | always |
+| `main` (OKDP wrapper) | `templates/env-secrets.yaml`: `<release>-db-env`, `-oauth2-env`, `-redis-env`, `-superset-env`, `-trino-oauth2-env`; its values in `vendor-values/superset.yaml` (fixed) and `templates/_values.tpl` (computed) | always |
 | `main` (Apache chart) | `vendor/superset` (apache/superset 0.22.8, bundled bitnami charts dropped) | always |
 | `main` (bitnami redis subchart) | `templates/valkey.yaml`: Deployment + Service `<release>-redis` (Valkey 9.1, `valkey/valkey`, BSD-3-Clause; no persistence) | always |
 | `internal-secrets` | `okdp.generatedSecret` `<release>-internal` (`superset_secret_key`, `redis-password`) | always |
