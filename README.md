@@ -80,6 +80,31 @@ helm template demo-trino charts/services/trino -n demo -f charts/services/trino/
 helm lint charts/services/trino -f charts/services/trino/ci/opa-opal-values.yaml
 ```
 
+### Auditing the values of the upstream charts
+
+Each vendored upstream chart is rendered with values computed by the wrapper
+(`_values.tpl`), merged over its `values.yaml`. `okdp.vendor.render` writes
+the result, what the upstream chart actually received, to a ConfigMap
+`<release>-<chart>-values` (key `values.yaml`, label `okdp.io/vendor-values`),
+so it can be read and diffed like a plain Helm `values.yaml`:
+
+```bash
+# offline, before committing: every render, or one (bare YAML, for diff)
+scripts/show-values.sh charts/services/trino -f charts/services/trino/ci/opa-opal-values.yaml
+diff <(scripts/show-values.sh --only trino charts/services/trino -f a.yaml) \
+     <(scripts/show-values.sh --only trino charts/services/trino -f b.yaml)
+
+# in the cluster
+kubectl -n demo get cm -l okdp.io/vendor-values
+kubectl -n demo get cm demo-trino-trino-values -o jsonpath='{.data.values\.yaml}'
+```
+
+As part of the release, the ConfigMap also shows in `helm get manifest` and in
+Argo CD and Flux diffs. A chart rendering the same upstream chart twice names
+each render (`"valuesName"`, see `polaris-admin.yaml`). See the
+[`okdp-lib-chart` README](https://github.com/OKDP/okdp-lib-chart#readme) to
+turn it off.
+
 `vendor.yaml` entries take `name`, `repository` (`https://`, `oci://`, or
 `file://` for a chart of this repository), `version`, optional `chart` (upstream
 name) and optional `drop` (paths relative to the vendored chart root removed after
