@@ -53,8 +53,8 @@
     "load_examples": {
       "type": "boolean",
       "title": "Load examples",
-      "description": "Whether to load superset examples",
-      "default": true,
+      "description": "Whether to load superset examples (downloaded from GitHub)",
+      "default": false,
       "x-ui-group": "Cluster",
       "x-ui-order": 2
     },

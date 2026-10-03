@@ -35,8 +35,8 @@ contract's "only standard tooling" rule to be revisited.
 | Parameter | Default | Description |
 |---|---|---|
 | `metadataDb` | (required) | `database-server` connection of the metadata database; its Secret holds `username`/`password`. |
-| `examplesDb` | (required) | `database-server` (PostgreSQL) connection receiving the examples, used when `load_examples`. |
-| `load_examples` | `true` | Load the Superset examples. |
+| `examplesDb` | (required when `load_examples`) | `database-server` (PostgreSQL) connection receiving the examples. |
+| `load_examples` | `false` | Load the Superset examples. They are downloaded from GitHub: leave it off without Internet access. |
 | `datasources[]` | `[]` | `{name, trino (trino connection), catalog}`: one Superset database per item. `name`: `^[A-Za-z0-9][A-Za-z0-9 _.-]*$`; `catalog`: `^[A-Za-z0-9_.-]+$`. |
 | `oidcRoleMapping` | `{}` | OIDC group → list of Superset roles. Keys and roles may not contain `{{`, `}}` or line breaks. |
 | `cpu` / `memoryGi` / `workers` | `0.5` / `2` / `2` | Web server limits and gunicorn workers. |

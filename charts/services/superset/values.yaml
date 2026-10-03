@@ -11,10 +11,11 @@ connections: {}
 # Its credentials Secret holds the keys username and password.
 metadataDb: ""
 # database-server connection (PostgreSQL) receiving the Superset examples
-# (required; used when load_examples is true).
+# (required when load_examples is true).
 examplesDb: ""
-# Whether to load the Superset examples.
-load_examples: true
+# Whether to load the Superset examples. They are downloaded from GitHub, so
+# false by default (and in air-gapped installs).
+load_examples: false
 
 # Trino datasources, one Superset database per item:
 #   - name: lakehouse        # display name in Superset
