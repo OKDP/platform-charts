@@ -9,4 +9,4 @@ charts:
     version: 0.1.0
   - name: oidc-dcr            # module oidc-dcr (global.okdp.oidc.clientProvisioning: dcr)
     repository: oci://quay.io/adaltas
-    version: 0.3.3
+    version: 0.4.0

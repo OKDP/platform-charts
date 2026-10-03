@@ -16,7 +16,7 @@ The former KuboCD modules are vendored upstream charts (`vendor.yaml`,
 | `opa` | `vendor/opa-kube-mgmt` 11.0.12 | `enableOPA` |
 | `opal-secrets` | `templates/opal-secrets.yaml` (idempotent pre-install/pre-upgrade hook) | `enableOPA` and `enableOPAL` |
 | `opal` | `vendor/opal` 0.0.30 | `enableOPA` and `enableOPAL` |
-| `oidc-dcr` | `vendor/oidc-dcr` 0.3.3 (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
+| `oidc-dcr` | `vendor/oidc-dcr` 0.4.0 (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
 
 ## Parameters
 

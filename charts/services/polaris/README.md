@@ -15,7 +15,7 @@ It renders three upstream charts, vendored under `vendor/` (see
 | main | `polaris` 1.3.0-incubating (Apache) | `<release>-polaris`, ingress `polaris-<namespace>.<suffix>` |
 | principals | `polaris-admin` 1.0.0, `phase: principals` | Job `<release>-principals`, post-install/post-upgrade hook, weight 5 (only with principals) |
 | console | `oci://quay.io/okdp/charts/polaris-console` 0.2.0 | `<release>-polaris-console`, ingress `polaris-console-<namespace>.<suffix>` |
-| (new) oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.3.3, twice | Jobs `<release>-oidc-dcr` and `<release>-console-oidc-dcr` (pre-install/pre-upgrade hooks), only with `global.okdp.oidc.clientProvisioning: dcr` |
+| (new) oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.4.0, twice | Jobs `<release>-oidc-dcr` and `<release>-console-oidc-dcr` (pre-install/pre-upgrade hooks), only with `global.okdp.oidc.clientProvisioning: dcr` |
 
 ## Parameters
 

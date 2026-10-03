@@ -9,7 +9,7 @@ with values computed from the parameters below (`templates/_values.tpl`):
 
 | Former module | Chart | Rendered |
 |---|---|---|
-| oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.3.3 | only with `global.okdp.oidc.clientProvisioning: dcr` |
+| oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.4.0 | only with `global.okdp.oidc.clientProvisioning: dcr` |
 | internal-secrets | (replaced) | ESO `Password` generators + `ExternalSecret` `<release>-internal` |
 | main | `airflow` 1.22.0 (`https://airflow.apache.org`), bundled `postgresql` subchart dropped (`vendor.yaml` `drop`) | `<release>-*`, ingress `airflow-<namespace>.<suffix>` |
 

@@ -12,7 +12,7 @@ rendered by `okdp.vendor.render` with computed values (`templates/_values.tpl`):
 |---|---|---|
 | `main` | `vendor/jupyterhub` (z2jh 4.4.2) | always |
 | `spark-rbac` | `vendor/spark-rbac` (`oci://quay.io/okdp/charts` 1.0.1): ServiceAccount/Role `spark` | always |
-| `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.3.3): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
+| `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.4.0): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
 
 ## Parameters
 

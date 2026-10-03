@@ -11,7 +11,7 @@ with values computed from the parameters below (`templates/_values.tpl`):
 |---|---|---|
 | main | `oci://quay.io/okdp/charts/spark-history-server` 1.0.0 | `<release>-spark-history-server` |
 | proxy | `oci://quay.io/okdp/charts/spark-web-proxy` 0.1.0 | `<release>-spark-web-proxy`, ingress `spark-web-proxy-<namespace>.<suffix>` |
-| (new) oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.3.3 | Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook), only with `global.okdp.oidc.clientProvisioning: dcr` |
+| (new) oidc-dcr | `oci://quay.io/adaltas/oidc-dcr` 0.4.0 | Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook), only with `global.okdp.oidc.clientProvisioning: dcr` |
 
 ## Parameters
 

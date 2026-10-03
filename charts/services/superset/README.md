@@ -21,7 +21,7 @@ rendered by `okdp.vendor.render` (`templates/superset.yaml`):
 | `main` (bitnami redis subchart) | `templates/valkey.yaml`: Deployment + Service `<release>-redis` (Valkey 9.1, `valkey/valkey`, BSD-3-Clause; no persistence) | always |
 | `internal-secrets` | `okdp.generatedSecret` `<release>-internal` (`superset_secret_key`, `redis-password`) | always |
 | (new) local admin | `okdp.generatedSecret` `<release>-admin` (`password`) | `global.okdp.oidc.enabled: false` |
-| (new) `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.3.3): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
+| (new) `oidc-dcr` | `vendor/oidc-dcr` (`oci://quay.io/adaltas` 0.4.0): Job `<release>-oidc-dcr` (pre-install/pre-upgrade hook) | `global.okdp.oidc.clientProvisioning: dcr` |
 
 The Apache Superset Helm chart is deprecated upstream (0.22.8 is marked
 `deprecated: true`); upstream points to the
