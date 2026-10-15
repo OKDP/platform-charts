@@ -1,0 +1,5 @@
+# error: - at '/gitops/topology': missing properties 'projects', 'output'
+# A topology names the platform's, the projects' and the output's repositories.
+gitops:
+  topology:
+    platform: {url: "https://git.example.com/okdp/platform.git"}

@@ -1,0 +1,15 @@
+# The split topology of the sandbox: the platform, each project and the
+# compiled output in their own repositories of the sandbox Forgejo, which
+# the server creates the new projects' repositories in. The chart cache is
+# the server's default, under its clone.
+gitops:
+  topology:
+    platform: {url: "http://forgejo-http.forgejo.svc.cluster.local:3000/okdp/okdp-platform.git", branch: main}
+    projects: {url: "http://forgejo-http.forgejo.svc.cluster.local:3000/okdp/okdp-project-{project}.git"}
+    output: {url: "http://forgejo-http.forgejo.svc.cluster.local:3000/okdp/okdp-output.git", path: ""}
+    forgejo:
+      url: http://forgejo-http.forgejo.svc.cluster.local:3000
+      owner: okdp
+  forgejoTokenSecret: okdp-forgejo-token
+  credentialsSecret: okdp-gitops-credentials
+  chartCacheDir: ""

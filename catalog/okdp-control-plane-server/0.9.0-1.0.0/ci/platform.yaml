@@ -1,0 +1,13 @@
+# The platform values of the test cases (--context, level 0): global.okdp,
+# as platform/platform-values.yaml gives them. A case's own are in
+# <case>-platform.yaml, over them; its connections in
+# <case>-connections.yaml (--context 2:).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx
+    proxy:
+      httpProxy: ""
+      httpsProxy: ""
+      noProxy: ""

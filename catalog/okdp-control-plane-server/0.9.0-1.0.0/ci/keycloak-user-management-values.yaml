@@ -1,0 +1,11 @@
+# Keycloak user management: the Secret shared with the client provisioning
+# (default keys), an explicit Keycloak URL and realm, TLS check skipped.
+gitops:
+  repoURL: https://git.okdp.sandbox/okdp/deployments.git
+  credentialsSecret: okdp-gitops-credentials
+keycloak:
+  url: https://keycloak.okdp.sandbox
+  realm: okdp
+  credentialsSecret:
+    name: keycloak-admin-credentials
+  tlsInsecure: true

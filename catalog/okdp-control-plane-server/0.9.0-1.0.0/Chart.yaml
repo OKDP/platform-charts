@@ -1,0 +1,19 @@
+apiVersion: v2
+name: okdp-control-plane-server
+description: >-
+  OKDP Server - API backend for the Open Kubernetes Data Platform. Commits the
+  desired state (instances, connections, projects, catalog) to the deployments
+  Git repositories and reads the observed state from the cluster.
+type: application
+# <upstream>-<okdp semver>. No dependencies: the server is OKDP's own
+# component, its objects are written whole in okdp.yaml (objects).
+version: 0.9.0-1.0.0
+appVersion: "0.9.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/okdp-control-plane-server

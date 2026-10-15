@@ -1,0 +1,8 @@
+# error: okdp-control-plane-server: gitops.topology.forgejo needs gitops.forgejoTokenSecret
+# A Forgejo to create the projects' repositories in, without its token.
+gitops:
+  topology:
+    platform: {url: "https://git.example.com/okdp/platform.git"}
+    projects: {url: "https://git.example.com/okdp/project-{project}.git"}
+    output: {url: "https://git.example.com/okdp/output.git"}
+    forgejo: {url: "https://git.example.com", owner: okdp}

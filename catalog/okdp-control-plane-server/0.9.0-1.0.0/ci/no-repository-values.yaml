@@ -1,0 +1,4 @@
+# error: okdp-control-plane-server: gitops.repoURL is required (or gitops.topology)
+# Neither a repository nor a topology: nowhere to commit the desired state.
+gitops:
+  credentialsSecret: okdp-gitops-credentials

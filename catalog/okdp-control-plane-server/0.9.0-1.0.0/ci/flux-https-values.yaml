@@ -1,0 +1,5 @@
+# The sandbox: Flux, HTTPS token Secret, default console host.
+gitops:
+  repoURL: https://git.okdp.sandbox/okdp/deployments.git
+  credentialsSecret: okdp-gitops-credentials
+insecureOciRegistries: registry.okdp.sandbox:5000

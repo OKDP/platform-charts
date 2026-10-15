@@ -1,0 +1,338 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "okdp-control-plane-server",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "imageRepository": {
+      "type": "string",
+      "title": "Image repository",
+      "description": "Server image repository.",
+      "default": "quay.io/okdp/images/okdp-control-plane-server",
+      "x-ui-group": "Image",
+      "x-ui-order": 1,
+      "x-ui-advanced": true
+    },
+    "imageTag": {
+      "type": "string",
+      "title": "Image tag",
+      "description": "Server image tag. Set explicitly so the deployed image is pinned; empty, the upstream half of the package version.",
+      "default": "0.9.0",
+      "x-ui-group": "Image",
+      "x-ui-order": 2,
+      "x-ui-advanced": true
+    },
+    "consoleHost": {
+      "type": "string",
+      "title": "Console host",
+      "description": "Console host, used verbatim as the single allowed origin. Defaults to okdp-ui.<ingress suffix>.",
+      "default": "",
+      "x-ui-group": "Server",
+      "x-ui-order": 1
+    },
+    "logLevel": {
+      "type": "string",
+      "title": "Log level",
+      "default": "info",
+      "enum": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ],
+      "x-ui-group": "Server",
+      "x-ui-order": 2
+    },
+    "insecureOciRegistries": {
+      "type": "string",
+      "title": "Insecure OCI registries",
+      "description": "Registry hosts reachable over plain HTTP, comma separated. A sandbox concern, empty anywhere else.",
+      "default": "",
+      "x-ui-group": "Server",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "gitops": {
+      "type": "object",
+      "title": "Deployments repositories",
+      "description": "The Git repositories the server commits the desired state to, and the engine reconciling them: one repository (repoURL, branch, path), or the topology of several.",
+      "x-ui-group": "GitOps",
+      "x-ui-order": 1,
+      "required": [
+        "engine"
+      ],
+      "properties": {
+        "repoURL": {
+          "type": "string",
+          "title": "Repository URL",
+          "description": "https://…, ssh://… or git@host:org/repo.git (GITOPS_REPO_URL): the one repository holding platform/, projects/ and the compiled output. Required unless topology is set.",
+          "default": "",
+          "x-ui-placeholder": "https://git.example.com/org/deployments.git"
+        },
+        "branch": {
+          "type": "string",
+          "title": "Branch",
+          "description": "GITOPS_BRANCH.",
+          "default": "main"
+        },
+        "path": {
+          "type": "string",
+          "title": "Path",
+          "description": "Directory holding the layout (platform/, projects/), empty for the root (GITOPS_PATH).",
+          "default": ""
+        },
+        "topology": {
+          "type": "object",
+          "title": "Topology",
+          "description": "Where the platform, the projects and the compiled output live, each a repository (url, branch, path; the projects' url and path may hold {project}), and the Forgejo the server creates the project repositories in. Written to a ConfigMap mounted at /etc/okdp/gitops/topology.yaml (GITOPS_CONFIG), forgejo.tokenFile set to the token of forgejoTokenSecret. Empty: repoURL, branch and path hold everything.",
+          "default": {},
+          "x-ui-advanced": true,
+          "additionalProperties": false,
+          "properties": {
+            "platform": {
+              "type": "object",
+              "title": "Platform",
+              "description": "The platform's sources: platform-values.yaml, connections/, components/, catalog.yaml, projects.yaml.",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "main when empty."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The directory of the repository, empty for its root."
+                }
+              }
+            },
+            "projects": {
+              "type": "object",
+              "title": "Projects",
+              "description": "Each project's sources (project.yaml, connections/, services/): {project} in url or path is the project's name.",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "main when empty."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The directory of the repository, empty for its root."
+                }
+              }
+            },
+            "output": {
+              "type": "object",
+              "title": "Output",
+              "description": "The directory holding compiled/, flux/ and argocd/: what Flux and Argo CD read.",
+              "required": [
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "branch": {
+                  "type": "string",
+                  "description": "main when empty."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The directory of the repository, empty for its root."
+                }
+              }
+            },
+            "forgejo": {
+              "type": "object",
+              "title": "Forgejo",
+              "description": "The Forgejo the server creates a new project's repository okdp-project-<project> in (split topology); its token is the key token of forgejoTokenSecret.",
+              "required": [
+                "url",
+                "owner"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The Forgejo API base URL, e.g. http://forgejo-http.forgejo.svc.cluster.local:3000."
+                },
+                "owner": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The organization of the repositories."
+                }
+              }
+            }
+          },
+          "if": {
+            "minProperties": 1
+          },
+          "then": {
+            "required": [
+              "platform",
+              "projects",
+              "output"
+            ]
+          }
+        },
+        "forgejoTokenSecret": {
+          "type": "string",
+          "title": "Forgejo token secret",
+          "description": "Secret of the release namespace whose key token is the Forgejo API token, mounted at /etc/okdp/forgejo/token. Required with topology.forgejo.",
+          "default": "",
+          "x-ui-advanced": true
+        },
+        "chartCacheDir": {
+          "type": "string",
+          "title": "Chart cache directory",
+          "description": "Where the server pulls the upstream charts it checks the compiled values against (GITOPS_CHART_CACHE_DIR), an emptyDir. Empty: the server's default, under its clone.",
+          "default": "/var/cache/okdp/charts",
+          "pattern": "^(/.*)?$",
+          "x-ui-advanced": true
+        },
+        "engine": {
+          "type": "string",
+          "title": "GitOps engine",
+          "enum": [
+            "flux",
+            "argocd"
+          ],
+          "default": "flux"
+        },
+        "releasesNamespace": {
+          "type": "string",
+          "title": "Releases namespace",
+          "description": "Namespace of the Flux HelmReleases and values ConfigMaps, including okdp-platform-values.",
+          "default": "okdp-releases"
+        },
+        "argocdNamespace": {
+          "type": "string",
+          "title": "Argo CD namespace",
+          "description": "Namespace of the Argo CD Applications.",
+          "default": "argocd"
+        },
+        "credentialsSecret": {
+          "type": "string",
+          "title": "Credentials secret",
+          "description": "Secret with write access to the repositories (Flux GitRepository keys: username/password, bearerToken, or identity/known_hosts).",
+          "default": ""
+        },
+        "sshInsecureIgnoreHostKey": {
+          "type": "boolean",
+          "title": "Ignore the SSH host key",
+          "description": "Sandboxes only.",
+          "default": false
+        },
+        "author": {
+          "type": "object",
+          "title": "Commit author",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name",
+              "default": "OKDP control plane"
+            },
+            "email": {
+              "type": "string",
+              "title": "Email",
+              "default": "okdp-control-plane@okdp.io"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "keycloak": {
+      "type": "object",
+      "title": "Keycloak user management",
+      "description": "Keycloak Admin REST API backing the console's user and group management. Off while credentialsSecret.name is empty. The service account needs the realm-management roles view-users, query-users, manage-users and query-groups.",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "properties": {
+        "url": {
+          "type": "string",
+          "title": "Keycloak URL",
+          "description": "Base URL, without /realms/... (KEYCLOAK_URL). Empty: derived from the platform OIDC issuer.",
+          "default": "",
+          "x-ui-order": 1,
+          "x-ui-placeholder": "https://keycloak.example.com"
+        },
+        "realm": {
+          "type": "string",
+          "title": "Realm",
+          "description": "Realm of the Admin API (KEYCLOAK_REALM). Empty: derived from the platform OIDC issuer.",
+          "default": "",
+          "x-ui-order": 2
+        },
+        "credentialsSecret": {
+          "type": "object",
+          "title": "Credentials secret",
+          "description": "Secret in the release namespace with the service-account client credentials. The default keys match identity.provisioning.keycloak.credentialsSecret, so the same Secret can be reused.",
+          "x-ui-order": 3,
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Secret name",
+              "description": "Empty: user management is off.",
+              "default": ""
+            },
+            "clientIdKey": {
+              "type": "string",
+              "title": "Client id key",
+              "default": "client_id"
+            },
+            "clientSecretKey": {
+              "type": "string",
+              "title": "Client secret key",
+              "default": "client_secret"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tlsInsecure": {
+          "type": "boolean",
+          "title": "Skip the TLS check",
+          "description": "Skip the Keycloak certificate check (KEYCLOAK_TLS_INSECURE). Sandboxes only.",
+          "default": false,
+          "x-ui-order": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "title": "Resources",
+      "description": "Container resources (requests/limits).",
+      "default": {},
+      "x-ui-group": "Server",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    }
+  },
+  "required": [
+    "gitops"
+  ],
+  "additionalProperties": false
+}

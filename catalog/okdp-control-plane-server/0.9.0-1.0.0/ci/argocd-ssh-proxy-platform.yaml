@@ -1,0 +1,10 @@
+# The platform values of the case argocd-ssh-proxy, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: example.com
+      className: nginx
+    proxy:
+      httpProxy: http://proxy:3128
+      httpsProxy: http://proxy:3128
+      noProxy: .svc,.cluster.local
