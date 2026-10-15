@@ -1,0 +1,3 @@
+# Only the ServiceAccount: RBAC is managed elsewhere.
+rbacCreate: false
+serviceAccountName: spark-jobs

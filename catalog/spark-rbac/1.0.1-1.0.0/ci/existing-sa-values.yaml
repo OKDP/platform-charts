@@ -1,0 +1,4 @@
+# An existing ServiceAccount bound to the Role, no token automount.
+serviceAccountCreate: false
+serviceAccountName: jobs
+automountServiceAccountToken: false

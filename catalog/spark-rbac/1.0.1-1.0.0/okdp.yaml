@@ -1,0 +1,17 @@
+# OKDP's part of spark-rbac: what an instance may override of its upstream
+# chart, and what the instance publishes. values.cel.yaml computes the
+# chart's values. No platform value is read.
+
+roles: [spark-rbac]
+upstream:
+  spark-rbac:
+    # okdp.instance.yaml publishes it, and the Spark jobs of the namespace use
+    # it (serviceAccountName).
+    protect: [serviceAccount.name]
+
+# No UI, no provided connection.
+instance:
+  usage: |
+    Kubernetes ServiceAccount and RBAC resources (Role and RoleBinding) required to run Apache Spark on Kubernetes.
+
+    Spark jobs of namespace `${{ release.namespace }}` run as ServiceAccount `${{ values.serviceAccountName }}`.

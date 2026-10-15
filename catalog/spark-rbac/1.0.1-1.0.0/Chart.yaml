@@ -1,0 +1,21 @@
+apiVersion: v2
+name: spark-rbac
+description: >-
+  Kubernetes ServiceAccount and RBAC resources (Role and RoleBinding) required
+  to run Apache Spark on Kubernetes.
+type: application
+# <upstream>-<okdp semver>.
+version: 1.0.1-1.0.0
+appVersion: "1.0.1"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/okdp-sandbox
+dependencies:
+  - name: spark-rbac
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.1

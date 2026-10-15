@@ -1,0 +1,9 @@
+# The values of the spark-rbac chart: the flat console parameters onto the
+# keys of the upstream chart (the former KuboCD module "main").
+spark-rbac:
+  rbac:
+    create: ${{ values.rbacCreate }}
+  serviceAccount:
+    create: ${{ values.serviceAccountCreate }}
+    name: ${{ values.serviceAccountName }}
+    automount: ${{ values.automountServiceAccountToken }}
