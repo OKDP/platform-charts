@@ -1,0 +1,2 @@
+# error: okdp-control-plane-ui: oidcAuthority is required
+# No issuer: neither oidcAuthority nor the platform's oidc.issuerUri.

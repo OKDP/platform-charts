@@ -1,0 +1,16 @@
+# The platform values of the case platform-defaults, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx
+    oidc:
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      clientId: okdp-ui
+    proxy:
+      httpProxy: ""
+      httpsProxy: ""
+      noProxy: ""
+    certificateIssuers:
+      selfSigned:
+        name: default-issuer

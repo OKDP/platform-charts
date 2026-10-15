@@ -1,0 +1,14 @@
+# The platform values of the case explicit-proxy, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: example.com
+      className: traefik
+    oidc: {}
+    proxy:
+      httpProxy: http://proxy:3128
+      httpsProxy: ""
+      noProxy: .svc
+    certificateIssuers:
+      selfSigned:
+        name: platform-issuer

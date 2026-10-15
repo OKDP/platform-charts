@@ -1,0 +1,17 @@
+apiVersion: v2
+name: okdp-control-plane-ui
+description: >-
+  OKDP UI - Frontend web interface for the Open Kubernetes Data Platform.
+type: application
+# <upstream>-<okdp semver>. No dependencies: the console is OKDP's own
+# component, its objects are written whole in okdp.yaml (objects).
+version: 0.9.0-1.0.0
+appVersion: "0.9.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/okdp-control-plane-ui

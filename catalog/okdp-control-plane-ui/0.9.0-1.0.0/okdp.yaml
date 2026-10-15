@@ -1,0 +1,165 @@
+# OKDP's part of okdp-control-plane-ui. The console has no upstream chart (no
+# dependency in Chart.yaml, no values file): its Deployment, Service and
+# Ingress are OKDP's own objects, written whole in objects below. They follow
+# chart/ of the okdp-control-plane-ui repository (the environment its
+# docker-entrypoint.sh writes into config.js) and read global.okdp.
+
+roles: [okdp-ui]
+dependsOn: [okdp-server, ingress]
+# ingress.suffix is needed only when host is empty: the errors section
+# checks it.
+require:
+  - ingress.className
+  - certificateIssuers.selfSigned.name
+
+vars:
+  fullname: ${{ okdpFullname() }}
+  # The upstream half of the package version (<upstream>-<okdp semver>), the
+  # image tag when imageTag is empty.
+  appVersion: >-
+    ${{ cel.bind(i, service.version.lastIndexOf('-'), i > 0 ? service.version.substring(0, i) : service.version) }}
+  # Console host: host, else okdp-ui.<ingress suffix>.
+  host: ${{ first([values.host, 'okdp-ui.' + global.okdp.?ingress.?suffix.orValue('')]) }}
+  # Service of the control-plane server: backendService, else this release
+  # name with okdp-control-plane-ui replaced by okdp-control-plane-server (the
+  # server package names its Service after its release), else
+  # okdp-control-plane-server.
+  backendService: >-
+    ${{ first([values.backendService,
+        release.name.endsWith('okdp-control-plane-ui')
+          ? release.name.substring(0, release.name.size() - 'okdp-control-plane-ui'.size()) + 'okdp-control-plane-server'
+          : 'okdp-control-plane-server']) }}
+  # OIDC issuer and client of the console, defaulting to the platform ones.
+  oidcAuthority: ${{ first([values.oidcAuthority, global.okdp.?oidc.?issuerUri.orValue('')]) }}
+  oidcClientId: ${{ first([values.oidcClientId, global.okdp.?oidc.?clientId.orValue(''), 'okdp-ui']) }}
+
+errors:
+  # The default host needs the platform ingress suffix.
+  - $if: ${{ first([values.host]) == '' && global.okdp.?ingress.?suffix.orValue('') == '' }}
+    $value: "okdp-control-plane-ui: global.okdp.ingress.suffix is required when host is empty. It is a platform value: set it in platform/platform-values.yaml."
+  - $if: ${{ oidcAuthority == '' }}
+    $value: "okdp-control-plane-ui: oidcAuthority is required (or global.okdp.oidc.issuerUri in platform/platform-values.yaml): the console has no issuer to authenticate against without it"
+
+# The whole console, rendered by the umbrella (okdp.objects.yaml).
+objects:
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ${{ fullname }}
+      labels: ${{ labels }}
+    spec:
+      replicas: 1
+      selector:
+        matchLabels: ${{ selectorLabels }}
+      template:
+        metadata:
+          labels: ${{ labels }}
+        spec:
+          securityContext:
+            # The image runs nginx as 1001 (group root, which owns its runtime
+            # directories and config.js).
+            runAsNonRoot: true
+            runAsUser: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: console
+              image: "${{ values.imageRepository }}:${{ first([values.imageTag, appVersion]) }}"
+              imagePullPolicy: IfNotPresent
+              # Pod Security "restricted" (nginx listens on 4200, no capability
+              # needed). The root filesystem stays writable: the entrypoint writes
+              # /usr/share/nginx/html/config.js and nginx its cache and pid.
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false
+                capabilities:
+                  drop: [ALL]
+              # Written to /config.js by the entrypoint and read by the bundle at
+              # startup: one image, any cluster.
+              env:
+                - name: OIDC_AUTHORITY
+                  value: ${{ str(oidcAuthority) }}
+                - name: OIDC_CLIENT_ID
+                  value: ${{ str(oidcClientId) }}
+                - name: OIDC_ROLES_CLAIM
+                  value: ${{ str(values.rolesClaim) }}
+                - name: OIDC_ADMIN_ROLE
+                  value: ${{ str(values.adminRole) }}
+                # The platform proxy, upper and lower case.
+                - $for: "k in ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'].filter(p, p in platform.proxyEnv)"
+                  $each:
+                    - {name: "${{ k }}", value: "${{ str(platform.proxyEnv[k]) }}"}
+                    - {name: "${{ k.lowerAscii() }}", value: "${{ str(platform.proxyEnv[k]) }}"}
+              ports:
+                - name: http
+                  containerPort: 4200
+                  protocol: TCP
+              # The image serves only the static bundle (its nginx answers 404 on
+              # /api); the ingress routes /api to the control plane.
+              livenessProbe:
+                httpGet:
+                  path: /
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 30
+              readinessProbe:
+                httpGet:
+                  path: /
+                  port: http
+              resources:
+                $if: ${{ values.?resources.orValue(null) }}
+                $value: ${{ values.resources }}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${{ fullname }}
+      labels: ${{ labels }}
+    spec:
+      type: ClusterIP
+      ports:
+        - name: http
+          port: 4200
+          targetPort: http
+          protocol: TCP
+      selector: ${{ selectorLabels }}
+  - apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: ${{ fullname }}
+      labels: ${{ labels }}
+      annotations: ${{ platform.ingressAnnotations }}
+    spec:
+      ingressClassName: ${{ global.okdp.ingress.className }}
+      tls:
+        - hosts: ["${{ host }}"]
+          secretName: ${{ release.name }}-tls
+      rules:
+        - host: ${{ host }}
+          http:
+            paths:
+              # API calls go to the in-cluster control-plane Service: the browser
+              # stays same-origin (no CORS), the API has no host of its own.
+              - path: /api
+                pathType: Prefix
+                backend:
+                  service:
+                    name: ${{ backendService }}
+                    port:
+                      number: ${{ values.backendPort }}
+              # Everything else is the single-page app.
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: ${{ fullname }}
+                    port:
+                      number: 4200
+
+# okdp.instance.yaml: what the console lists of the instance.
+instance:
+  url: https://${{ host }}
+  usage: |
+    Access the console at https://${{ host }}
+    The same ingress routes /api to the okdp-control-plane-server Service
+    (`${{ backendService }}`), so the browser never leaves
+    the origin and the API is never exposed on its own host.
