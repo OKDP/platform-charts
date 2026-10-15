@@ -1,0 +1,9 @@
+# One hive catalog on an internal metastore (the hive-metastore release demo-hive
+# in the same namespace, no connection file) and an external s3 connection.
+# OPA off, as in the demo project.
+s3SecretRef: creds-trino-s3
+hiveCatalogs:
+  - name: bronze
+    metastore: demo-hive
+    storage: demo-storage
+enableOPA: false

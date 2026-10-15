@@ -1,0 +1,11 @@
+# OKDP's defaults of the opal chart (okdp.yaml defaults): over the chart's
+# values.yaml, under the values computed by values.cel.yaml. Plain YAML.
+image:
+  client:
+    registry: docker.io
+    repository: permitio/opal-client-standalone
+    tag: 0.9.4
+  server:
+    registry: docker.io
+    repository: permitio/opal-server
+    tag: 0.9.4

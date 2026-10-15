@@ -1,0 +1,19 @@
+# error: trino: catalog "raw": no S3 credentials, set s3SecretRef on the catalog or on the release, or a secretRef on connection "aws"
+# Every catalog rule at once: a hive catalog without S3 credentials (no
+# s3SecretRef, a connection without secretRef), an Iceberg catalog on an
+# internal Polaris without warehouse (the realm is not derivable from the
+# release name), and a catalog named after a built-in one.
+hiveCatalogs:
+  - name: raw
+    metastore: demo-hive
+    storage: aws
+  - name: tpch
+    metastore: demo-hive
+    storage: aws
+    s3SecretRef: creds-tpch-s3
+icebergCatalogs:
+  - name: silver
+    catalog: demo-polaris
+    storage: aws
+    s3SecretRef: creds-silver-s3
+enableOPA: false

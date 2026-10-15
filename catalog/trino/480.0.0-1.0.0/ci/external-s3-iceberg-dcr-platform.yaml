@@ -1,0 +1,13 @@
+# The platform values of the case external-s3-iceberg-dcr, over platform.yaml
+# (--context, level 0): OAuth clients registered by DCR, a proxy.
+global:
+  okdp:
+    oidc:
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://keycloak.okdp.sandbox/realms/master/clients-registrations/openid-connect
+        authMethod: anonymous
+    proxy:
+      httpProxy: http://proxy.corp:3128
+      httpsProxy: http://proxy.corp:3128
+      noProxy: .svc,.cluster.local

@@ -1,0 +1,7 @@
+# The platform values of the case opa-opal, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    proxy:
+      httpProxy: http://proxy.corp:3128
+      httpsProxy: ""
+      noProxy: .svc

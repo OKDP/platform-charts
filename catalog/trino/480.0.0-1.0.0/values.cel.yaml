@@ -1,0 +1,124 @@
+# The values of the charts of trino (the former KuboCD modules main, opa and
+# opal), computed from the parameters, the platform values and the catalogs
+# of okdp.yaml (vars). ${{ ... }} is a CEL expression; Trino's own ${ENV:X}
+# and Kubernetes' $(VAR) stay literal.
+
+# Module main: the trino chart.
+trino:
+  fullnameOverride: ${{ fullname }}
+  catalogs:
+    $if: ${{ catalogs.size() > 0 }}
+    $for: c in catalogs
+    $key: ${{ c.name }}
+    $value: ${{ c.properties + '\n' }}
+  env:
+    - name: TRINO_OAUTH_CLIENT_ID
+      valueFrom: {secretKeyRef: {name: "${{ platform.oidcClientSecret }}", key: client_id}}
+    - name: TRINO_OAUTH_CLIENT_SECRET
+      valueFrom: {secretKeyRef: {name: "${{ platform.oidcClientSecret }}", key: client_secret}}
+    - $for: c in iceberg
+      $each:
+        - name: ICEBERG_OAUTH_CLIENT_ID_${{ c.env }}
+          valueFrom: {secretKeyRef: {name: "${{ c.oidcSecret }}", key: client_id}}
+        - name: ICEBERG_OAUTH_CLIENT_SECRET_${{ c.env }}
+          valueFrom: {secretKeyRef: {name: "${{ c.oidcSecret }}", key: client_secret}}
+        # Kubernetes expands $(VAR) from variables declared earlier in this list.
+        - name: ICEBERG_OAUTH_${{ c.env }}
+          value: $(ICEBERG_OAUTH_CLIENT_ID_${{ c.env }}):$(ICEBERG_OAUTH_CLIENT_SECRET_${{ c.env }})
+    - name: TRINO_SHARED_SECRET
+      valueFrom: {secretKeyRef: {name: "${{ internalSecret }}", key: shared-secret}}
+    - name: TRUSTSTORE_PASSWORD
+      value: ""
+    - $for: c in catalogs
+      $each:
+        - name: S3_ACCESS_KEY_${{ c.env }}
+          valueFrom: {secretKeyRef: {name: "${{ c.s3Secret }}", key: accessKey}}
+        - name: S3_SECRET_ACCESS_${{ c.env }}
+          valueFrom: {secretKeyRef: {name: "${{ c.s3Secret }}", key: secretKey}}
+  coordinator:
+    resources:
+      limits:
+        memory: ${{ str(values.coordinatorMemoryGi) }}Gi
+  worker:
+    resources:
+      requests:
+        cpu: ${{ str(values.workerCpu) }}
+        memory: ${{ str(values.workerMemoryGi) }}Gi
+      limits:
+        cpu: ${{ str(values.workerCpu * 2.0) }}
+        memory: ${{ str(values.workerMemoryGi * 2.0) }}Gi
+  server:
+    workers: ${{ values.numWorkers }}
+    coordinatorExtraConfig: |
+      http-server.process-forwarded=true
+      web-ui.authentication.type=oauth2
+      # Enable two authentication flows on the coordinator:
+      # - OAUTH2: interactive browser-based login for human users (UI/CLI with external authentication)
+      # - JWT: non-interactive bearer token authentication for automation/service accounts
+      #   such as scripts, jobs, or CI/CD using --access-token
+      http-server.authentication.type=jwt,oauth2
+      # In-cluster clients reach the coordinator on plain HTTP. Without this,
+      # Trino answers 403 to any authenticated call that is not TLS.
+      http-server.authentication.allow-insecure-over-http=true
+      http-server.authentication.oauth2.issuer=${{ global.okdp.oidc.issuerUri }}
+      http-server.authentication.oauth2.client-id=${ENV:TRINO_OAUTH_CLIENT_ID}
+      http-server.authentication.oauth2.client-secret=${ENV:TRINO_OAUTH_CLIENT_SECRET}
+      http-server.authentication.oauth2.auth-url=${{ global.okdp.oidc.authUrl }}
+      http-server.authentication.oauth2.token-url=${{ global.okdp.oidc.tokenUrl }}
+      http-server.authentication.oauth2.scopes=${{ platform.oidc.scope.replace(' ', ',') }}
+      http-server.authentication.oauth2.principal-field=preferred_username
+
+      http-server.authentication.jwt.key-file=${{ global.okdp.oidc.jwksUri }}
+      http-server.authentication.jwt.required-issuer=${{ global.okdp.oidc.issuerUri }}
+      http-server.authentication.jwt.required-audience=account
+      http-server.authentication.jwt.principal-field=client_id
+  ingress:
+    className: ${{ global.okdp.ingress.className }}
+    annotations: ${{ platform.ingressAnnotations }}
+    hosts:
+      - host: ${{ host }}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts: ["${{ host }}"]
+        secretName: ${{ release.name }}-tls
+  accessControl:
+    $if: ${{ values.enableOPA }}
+    type: properties
+    properties: |-
+      access-control.name=opa
+      opa.policy.uri=http://${{ opaName }}.${{ release.namespace }}:8181/${{ values.opaPolicyPath }}
+      opa.log-responses=${{ str(values.enableOPADebugLogs) }}
+      opa.log-requests=${{ str(values.enableOPADebugLogs) }}
+
+# Module opa: opa-kube-mgmt, rendered with enableOPA. Never set
+# admissionController.enabled: its template runs genCA and genSignedCert
+# (protected in okdp.yaml).
+opa-kube-mgmt:
+  $if: ${{ values.enableOPA }}
+  fullnameOverride: ${{ opaName }}
+  extraArgs:
+    $if: ${{ values.enableOPADebugLogs }}
+    $value: ["--set=status.console=true", "--set=decision_logs.console=true"]
+  mgmt: {enabled: "${{ !values.enableOPAL }}"}
+  rbac: {create: "${{ !values.enableOPAL }}"}
+  serviceAccount: {create: "${{ !values.enableOPAL }}"}
+
+# Module opal: the OPAL server and client feeding OPA from a policy
+# repository, rendered with enableOPA and enableOPAL. Its secrets come from
+# the opal-secrets hook (okdp.yaml objects).
+opal:
+  $if: ${{ values.enableOPA && values.enableOPAL }}
+  client:
+    extraEnv:
+      OPAL_POLICY_STORE_URL: http://${{ opaName }}.${{ release.namespace }}:8181
+      OPAL_POLICY_SUBSCRIPTION_DIRS: ${{ values.OPAL_POLICY_SUBSCRIPTION_DIRS }}
+    secrets: ["${{ opalSecrets.client }}"]
+  server:
+    policyRepoUrl: ${{ values.policyRepoUrl }}
+    policyRepoMainBranch: ${{ values.policyRepoMainBranch }}
+    secrets: ["${{ opalSecrets.ssh }}", "${{ opalSecrets.master }}"]
+    extraEnv:
+      OPAL_POLICY_REPO_MANIFEST_PATH: ${{ values.OPAL_POLICY_REPO_MANIFEST_PATH }}
+      $merge: ${{ platform.proxyEnv }}

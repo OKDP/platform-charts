@@ -1,0 +1,6 @@
+# OPA fed by OPAL from a policy repository, debug logs, proxy for the OPAL server.
+enableOPA: true
+enableOPAL: true
+enableOPADebugLogs: true
+policyRepoUrl: https://github.com/OKDP/okdp-examples.git
+policyRepoMainBranch: main

@@ -1,0 +1,11 @@
+# The connections of the case internal-hive: the instance's own (--context 2:).
+connections:
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef:
+      name: creds-seaweedfs-s3

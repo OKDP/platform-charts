@@ -1,0 +1,25 @@
+# OKDP's defaults of the opa-kube-mgmt chart (okdp.yaml defaults): over the
+# chart's values.yaml, under the values computed by values.cel.yaml. Plain
+# YAML. Never set admissionController.enabled: see okdp.yaml (upstream).
+authz:
+  enabled: false
+image:
+  repository: openpolicyagent/opa
+  tag: 1.16.1
+  pullPolicy: IfNotPresent
+useHttps: false
+port: 8181
+mgmt:
+  startupProbe:
+    failureThreshold: 5
+    httpGet:
+      path: /health
+      port: 8181
+      scheme: HTTP
+    initialDelaySeconds: 20
+    successThreshold: 1
+    timeoutSeconds: 10
+  data:
+    enabled: true
+  policies:
+    enabled: true

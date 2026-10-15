@@ -1,0 +1,16 @@
+# The connections of the case external-s3-iceberg-dcr: the instance's own (--context 2:).
+connections:
+  lake-s3:
+    contract: s3
+    apiUrl: https://s3.example.org
+    region: eu-west-3
+    pathStyle: false
+    secretRef:
+      name: lake-s3-creds
+  corp-hive:
+    contract: hive
+    thriftUri: thrift://hms.corp.example.org:9083
+  corp-iceberg:
+    contract: iceberg-catalog
+    uri: https://iceberg.corp.example.org/api/catalog
+    realm: corp

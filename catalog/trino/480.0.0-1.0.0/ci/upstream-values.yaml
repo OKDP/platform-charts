@@ -1,0 +1,29 @@
+# Instance-level upstream values (upstream.trino, upstream.opa-kube-mgmt) over
+# the internal-hive setup with OPA on: overrides, list appends, an extra catalog.
+s3SecretRef: creds-trino-s3
+hiveCatalogs:
+  - name: bronze
+    metastore: demo-hive
+    storage: demo-storage
+enableOPA: true
+upstream:
+  trino:
+    image: {repository: mirror.example.org/trinodb/trino}
+    server:
+      config:
+        query: {maxMemory: 8GB}
+    worker:
+      tolerations:
+        - {key: dedicated, operator: Exists, effect: NoSchedule}
+    env:
+      - {name: EXTRA_FLAG, value: "1"}
+    additionalConfigProperties:
+      - http-server.log.enabled=false
+    catalogs:
+      memory: |
+        connector.name=memory
+  opa-kube-mgmt:
+    resources:
+      limits: {memory: 256Mi}
+    extraArgs:
+      - --log-level=debug
