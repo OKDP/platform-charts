@@ -1,0 +1,22 @@
+# Instance upstream values over the external-connections setup: an
+# environment variable appended to the server's, the console's resources,
+# and polaris-admin values that both Jobs take (bootstrap and principals).
+db: demo-db-polaris
+storage: demo-storage
+s3SecretRef: creds-polaris-s3
+realm: SANDBOX
+principals:
+  - name: service-account-polaris-admin
+    roles: [service_admin, catalog_admin]
+upstream:
+  polaris:
+    extraEnv:
+      - {name: EXTRA_FLAG, value: "1"}
+  polaris-console:
+    resources:
+      limits: {memory: 256Mi}
+  polaris-admin:
+    bootstrap: {backoffLimit: 3}
+    principals:
+      backoffLimit: 2
+      image: {tag: 8.19.0}

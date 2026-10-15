@@ -1,0 +1,8 @@
+# error: polaris-admin: upstream.polaris-admin.realms: realms is set by the platform and cannot be changed
+# The realms of polaris-admin are the realm and principals parameters.
+db: demo-db-polaris
+storage: demo-storage
+s3SecretRef: creds-polaris-s3
+upstream:
+  polaris-admin:
+    realms: []

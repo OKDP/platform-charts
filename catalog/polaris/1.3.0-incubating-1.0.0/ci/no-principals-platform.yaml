@@ -1,0 +1,11 @@
+# The platform values of the case no-principals, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: example.org
+      className: traefik
+    certificateIssuers:
+      selfSigned:
+        name: letsencrypt
+    oidc:
+      issuerUri: https://sso.example.org/realms/data

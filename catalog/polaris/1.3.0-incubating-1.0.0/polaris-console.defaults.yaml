@@ -1,0 +1,14 @@
+# OKDP's defaults of the polaris-console chart (defaults in okdp.yaml), over
+# its values.yaml and under the values computed by values.cel.yaml. Plain
+# YAML, read as Helm reads a values file.
+image:
+  repository: quay.io/okdp/polaris-console
+  tag: v0.1.1
+  pullPolicy: Always
+extraEnv:
+  # dcr mode: read from the console's DCR Secret instead (values.cel.yaml).
+  VITE_OIDC_CLIENT_ID: "polaris-console"
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"

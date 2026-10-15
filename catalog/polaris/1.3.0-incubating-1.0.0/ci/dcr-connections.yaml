@@ -1,0 +1,21 @@
+# The connections of the case dcr: the instance's own (--context 2:).
+connections:
+  demo-db-polaris:
+    contract: database-server
+    description: Polaris metastore database
+    engine: postgresql
+    host: demo-pg-rw.demo.svc.cluster.local
+    port: 5432
+    dbName: polaris
+    sslMode: disable
+    secretRef:
+      name: demo-pg-polaris
+  demo-storage:
+    contract: s3
+    description: Platform S3 store, shared with this project
+    apiUrl: https://storage-default-api.okdp.sandbox
+    internalUrl: http://storage-s3.default.svc.cluster.local:8333
+    region: us-east-1
+    pathStyle: true
+    secretRef:
+      name: creds-seaweedfs-s3

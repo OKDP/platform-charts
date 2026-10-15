@@ -1,0 +1,5 @@
+# error: polaris: db: connection "demo-db-mysql" has engine "mysql", Polaris is deployed with PostgreSQL only
+# A MySQL metastore database: refused.
+db: demo-db-mysql
+storage: demo-storage
+s3SecretRef: creds-polaris-s3

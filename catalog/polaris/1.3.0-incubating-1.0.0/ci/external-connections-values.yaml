@@ -1,0 +1,9 @@
+# The demo project: CNPG database and platform S3 store as connection files,
+# one admin principal.
+db: demo-db-polaris
+storage: demo-storage
+s3SecretRef: creds-polaris-s3
+realm: SANDBOX
+principals:
+  - name: service-account-polaris-admin
+    roles: [service_admin, catalog_admin]

@@ -1,0 +1,5 @@
+# Default realm, no principal (no principals Job), bigger memory, another suffix.
+db: pg
+storage: aws
+s3SecretRef: polaris-aws
+memoryGi: 2

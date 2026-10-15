@@ -1,0 +1,9 @@
+# The demo project with the server's and the console's OAuth clients registered by
+# DCR (<release>-<namespace>-dcr, <release>-<namespace>-console-dcr).
+db: demo-db-polaris
+storage: demo-storage
+s3SecretRef: creds-polaris-s3
+realm: SANDBOX
+principals:
+  - name: service-account-polaris-admin
+    roles: [service_admin, catalog_admin]

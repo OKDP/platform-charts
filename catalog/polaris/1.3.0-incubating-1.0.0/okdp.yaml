@@ -1,0 +1,167 @@
+# OKDP's part of polaris: the platform values it needs, OKDP's defaults of its
+# upstream charts and what an instance may override; then its OAuth clients
+# (the former module oidc-dcr), OKDP's own objects, what the instance
+# publishes and the connection it provides. values.cel.yaml computes the
+# charts' values. The db and storage references arrive resolved (their
+# x-okdp-connection-ref in config.schema.json): values.db holds the
+# database-server contract fields and secretRef, values.storage the s3 ones.
+
+roles: [data-catalog, iceberg-catalog]
+dependsOn: [identity, storage, database-server, ingress]
+require:
+  - ingress.suffix
+  - ingress.className
+  - certificateIssuers.selfSigned.name
+  - oidc.issuerUri
+defaults:
+  polaris: polaris.defaults.yaml
+  polaris-admin: polaris-admin.defaults.yaml
+  polaris-admin-principals: polaris-admin-principals.defaults.yaml
+  polaris-console: polaris-console.defaults.yaml
+upstream:
+  polaris:
+    # What the platform relies on: the Service name and port of the
+    # iceberg-catalog contract, the metastore database, the S3 identity, the
+    # realm the connection publishes and polaris-admin bootstraps, sign-in
+    # through the identity provider and its role mapping, the published ingress
+    # host, and serviceMonitor: its template reads .Capabilities.APIVersions,
+    # which differ between Flux (helm install) and Argo CD (helm template), so
+    # it stays disabled (false upstream, never set by the package).
+    # authentication.tokenBroker and tokenService stay open (a key pair Secret
+    # shared by the replicas). advancedConfig merges key by key: an instance
+    # adds properties to it, and may change the two OKDP's defaults set (the
+    # realm header name, CORS on).
+    protect: [fullnameOverride, service.ports, persistence, storage, realmContext,
+              authentication.type, authentication.authenticator, authentication.realmOverrides,
+              oidc, ingress.enabled, ingress.className, ingress.hosts, ingress.tls, serviceMonitor]
+    # The lists carrying OKDP's Secrets, CA bundle and the console origin: an
+    # instance adds to them.
+    append: [extraEnv, extraVolumes, extraVolumeMounts, cors.allowedOrigins]
+  polaris-admin:
+    # One set of values for both renders of the chart: the instance's
+    # upstream.polaris-admin applies to the bootstrap render (this key) and,
+    # merged by values.cel.yaml, to the principals render
+    # (polaris-admin-principals, which takes no upstream values of its own).
+    # bootstrap.* is read in the bootstrap phase only, principals.* in the
+    # principals phase only, the rest (image settings aside) by both.
+    # Protected: the name and phase, the realms (root credentials Secret, the
+    # realm and the principals parameters), the metastore database, the hook
+    # annotations that order the two Jobs, the URL of this Polaris, and
+    # bootstrap.purge (it would drop every realm's catalogs at each upgrade).
+    # The mapping sets no list.
+    protect: [fullnameOverride, phase, realms, bootstrap.purge, bootstrap.database,
+              bootstrap.annotations, principals.polaris.url, principals.annotations]
+  polaris-console:
+    # Besides the name: what points it at this Polaris and its realm, the OIDC
+    # sign-in, and the ingress host whose callback URL is registered with the
+    # identity provider. extraEnv is a map: an instance adds variables to it.
+    protect: [fullnameOverride, env.polarisApiUrl, env.polarisRealm, env.oauthTokenUrl,
+              extraEnv.VITE_OIDC_ISSUER_URL, extraEnv.VITE_OIDC_CLIENT_ID,
+              extraEnv.VITE_OIDC_REDIRECT_URI, extraEnv.VITE_OIDC_SCOPE,
+              ingress.enabled, ingress.className, ingress.hosts, ingress.tls]
+
+vars:
+  # Polaris server Service: <release>-polaris (iceberg-catalog contract convention).
+  fullname: ${{ okdpFullname('polaris') }}
+  # Public API host: polaris-<namespace>.<ingress suffix>.
+  host: polaris-${{ release.namespace }}.${{ global.okdp.ingress.suffix }}
+  # Console host: polaris-console-<namespace>.<ingress suffix>.
+  consoleHost: polaris-console-${{ release.namespace }}.${{ global.okdp.ingress.suffix }}
+  apiUrl: https://${{ host }}
+  consoleUrl: https://${{ consoleHost }}
+  # In-cluster base URL of the Polaris API.
+  internalUrl: http://${{ fullname }}.${{ release.namespace }}.svc:8181
+  # Root credentials of the realm (keys client_id, client_secret): <release>-root.
+  rootSecret: ${{ okdpFullname('root') }}
+  # The Secret of the console's OAuth client, registered by DCR (dcr mode):
+  # <release>-<namespace>-console-dcr (oidcClients).
+  consoleDcrSecret: ${{ oidcClientSecret('console') }}
+  # Login scope of the console (the oidc-dcr registration must grant it, openid aside).
+  consoleScope: ${{ platform.oidc.scope }} roles offline_access
+  # The metastore database (PostgreSQL only: the JDBC URL and the image
+  # driver, checked below); "" while db is unset.
+  jdbcUrl: >-
+    ${{ type(values.db) == map
+        ? 'jdbc:postgresql://' + str(values.db.host) + ':' + str(values.db.port) + '/' + str(values.db.dbName)
+        : '' }}
+  # realms value of the polaris-admin chart, shared by the bootstrap and
+  # principals phases.
+  adminRealms:
+    - name: ${{ str(values.realm) }}
+      rootPrincipal:
+        name: root
+        credentialsSecret:
+          name: ${{ rootSecret }}
+          clientIdKey: client_id
+          clientSecretKey: client_secret
+      principals: ${{ values.?principals.orValue([]) }}
+  # Kept on uninstall (Helm) and on prune (Argo CD).
+  keep:
+    helm.sh/resource-policy: keep
+    argocd.argoproj.io/sync-options: Delete=false
+
+errors:
+  # An unset reference stays "".
+  - $if: ${{ type(values.db) != map }}
+    $value: "polaris: db: no database-server connection given"
+  - $if: ${{ type(values.storage) != map }}
+    $value: "polaris: storage: no s3 connection given"
+  - $if: ${{ type(values.db) == map && str(values.db.engine) != 'postgresql' }}
+    $value: >-
+      polaris: db: connection "${{ values.db.okdp.ref }}" has engine "${{ str(values.db.engine) }}",
+      Polaris is deployed with PostgreSQL only
+  - $if: ${{ type(values.db) == map && !has(values.db.secretRef) }}
+    $value: >-
+      polaris: db: connection "${{ values.db.okdp.ref }}" has no secretRef:
+      Polaris needs a Secret with the keys username and password
+  - $if: ${{ values.?s3SecretRef.orValue('') == '' }}
+    $value: "polaris: s3SecretRef is required: a Secret with the keys accessKey and secretKey, this instance's own S3 identity"
+
+# The OAuth clients (the former module oidc-dcr), registered by dynamic client
+# registration in dcr mode (global.okdp.oidc.clientProvisioning: dcr): the
+# compiler adds one oidc-dcr chart per client. Nothing in existing mode.
+oidcClients:
+  # The server's, confidential: it validates the bearer tokens (no user
+  # sign-in, no redirect URI). Chart oidc-dcr (Job <release>-oidc-dcr), Secret
+  # platform.oidcClientSecret (<release>-<namespace>-dcr).
+  - grantTypes: [client_credentials]
+  # The console's, public (a browser application): authorization code with
+  # PKCE. Chart console-oidc-dcr (Job <release>-console-oidc-dcr), client name
+  # <release>-<namespace>-console, Secret oidcClientSecret('console')
+  # (<release>-<namespace>-console-dcr).
+  - name: console
+    public: true
+    redirectUris: ['${{ consoleUrl }}/auth/callback']
+    grantTypes: [authorization_code, refresh_token]
+    scope: ${{ consoleScope }}
+
+# OKDP's own objects, rendered by the umbrella (okdp.objects.yaml).
+objects:
+  # Former module internal-secrets: the root credentials of the realm
+  # (client_id: root, a generated client_secret), an ESO Password generator
+  # and the ExternalSecret writing the Secret, generated once (refreshInterval
+  # 0). Kept when the release goes away (was keep: true): the bootstrapped
+  # realm lives on in the database with these credentials.
+  - $spread: >-
+      ${{ okdpGeneratedSecret({'name': rootSecret,
+          'keys': [{'key': 'client_secret', 'length': 32}],
+          'stringData': {'client_id': 'root'},
+          'annotations': keep}) }}
+
+# okdp.instance.yaml: the console's URL and how to use the instance.
+instance:
+  url: ${{ consoleUrl }}
+  usage: |
+    Apache Polaris is an open-source, fully-featured catalog for Apache Iceberg™.
+    Access the UI at ${{ consoleUrl }}
+    Realm ${{ values.realm }}, root credentials in Secret ${{ rootSecret }} (keys client_id and client_secret)
+
+# The connection this instance publishes: other instances of the project
+# reference it by its release name (the iceberg-catalog contract's naming
+# convention, x-okdp-internal, which the compiler checks these values against).
+provides:
+  - contract: iceberg-catalog
+    values:
+      uri: ${{ apiUrl }}/api/catalog
+      internalUri: ${{ internalUrl }}/api/catalog
+      realm: ${{ str(values.realm) }}

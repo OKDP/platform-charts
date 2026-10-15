@@ -1,0 +1,35 @@
+apiVersion: v2
+name: polaris
+description: >-
+  Apache Polaris is an open-source, fully-featured catalog for Apache Iceberg™.
+type: application
+# <upstream>-<okdp semver>.
+version: 1.3.0-incubating-1.0.0
+appVersion: "1.3.0-incubating"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/apache/polaris
+dependencies:
+  # The former KuboCD module main: the Iceberg REST catalog.
+  - name: polaris
+    repository: https://downloads.apache.org/polaris/helm-chart/
+    version: 1.3.0-incubating
+  # The former module bootstrap: the polaris-admin chart, phase bootstrap.
+  - name: polaris-admin
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.0
+  # The former module principals: the polaris-admin chart again, phase
+  # principals, under its own key.
+  - name: polaris-admin
+    alias: polaris-admin-principals
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.0
+  # The former module console.
+  - name: polaris-console
+    repository: oci://quay.io/okdp/charts
+    version: 0.3.0

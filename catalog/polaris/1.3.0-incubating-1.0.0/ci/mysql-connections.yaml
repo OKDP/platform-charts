@@ -1,0 +1,15 @@
+# The connections of the case mysql: the instance's own (--context 2:).
+connections:
+  demo-db-mysql:
+    contract: database-server
+    engine: mysql
+    host: mysql.demo.svc.cluster.local
+    port: 3306
+    dbName: polaris
+    secretRef:
+      name: demo-mysql-polaris
+  demo-storage:
+    contract: s3
+    apiUrl: https://storage-default-api.okdp.sandbox
+    region: us-east-1
+    pathStyle: true

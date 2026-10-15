@@ -1,0 +1,148 @@
+# The values of the charts of polaris, by key: they see the bindings of
+# okdp.yaml (vars). Every chart is always rendered.
+
+# The former module bootstrap: the polaris-admin chart, phase bootstrap
+# (OKDP's defaults). Both polaris-admin Jobs are post-install/post-upgrade
+# hooks (Argo: PostSync), bootstrap first (weight -5), then principals
+# (weight 5): the root credentials come from an ESO ExternalSecret, a regular
+# object, so a pre-install hook would wait for a Secret created after it.
+# Polaris starts before its realm is bootstrapped and serves it once the
+# bootstrap Job is done; the principals Job waits for Polaris to answer. Both
+# Jobs are idempotent (already bootstrapped / 409).
+polaris-admin:
+  fullnameOverride: ${{ okdpFullname() }}
+  bootstrap:
+    database:
+      jdbcUrl: ${{ jdbcUrl }}
+      secret:
+        name: ${{ values.db.secretRef.name }}
+  realms: ${{ adminRealms }}
+
+# The former module principals: the polaris-admin chart again, phase
+# principals (OKDP's defaults).
+polaris-admin-principals:
+  fullnameOverride: ${{ okdpFullname() }}
+  principals:
+    polaris:
+      url: ${{ internalUrl }}
+  realms: ${{ adminRealms }}
+  # The instance's upstream.polaris-admin applies to this render too, over
+  # the values above, as an upstream layer would: okdp.yaml checks it against
+  # the paths polaris-admin protects.
+  $merge: ${{ values.upstream[?'polaris-admin'].orValue({}) }}
+
+# The former module main: the polaris chart.
+polaris:
+  # The Service name the iceberg-catalog contract promises internal references.
+  fullnameOverride: ${{ fullname }}
+  resources:
+    limits:
+      memory: ${{ str(values.memoryGi) }}Gi
+  extraEnv:
+    # S3
+    - name: AWS_REGION
+      value: ${{ str(values.storage.region) }}
+    - name: AWS_ENDPOINT_URL_S3
+      value: ${{ str(values.storage.apiUrl) }}
+    - name: AWS_ENDPOINT_URL_STS
+      value: ${{ str(values.storage.apiUrl) }}
+    # The Polaris S3 identity for STS
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: accessKey
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: secretKey
+    # Polaris Database
+    - name: QUARKUS_DATASOURCE_JDBC_URL
+      value: ${{ jdbcUrl }}
+    - name: QUARKUS_DATASOURCE_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.db.secretRef.name }}
+          key: username
+    - name: QUARKUS_DATASOURCE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.db.secretRef.name }}
+          key: password
+    - name: QUARKUS_OIDC_TLS_CONFIGURATION_NAME
+      value: "oidc"
+    - name: QUARKUS_TLS__OIDC__TRUST_STORE_PEM_CERTS
+      value: "/cacerts/ca.crt"
+    # OIDC, Enable multi-tenancy (Multiple realms)
+    - name: QUARKUS_OIDC_TENANT-ENABLED
+      value: "true"
+    - name: QUARKUS_OIDC_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: ${{ platform.oidcClientSecret }}
+          key: client_id
+    # Trust The CA
+    - name: JAVA_TOOL_OPTIONS
+      value: >-
+        -Djavax.net.ssl.trustStore=/cacerts/bundle.p12
+        -Djavax.net.ssl.trustStoreType=PKCS12
+        -Djavax.net.ssl.trustStorePassword=
+  realmContext:
+    realms:
+      - ${{ str(values.realm) }}
+  oidc:
+    authServeUrl: ${{ global.okdp.oidc.issuerUri }}
+    client:
+      secret:
+        name: ${{ platform.oidcClientSecret }}
+        key: client_secret
+  cors:
+    allowedOrigins:
+      - ${{ consoleUrl }}
+  ingress:
+    className: ${{ global.okdp.ingress.className }}
+    annotations: ${{ platform.ingressAnnotations }}
+    hosts:
+      - host: ${{ host }}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts: ["${{ host }}"]
+        secretName: ${{ release.name }}-tls
+
+# The former module console: the polaris-console chart. dcr mode: its client
+# id is read from its own DCR client's Secret.
+polaris-console:
+  fullnameOverride: ${{ release.name }}-polaris-console
+  env:
+    polarisApiUrl: ${{ apiUrl }}
+    polarisRealm: ${{ str(values.realm) }}
+    oauthTokenUrl: ${{ apiUrl }}/api/catalog/v1/oauth/tokens
+  extraEnv:
+    VITE_OIDC_ISSUER_URL: ${{ str(global.okdp.oidc.issuerUri) }}
+    VITE_OIDC_REDIRECT_URI: ${{ consoleUrl }}/auth/callback
+    VITE_OIDC_SCOPE: ${{ consoleScope }}
+    # dcr mode: from the console's DCR Secret (an extraEnv valueFrom,
+    # polaris-console >= 0.3.0); otherwise polaris-console.defaults.yaml.
+    VITE_OIDC_CLIENT_ID:
+      $if: ${{ platform.oidc.dcr.enabled }}
+      valueFrom:
+        secretKeyRef:
+          name: ${{ consoleDcrSecret }}
+          key: client_id
+  # The pod template carries no app.kubernetes.io/instance otherwise.
+  podLabels:
+    app.kubernetes.io/instance: ${{ release.name }}
+  ingress:
+    className: ${{ global.okdp.ingress.className }}
+    annotations: ${{ platform.ingressAnnotations }}
+    hosts:
+      - host: ${{ consoleHost }}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: ${{ release.name }}-polaris-console-tls
+        hosts: ["${{ consoleHost }}"]
