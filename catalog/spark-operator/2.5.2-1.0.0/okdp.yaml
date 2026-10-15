@@ -1,0 +1,73 @@
+# OKDP's part of spark-operator: its upstream chart's defaults, what an
+# instance may override, and what the instance publishes. values.cel.yaml
+# computes the chart's values. No platform value is read.
+
+roles: [sparkOperator]
+defaults:
+  spark-operator: spark-operator.defaults.yaml
+upstream:
+  spark-operator:
+    # Names (derived from the release); hook (its pre-upgrade Job would apply
+    # the CRDs, which the deployer upgrades with the release); certManager
+    # (its certificate.yaml and issuer.yaml check .Capabilities, which Flux
+    # and Argo CD do not see alike: kept disabled); spark.jobNamespaces (the
+    # jobNamespaces parameter; the operator's per-namespace RBAC derives from
+    # it); the job ServiceAccount and RBAC (owned by the spark-rbac service);
+    # the operator's own RBAC and ServiceAccounts. The PodMonitor template
+    # (podMonitorEnabled) checks .Capabilities too: it fails the render when
+    # the PodMonitor API is missing, and never changes the output.
+    protect: [fullnameOverride, nameOverride, hook, certManager, spark.jobNamespaces,
+              spark.serviceAccount.create, spark.rbac.create, controller.rbac.create,
+              controller.serviceAccount.create, webhook.rbac.create, webhook.serviceAccount.create]
+    # The controller and webhook volumes and volumeMounts, whose chart
+    # defaults carry the controller's /tmp and the webhook's serving
+    # certificates directory: an instance adds to them.
+    append: [controller.volumes, controller.volumeMounts, webhook.volumes, webhook.volumeMounts]
+
+vars:
+  # Namespaces where Spark jobs run; "" allows all. They must exist.
+  jobNamespaces: ${{ values.?jobNamespaces.orValue([]) }}
+
+# No UI, no provided connection: the former package usage.
+instance:
+  usage: |
+    Spark Operator has been deployed successfully.
+
+    The operator manages SparkApplication custom resources in ${{ jobNamespaces.size() > 0 && !('' in jobNamespaces) ? 'the namespaces ' + jobNamespaces.join(', ') + '.' : 'every namespace.' }}
+
+    To submit a Spark application:
+    1. Create a namespace for your Spark applications (e.g., spark-apps)
+    2. Create a ServiceAccount with appropriate RBAC permissions (the spark-rbac service)
+    3. Submit a SparkApplication manifest
+
+    Example SparkApplication:
+    ```yaml
+    apiVersion: sparkoperator.k8s.io/v1beta2
+    kind: SparkApplication
+    metadata:
+      name: spark-pi
+      namespace: spark-apps
+    spec:
+      type: Scala
+      mode: cluster
+      image: "quay.io/okdp/spark-py:spark-3.5.6-python-3.11-scala-2.12-java-17"
+      imagePullPolicy: Always
+      mainClass: org.apache.spark.examples.SparkPi
+      mainApplicationFile: "local:///opt/spark/examples/jars/spark-examples_2.12-3.5.6.jar"
+      sparkVersion: "3.5.6"
+      restartPolicy:
+        type: Never
+      driver:
+        cores: 1
+        coreLimit: "1200m"
+        memory: "512m"
+        serviceAccount: spark
+      executor:
+        cores: 1
+        instances: 2
+        memory: "512m"
+    ```
+
+    Monitor your application using:
+    kubectl get sparkapplications -n spark-apps
+    kubectl describe sparkapplication spark-pi -n spark-apps

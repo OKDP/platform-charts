@@ -1,0 +1,9 @@
+# Upstream values: a mirror registry, controller resources, and a volume
+# appended to the controller's /tmp (the chart's, restated by OKDP's defaults).
+upstream:
+  spark-operator:
+    image: {registry: mirror.example.org}
+    controller:
+      resources: {limits: {memory: 1Gi}}
+      volumes: [{name: ivy, emptyDir: {}}]
+      volumeMounts: [{name: ivy, mountPath: /opt/ivy}]

@@ -1,0 +1,16 @@
+# The values of the spark-operator chart (the former KuboCD module "noname"),
+# computed from the parameters.
+spark-operator:
+  prometheus:
+    metrics:
+      enable: ${{ values.metricsEnabled }}
+    podMonitor:
+      create: ${{ values.podMonitorEnabled }}
+  controller:
+    replicas: ${{ values.controllerReplicas }}
+    logLevel: ${{ str(values.controllerLogLevel) }}
+    workers: ${{ values.controllerWorkers }}
+  webhook:
+    enable: ${{ values.webhookEnabled }}
+  spark:
+    jobNamespaces: ${{ jobNamespaces }}

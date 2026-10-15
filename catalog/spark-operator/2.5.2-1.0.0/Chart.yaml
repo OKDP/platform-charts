@@ -1,0 +1,23 @@
+apiVersion: v2
+name: spark-operator
+description: >-
+  Spark Operator 2.5.2 - Kubernetes operator for managing Apache Spark applications.
+  Runs Spark applications on Kubernetes through custom resources (SparkApplication CRD).
+type: application
+# <upstream>-<okdp semver>.
+version: 2.5.2-1.0.0
+appVersion: "2.5.2"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/kubeflow/spark-operator
+dependencies:
+  # The former KuboCD module noname. Its CRDs are the chart's crds/: a
+  # deployer upgrades them with the release (README, CRDs).
+  - name: spark-operator
+    repository: https://kubeflow.github.io/spark-operator
+    version: 2.5.2

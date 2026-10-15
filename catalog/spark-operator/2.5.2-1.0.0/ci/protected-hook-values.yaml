@@ -1,0 +1,5 @@
+# error: spark-operator: upstream.spark-operator.hook: hook is set by the platform and cannot be changed
+# The CRDs are the deployer's to upgrade: the upstream hook stays off.
+upstream:
+  spark-operator:
+    hook: {upgradeCrd: true}

@@ -1,0 +1,7 @@
+# Two job namespaces, no webhook, no metrics, a busier controller.
+jobNamespaces: [spark-apps, demo]
+webhookEnabled: false
+metricsEnabled: false
+controllerReplicas: 2
+controllerWorkers: 20
+controllerLogLevel: debug

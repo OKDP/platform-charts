@@ -1,0 +1,49 @@
+# OKDP's defaults of the spark-operator chart, over its values.yaml and under
+# the values computed by values.cel.yaml (okdp.yaml defaults). Plain YAML, read
+# as a Helm values file.
+# The CRDs are the chart's crds/, which the deployer upgrades with the release
+# (README, CRDs), not the upstream pre-upgrade hook.
+hook:
+  upgradeCrd: false
+controller:
+  rbac:
+    create: true
+  # The chart's default volumes, restated: an instance appends to these lists
+  # (okdp.yaml append), and an appended list replaces the chart's own.
+  # A tmp directory to write Spark artifacts to for deployed Spark apps.
+  volumes:
+    - name: tmp
+      emptyDir:
+        sizeLimit: 1Gi
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+      readOnly: false
+  # The KuboCD values deleted fsGroup (null), leaving no pod securityContext.
+  # The compiler merges maps, so null the whole map for the same output.
+  podSecurityContext: null
+webhook:
+  # The chart's default volumes, restated (as the controller's): a directory
+  # for the webhook to generate its certificates in.
+  volumes:
+    - name: serving-certs
+      emptyDir:
+        sizeLimit: 500Mi
+  volumeMounts:
+    - name: serving-certs
+      mountPath: /etc/k8s-webhook-server/serving-certs
+      subPath: serving-certs
+      readOnly: false
+  # The KuboCD values deleted fsGroup (null), leaving no pod securityContext.
+  # The compiler merges maps, so null the whole map for the same output.
+  podSecurityContext: null
+spark:
+  # The ServiceAccount and RBAC of the jobs come from the spark-rbac service.
+  serviceAccount:
+    create: false
+  rbac:
+    create: false
+# Never enabled: its templates check .Capabilities, which Flux (helm install)
+# and Argo CD (helm template) do not see alike.
+certManager:
+  enable: false
