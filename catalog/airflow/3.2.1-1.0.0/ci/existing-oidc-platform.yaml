@@ -1,0 +1,17 @@
+# The platform values of the case existing-oidc, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx
+    certificateIssuers:
+      selfSigned:
+        name: default-issuer
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      scope: openid profile email groups
+      insecureSkipVerify: true
+      clientProvisioning: existing

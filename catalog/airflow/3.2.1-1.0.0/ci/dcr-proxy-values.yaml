@@ -1,0 +1,13 @@
+# DCR client registration, a corporate proxy for git-sync, bigger sizing.
+db: pg
+metadataSecret: airflow-metadata
+storage: aws
+s3SecretRef: airflow-aws
+schedulerMemoryGi: 2
+webserverMemoryGi: 2
+dagProcessorMemoryGi: 1.5
+dagProcessorCpuCores: 1
+dagsGitSync:
+  enabled: true
+  repo: https://git.example.org/data/dags.git
+  branch: main

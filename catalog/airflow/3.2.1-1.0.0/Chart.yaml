@@ -1,0 +1,22 @@
+apiVersion: v2
+name: airflow
+description: >-
+  Apache Airflow 3.2.1 - Workflow orchestration platform with Spark Operator integration.
+type: application
+# <upstream>-<okdp semver>.
+version: 3.2.1-1.0.0
+appVersion: "3.2.1"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/apache/airflow
+dependencies:
+  # Rendered as published: its bundled postgresql subchart is disabled
+  # (postgresql.enabled: false in airflow.defaults.yaml, protected).
+  - name: airflow
+    repository: https://airflow.apache.org
+    version: 1.22.0

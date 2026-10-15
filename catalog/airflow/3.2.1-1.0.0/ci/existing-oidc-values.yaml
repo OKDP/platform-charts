@@ -1,0 +1,15 @@
+# The demo project: existing OIDC client, role mapping, git-sync with credentials.
+db: demo-db-airflow
+metadataSecret: demo-airflow-metadata
+storage: demo-storage
+s3SecretRef: creds-airflow-s3
+oidcRoleMapping:
+  airflow-admins: [Admin]
+  data-eng: [User, Op]
+dagsGitSync:
+  enabled: true
+  repo: https://github.com/OKDP/okdp-examples.git
+  ref: main
+  subPath: airflow/dags
+  period: 60s
+  credentialsSecret: {name: git-creds}

@@ -1,0 +1,5 @@
+# OIDC off (Airflow's own login), no git-sync.
+db: pg
+metadataSecret: airflow-metadata
+storage: minio
+s3SecretRef: airflow-minio

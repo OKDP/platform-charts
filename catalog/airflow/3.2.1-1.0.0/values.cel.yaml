@@ -1,0 +1,92 @@
+# The values of the airflow chart (the former KuboCD module main), computed
+# from the parameters, the platform values and the connections; they see the
+# vars of okdp.yaml.
+airflow:
+  extraEnv: "${{ (oidcEnabled ? oidcEnv : '') + commonEnv }}"
+  apiServer:
+    annotations: ${{ workloadAnnotations }}
+    resources:
+      limits:
+        memory: ${{ str(values.webserverMemoryGi) }}Gi
+    apiServerConfig:
+      $if: ${{ oidcEnabled }}
+      $value: |
+        import os
+
+        from flask_appbuilder.security.manager import AUTH_OAUTH
+
+        verify_tls = os.environ.get("INSECURE_VERIFY_TLS", "true").lower() == "true"
+        oauth_verify = os.environ.get("REQUESTS_CA_BUNDLE") if verify_tls else False
+
+        AUTH_TYPE = AUTH_OAUTH
+        AUTH_USER_REGISTRATION = True
+        AUTH_USER_REGISTRATION_ROLE = "Viewer"
+        # Sync Airflow roles from OIDC groups at every login
+        AUTH_ROLES_SYNC_AT_LOGIN = True
+        # Map OIDC groups to Airflow roles
+        AUTH_ROLES_MAPPING = {${{ roleMapping.map(l, '\n    ' + l).join('') }}
+        }
+
+        OAUTH_PROVIDERS = [
+            {
+                "name": "oidc",
+                "icon": "fa-circle-o",
+                "token_key": "access_token",
+                "remote_app": {
+                    "client_id": os.environ["AIRFLOW_OIDC_CLIENT_ID"],
+                    "client_secret": os.environ["AIRFLOW_OIDC_CLIENT_SECRET"],
+                    "api_base_url": os.environ["AIRFLOW_OIDC_API_BASE_URL"],
+                    "access_token_url": os.environ["AIRFLOW_OIDC_ACCESS_TOKEN_URL"],
+                    "authorize_url": os.environ["AIRFLOW_OIDC_AUTHORIZE_URL"],
+                    "server_metadata_url": os.environ["AIRFLOW_OIDC_SERVER_METADATA_URL"],
+                    "client_kwargs": {
+                        "scope": os.environ.get("AIRFLOW_OIDC_SCOPE", "openid profile email").replace("+", " "),
+                        "verify": oauth_verify,
+                    },
+                },
+            },
+        ]
+  scheduler:
+    annotations: ${{ workloadAnnotations }}
+    resources:
+      limits:
+        memory: ${{ str(values.schedulerMemoryGi) }}Gi
+  triggerer:
+    annotations: ${{ workloadAnnotations }}
+  ingress:
+    apiServer:
+      ingressClassName: ${{ global.okdp.ingress.className }}
+      annotations:
+        kubernetes.io/ingress.class: ${{ global.okdp.ingress.className }}
+        $merge: ${{ platform.ingressAnnotations }}
+      hosts:
+        - name: ${{ host }}
+          tls:
+            enabled: true
+            secretName: ${{ release.name }}-airflow-tls
+  # The pre-provisioned Secret holding the full SQLAlchemy connection
+  # string: the chart does not generate its own airflow-metadata secret, so
+  # credentials never appear in the values.
+  data:
+    metadataSecretName: ${{ values.metadataSecret }}
+  dags:
+    gitSync:
+      $for: e in gitSync
+      $key: ${{ e.k }}
+      $value: ${{ e.v }}
+  dagProcessor:
+    annotations: ${{ workloadAnnotations }}
+    resources:
+      limits:
+        memory: ${{ str(values.dagProcessorMemoryGi) }}Gi
+        cpu: ${{ str(values.dagProcessorCpuCores) }}
+  # Generated once by ESO (okdp.yaml objects): the chart's own templates would mint
+  # them with randAlphaNum on every render.
+  fernetKeySecretName: ${{ internalSecret }}
+  apiSecretKeySecretName: ${{ internalSecret }}
+  jwtSecretName: ${{ internalSecret }}
+  # app.kubernetes.io/instance on every object and pod template, which the
+  # chart leaves out (the console finds the pods by it): the chart's common
+  # labels, never used in its selectors.
+  labels:
+    app.kubernetes.io/instance: ${{ release.name }}

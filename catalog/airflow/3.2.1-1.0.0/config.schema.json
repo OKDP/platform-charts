@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "airflow",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "db": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the SQL database server hosting the Airflow metadata database.",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 2,
+      "default": ""
+    },
+    "metadataSecret": {
+      "type": "string",
+      "title": "Metadata connection secret",
+      "description": "Secret with key connection holding the full SQLAlchemy connection string.",
+      "x-ui-group": "Cluster",
+      "x-ui-order": 3,
+      "default": ""
+    },
+    "schedulerMemoryGi": {
+      "type": "number",
+      "title": "Scheduler memory (GiB)",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "webserverMemoryGi": {
+      "type": "number",
+      "title": "Webserver memory (GiB)",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 2,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "dagProcessorMemoryGi": {
+      "type": "number",
+      "title": "DAG processor memory (GiB)",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 3,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "dagProcessorCpuCores": {
+      "type": "number",
+      "title": "DAG processor CPU (cores)",
+      "default": 0.75,
+      "multipleOf": 0.05,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 4,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "oidcRoleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "Map of OIDC groups to lists of Airflow roles.",
+      "default": {},
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+          }
+        }
+      },
+      "x-ui-group": "Authentication",
+      "x-ui-order": 4,
+      "x-ui-advanced": true,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+        }
+      }
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store the DAGs read and write.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 5,
+      "default": ""
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey and secretKey granting the DAGs access to the object store.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 6,
+      "default": ""
+    },
+    "dagsGitSync": {
+      "type": "object",
+      "title": "Git sync",
+      "description": "Chart dags.gitSync values (the scalar keys listed here). Unquoted true/false is a boolean, an unquoted number is an int/float, quote to force a string. ref is mirrored onto branch. credentialsSecret.name carries the git credentials Secret name.",
+      "default": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "branch": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        },
+        "rev": {
+          "type": "string"
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxFailures": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "subPath": {
+          "type": "string"
+        },
+        "period": {
+          "type": "string"
+        },
+        "wait": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sshKeySecret": {
+          "type": "string"
+        },
+        "knownHosts": {
+          "type": "string"
+        },
+        "containerName": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "integer"
+        },
+        "httpPort": {
+          "type": "integer"
+        },
+        "credentialsSecret": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "x-ui-group": "DAGs",
+      "x-ui-widget": "key-value-scalar",
+      "x-ui-order": 1
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "airflow": {
+          "type": "object",
+          "title": "airflow",
+          "description": "Values of the airflow chart 1.22.0 (https://airflow.apache.org), for example images, nodeSelector, tolerations, env, secret, extraEnvFrom, config, scheduler/apiServer/triggerer/dagProcessor resources, dags.gitSync. Refused: fullnameOverride, nameOverride, useStandardNaming, airflowVersion, executor, extraEnv (use env, secret or extraEnvFrom), apiServer.apiServerConfig/apiServerConfigConfigMapName, config.core.auth_manager, ingress.enabled, ingress.apiServer.enabled/ingressClassName/host/hosts/tls, data, fernetKey, apiSecretKey, jwtSecret, webserverSecretKey and their *SecretName, redis.enabled, postgresql.enabled, migrateDatabaseJob.enabled/useHelmHooks/jobAnnotations, createUserJob.enabled. Appended to the lists this chart sets: volumes, volumeMounts, dags.gitSync.env.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "db",
+    "metadataSecret",
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
+}

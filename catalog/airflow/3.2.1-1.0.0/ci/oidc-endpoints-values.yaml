@@ -1,0 +1,7 @@
+# error: global.okdp.oidc.authUrl is required. It is a platform value
+# OIDC enabled on a platform that gives the issuer only: the login endpoints
+# are required.
+db: pg
+metadataSecret: airflow-metadata
+storage: minio
+s3SecretRef: airflow-minio

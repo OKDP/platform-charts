@@ -1,0 +1,21 @@
+# The platform values of the case dcr-proxy, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: example.org
+      className: nginx
+    certificateIssuers:
+      selfSigned:
+        name: letsencrypt
+    oidc:
+      issuerUri: https://sso.example.org/realms/data
+      authUrl: https://sso.example.org/realms/data/protocol/openid-connect/auth
+      tokenUrl: https://sso.example.org/realms/data/protocol/openid-connect/token
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://sso.example.org/realms/data/clients-registrations/openid-connect
+        authMethod: anonymous
+    proxy:
+      httpProxy: http://proxy.example.org:3128
+      httpsProxy: http://proxy.example.org:3128
+      noProxy: .svc,.cluster.local,10.0.0.0/8

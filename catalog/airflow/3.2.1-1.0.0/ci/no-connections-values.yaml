@@ -1,0 +1,3 @@
+# error: airflow: db: no database-server connection given
+# Neither the metadata database nor the object store, nor their Secrets:
+# every connection and Secret the instance needs is reported at once.
