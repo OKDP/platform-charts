@@ -1,0 +1,9 @@
+# OIDC off, ACL groups set, bigger sizing, an external S3 without internalUrl.
+storage: aws
+s3SecretRef: shs-aws
+cpu: 2
+memoryGi: 4
+roleMapping:
+  admin_groups: [platform-admins]
+  history_admin_groups: [spark-admins, data-eng]
+  view_groups: [analysts]

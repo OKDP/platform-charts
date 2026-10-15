@@ -1,0 +1,3 @@
+# The demo project with the OAuth client registered by DCR (<release>-<namespace>-dcr).
+storage: demo-storage
+s3SecretRef: creds-spark-history-s3

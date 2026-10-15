@@ -1,0 +1,8 @@
+# error: spark-history-server: upstream.spark-history-server.config["spark.ui.filters"]: config["spark.ui.filters*"] is set by the platform and cannot be changed
+# A Spark property the platform sets (the OIDC filter), refused.
+storage: demo-storage
+s3SecretRef: creds-spark-history-s3
+upstream:
+  spark-history-server:
+    config:
+      spark.ui.filters: org.example.NoAuthFilter

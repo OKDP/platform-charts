@@ -1,0 +1,7 @@
+# The connections of the case acls-no-oidc: the instance's own (--context 2:).
+connections:
+  aws:
+    contract: s3
+    apiUrl: https://s3.eu-west-1.amazonaws.com
+    region: eu-west-1
+    pathStyle: false

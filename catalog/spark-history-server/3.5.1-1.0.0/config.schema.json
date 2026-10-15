@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "spark-history-server",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU limit in vCPU. The request is 250m.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory limit in GiB. The request is 512Mi.",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 2,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "storage": {
+      "type": "string",
+      "title": "Event log store",
+      "description": "Connection to the S3-compatible object store holding the Spark event logs.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 1,
+      "default": ""
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2,
+      "default": ""
+    },
+    "roleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "OIDC group to Spark ACL mapping (keys admin_groups, history_admin_groups, modify_groups, view_groups).",
+      "x-ui-group": "Authentication",
+      "x-ui-order": 4,
+      "x-ui-advanced": true,
+      "properties": {
+        "admin_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "history_admin_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "modify_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "view_groups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "spark-history-server": {
+          "type": "object",
+          "title": "spark-history-server",
+          "description": "Values of the spark-history-server chart 1.0.0 (oci://quay.io/okdp/charts/spark-history-server), for example image, replicaCount, resources, nodeSelector, tolerations, logLevel, Spark properties under config (single-line scalars). Refused: fullnameOverride, service.name, service.port, ingress, and the Spark properties the platform sets: spark.ui.filters, spark.io.okdp.spark.authc.*, spark.acls.enable, spark.history.ui.acls.*, spark.admin.acls*, spark.history.ui.admin.acls*, spark.modify.acls*, spark.ui.view.acls*, spark.user.groups.mapping, spark.history.fs.logDirectory, spark.history.ui.port, spark.hadoop.fs.s3a.endpoint/path.style.access/access.key/secret.key/session.token/aws.credentials.provider, spark.hadoop.fs.s3a.bucket.*. Appended to the lists this chart sets: extraEnvs, extraVolumes, extraVolumeMounts.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "properties": {
+            "config": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[A-Za-z0-9._-]+$"
+              },
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "pattern": "^[^\\r\\n]*$"
+              }
+            }
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "spark-web-proxy": {
+          "type": "object",
+          "title": "spark-web-proxy",
+          "description": "Values of the spark-web-proxy chart 0.1.0 (oci://quay.io/okdp/charts/spark-web-proxy): image, replicaCount, resources, nodeSelector, tolerations, configuration.logging, configuration.security, ingress.annotations, ... Refused: fullnameOverride, configuration.spark.history, configuration.spark.ui.proxyBase, configuration.spark.jobNamespaces, rbac.create, serviceAccount.create, ingress.enabled/className/hosts/tls.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 2,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
+}

@@ -1,0 +1,143 @@
+# OKDP's part of spark-history-server: the platform values it needs, OKDP's
+# defaults of its upstream charts and what an instance may override; then its
+# OAuth client (the former module oidc-dcr), OKDP's own objects and what the
+# instance publishes. values.cel.yaml computes the charts' values.
+
+roles: [spark]
+dependsOn: [identity, storage, ingress]
+# Platform values the service needs, under global.okdp (oidc.issuerUri too
+# when OIDC is on: checked in errors).
+require:
+  - ingress.suffix
+  - ingress.className
+  - certificateIssuers.selfSigned.name
+defaults:
+  spark-history-server: spark-history-server.defaults.yaml
+  spark-web-proxy: spark-web-proxy.defaults.yaml
+upstream:
+  spark-history-server:
+    # The names the web proxy addresses (the Service name and port) and the
+    # ingress (the UI entry point is the web proxy, whose host is registered
+    # with the identity provider).
+    protect:
+      - fullnameOverride
+      - service.name
+      - service.port
+      - ingress
+      # The Spark properties the platform sets under config: the OIDC filter,
+      # the ACLs, the group mapping, the event log directory, the UI port, the
+      # S3 endpoint and credentials. Their names contain dots, so they are
+      # written in brackets, and each ends with a glob: it also refuses the
+      # properties that start with it (spark.admin.acls.groups,
+      # spark.hadoop.fs.s3a.bucket.<bucket>.*). The errors section checks the
+      # format of every property (a properties file).
+      - 'config["spark.ui.filters*"]'
+      - 'config["spark.io.okdp.spark.authc.*"]'
+      - 'config["spark.acls.enable*"]'
+      - 'config["spark.history.ui.acls.*"]'
+      - 'config["spark.admin.acls*"]'
+      - 'config["spark.history.ui.admin.acls*"]'
+      - 'config["spark.modify.acls*"]'
+      - 'config["spark.ui.view.acls*"]'
+      - 'config["spark.user.groups.mapping*"]'
+      - 'config["spark.history.fs.logDirectory*"]'
+      - 'config["spark.history.ui.port*"]'
+      - 'config["spark.hadoop.fs.s3a.endpoint*"]'
+      - 'config["spark.hadoop.fs.s3a.path.style.access*"]'
+      - 'config["spark.hadoop.fs.s3a.access.key*"]'
+      - 'config["spark.hadoop.fs.s3a.secret.key*"]'
+      - 'config["spark.hadoop.fs.s3a.session.token*"]'
+      - 'config["spark.hadoop.fs.s3a.aws.credentials.provider*"]'
+      - 'config["spark.hadoop.fs.s3a.bucket.*"]'
+    # The lists carrying the S3 identity, the OAuth client, the cookie key and
+    # the CA bundle: an instance adds to them.
+    append: [extraEnvs, extraVolumes, extraVolumeMounts]
+  spark-web-proxy:
+    # Besides the name: the history server it proxies and the Spark UI path the
+    # jobs are set up with (proxyBase), the job namespaces (each gets a Role
+    # letting the proxy list its pods: an instance must not reach other
+    # projects' namespaces) with the RBAC and service account behind them, and
+    # the ingress host and TLS registered with the identity provider.
+    protect: [fullnameOverride, configuration.spark.history, configuration.spark.ui.proxyBase,
+              configuration.spark.jobNamespaces, rbac.create, serviceAccount.create,
+              ingress.enabled, ingress.className, ingress.hosts, ingress.tls]
+
+vars:
+  # History server Service and Deployment: <release>-spark-history-server.
+  historyName: ${{ okdpFullname('spark-history-server') }}
+  # Web proxy (the UI entry point): <release>-spark-web-proxy.
+  proxyName: ${{ okdpFullname('spark-web-proxy') }}
+  # Public host: spark-web-proxy-<namespace>.<ingress suffix> (the KuboCD-era host).
+  host: spark-web-proxy-${{ release.namespace }}.${{ global.okdp.ingress.suffix }}
+  # The OIDC filter's redirect URI: the web proxy's /home.
+  redirectUri: https://${{ host }}/home
+  # Login scope, offline_access included (the oidc-dcr registration must grant it).
+  scope: ${{ platform.oidc.scope }} offline_access
+  # OIDC on (global.okdp.oidc.enabled, default true).
+  oidcOn: ${{ platform.oidc.?enabled.orValue(false) == true }}
+  # Secret of the OIDC filter's cookie encryption key (key
+  # cookie-cipher-secret-key): <release>-auth-cookie, generated once by ESO
+  # (objects).
+  cookieSecret: ${{ okdpFullname('auth-cookie') }}
+  # The OIDC filter's properties (OIDC on).
+  oidcConfig:
+    spark.ui.filters: io.okdp.spark.authc.OidcAuthFilter
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.issuer-uri: ${{ platform.oidc.?issuerUri.orValue('') }}
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.redirect-uri: ${{ redirectUri }}
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.scope: ${{ scope.replace(' ', '+') }}
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-max-age-minutes: 480
+    # cookie-cipher-secret-key: not a property, the filter falls back to the
+    # AUTH_COOKIE_ENCRYPTION_KEY env, read from the generated Secret (objects).
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.cookie-is-secure: true
+    spark.io.okdp.spark.authc.OidcAuthFilter.param.use-pkce: ${{ platform.oidc.?usePKCE.orValue(true) }}
+    spark.history.ui.acls.enable: true
+    spark.user.groups.mapping: io.okdp.spark.authz.OidcGroupMappingServiceProvider
+  # The Spark properties of the instance's upstream values of
+  # spark-history-server: the config map is written as a properties file, so
+  # the errors section refuses any key or value that could add a line to it.
+  # The properties the platform sets are protected (upstream above).
+  upstreamConfig: ${{ values.?upstream[?'spark-history-server'].?config.orValue(null) }}
+
+errors:
+  # Required when OIDC is on.
+  - $if: ${{ oidcOn && platform.oidc.?issuerUri.orValue('') == '' }}
+    $value: "global.okdp.oidc.issuerUri is required when OIDC is enabled. It is a platform value: set it in platform/platform-values.yaml"
+  - $if: ${{ values.?s3SecretRef.orValue('') == '' }}
+    $value: "spark-history-server: s3SecretRef is required: a Secret with the keys accessKey and secretKey, this instance's own S3 identity"
+  # The reference left empty.
+  - $if: ${{ type(values.storage) != map }}
+    $value: "spark-history-server: storage: no s3 connection given"
+  - $spread: >-
+      ${{ type(upstreamConfig) != map ? [] : upstreamConfig.map(k, k).sort().map(k, cel.bind(v, upstreamConfig[k],
+          (k.matches('^[A-Za-z0-9._-]+$') ? [] : ['spark-history-server: upstream.spark-history-server.config: "' + k + '" is not a Spark property name'])
+          + (type(v) in [string, bool, double, int] ? [] : ['spark-history-server: upstream.spark-history-server.config.' + k + ' must be a scalar (a Spark property value)'])
+          + (type(v) == string && (v.contains('\n') || v.contains('\r')) ? ['spark-history-server: upstream.spark-history-server.config.' + k + ': a Spark property value is a single line'] : []))).flatten() }}
+
+# The OAuth client (the former module oidc-dcr), registered by dynamic client
+# registration in dcr mode (global.okdp.oidc.clientProvisioning: dcr): the
+# compiler adds the chart oidc-dcr (Job <release>-oidc-dcr), which writes the
+# Secret platform.oidcClientSecret (<release>-<namespace>-dcr). Nothing in
+# existing mode, nor with OIDC off.
+oidcClients:
+  - redirectUris: ['${{ redirectUri }}']
+    grantTypes: [authorization_code, refresh_token]
+    scope: ${{ scope }}
+
+# OKDP's own objects, rendered by the umbrella (okdp.objects.yaml).
+objects:
+  # The cookie key Secret (OIDC on), generated once by an ESO Password
+  # generator (refreshInterval 0): the filter reads it from
+  # AUTH_COOKIE_ENCRYPTION_KEY when the Spark property cookie-cipher-secret-key
+  # is unset; its UTF-8 bytes are the AES key, so the length must be 16, 24 or
+  # 32 (32: AES-256). Regenerated only if the Secret is deleted, which only
+  # signs every user out.
+  - $spread: >-
+      ${{ oidcOn ? okdpGeneratedSecret({'name': cookieSecret,
+          'keys': [{'key': 'cookie-cipher-secret-key', 'length': 32}]}) : [] }}
+
+# okdp.instance.yaml: a UI (the web proxy), no provided connection.
+instance:
+  url: https://${{ host }}
+  usage: |
+    Spark History Server provides a web UI for viewing completed Spark applications.
+    Access the UI at https://${{ host }}

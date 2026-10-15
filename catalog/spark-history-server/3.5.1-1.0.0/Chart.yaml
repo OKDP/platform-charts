@@ -1,0 +1,28 @@
+apiVersion: v2
+name: spark-history-server
+description: >-
+  Spark History Server - Monitoring and debugging interface for Apache Spark applications.
+  Provides detailed execution metrics, job timelines, and performance insights for completed Spark jobs.
+  Essential tool for optimizing Spark workloads and troubleshooting data processing pipelines.
+type: application
+# <upstream>-<okdp semver>.
+version: 3.5.1-1.0.0
+appVersion: "3.5.1"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/spark-history-server
+  - https://github.com/OKDP/spark-web-proxy
+dependencies:
+  # The former KuboCD module main.
+  - name: spark-history-server
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.0
+  # The former module proxy: the UI entry point.
+  - name: spark-web-proxy
+    repository: oci://quay.io/okdp/charts
+    version: 0.1.0

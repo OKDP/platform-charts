@@ -1,0 +1,84 @@
+# The values of the charts of spark-history-server, by key: they see the
+# bindings of okdp.yaml (vars). Both charts are always rendered.
+
+# The former KuboCD module main: the spark-history-server chart.
+spark-history-server:
+  resources:
+    limits:
+      cpu: ${{ str(values.cpu) }}
+      memory: ${{ str(values.memoryGi) }}Gi
+  # The web proxy addresses the history server by this name.
+  fullnameOverride: ${{ historyName }}
+  config:
+    spark.hadoop.fs.s3a.endpoint: ${{ first([values.storage.?internalUrl.orValue(''), values.storage.apiUrl]) }}
+    spark.hadoop.fs.s3a.path.style.access: ${{ values.storage.?pathStyle.orValue(false) }}
+    # The Spark ACL groups of roleMapping, the non-empty ones.
+    spark.admin.acls.groups:
+      $if: ${{ values.?roleMapping.?admin_groups.orValue([]) }}
+      $value: ${{ values.roleMapping.admin_groups.join(',') }}
+    spark.history.ui.admin.acls.groups:
+      $if: ${{ values.?roleMapping.?history_admin_groups.orValue([]) }}
+      $value: ${{ values.roleMapping.history_admin_groups.join(',') }}
+    spark.modify.acls.groups:
+      $if: ${{ values.?roleMapping.?modify_groups.orValue([]) }}
+      $value: ${{ values.roleMapping.modify_groups.join(',') }}
+    spark.ui.view.acls.groups:
+      $if: ${{ values.?roleMapping.?view_groups.orValue([]) }}
+      $value: ${{ values.roleMapping.view_groups.join(',') }}
+    $merge: "${{ oidcOn ? oidcConfig : {} }}"
+  extraEnvs:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: accessKey
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: secretKey
+    # S3 certificate checking off (global.okdp.oidc.insecureSkipVerify); otherwise
+    # the endpoint is verified against the CA bundle of JAVA_TOOL_OPTIONS.
+    - $if: ${{ platform.oidc.?insecureSkipVerify.orValue(false) }}
+      name: SPARK_HISTORY_OPTS
+      value: "-Dcom.amazonaws.sdk.disableCertChecking=true"
+    - name: JAVA_TOOL_OPTIONS
+      value: "-Djavax.net.ssl.trustStore=/cacerts/bundle.p12 -Djavax.net.ssl.trustStorePassword="
+    - $for: "secret in (oidcOn ? [platform.oidcClientSecret] : [])"
+      $each:
+        - name: AUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ${{ secret }}
+              key: client_id
+        - name: AUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ${{ secret }}
+              key: client_secret
+        - name: AUTH_COOKIE_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ${{ cookieSecret }}
+              key: cookie-cipher-secret-key
+
+# The former module proxy: the spark-web-proxy chart, the UI entry point.
+spark-web-proxy:
+  fullnameOverride: ${{ proxyName }}
+  configuration:
+    spark:
+      history:
+        service: ${{ historyName }}.${{ release.namespace }}.svc.cluster.local
+      jobNamespaces:
+        - ${{ release.namespace }}
+  ingress:
+    className: ${{ global.okdp.ingress.className }}
+    annotations: ${{ platform.ingressAnnotations }}
+    hosts:
+      - host: ${{ host }}
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - hosts: ["${{ host }}"]
+        secretName: ${{ release.name }}-proxy-tls

@@ -1,0 +1,3 @@
+# The demo project: the platform S3 store as a connection file, OIDC on.
+storage: demo-storage
+s3SecretRef: creds-spark-history-s3

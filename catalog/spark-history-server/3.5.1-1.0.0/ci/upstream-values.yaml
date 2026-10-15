@@ -1,0 +1,15 @@
+# Instance upstream values over the external-s3 setup: a Spark property the
+# platform does not set, an environment variable appended to the computed
+# ones, the web proxy's resources.
+storage: demo-storage
+s3SecretRef: creds-spark-history-s3
+upstream:
+  spark-history-server:
+    config:
+      spark.history.retainedApplications: 100
+      spark.history.fs.cleaner.maxAge: 14d
+    extraEnvs:
+      - {name: EXTRA_FLAG, value: "1"}
+  spark-web-proxy:
+    resources:
+      limits: {memory: 256Mi}
