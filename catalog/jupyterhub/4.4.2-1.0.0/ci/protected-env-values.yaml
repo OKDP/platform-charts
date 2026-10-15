@@ -1,0 +1,16 @@
+# error: jupyterhub: upstream.jupyterhub.singleuser.extraEnv.LAKEHOUSE_S3_ACCESS_KEY: singleuser.extraEnv.LAKEHOUSE_S3_ACCESS_KEY is set by the platform and cannot be changed
+# The S3 identity variable of a PySpark connection with its own s3SecretRef,
+# set again by the instance's upstream values (errors: no protect path
+# expresses it, the name depends on the instance).
+storage: demo-storage
+s3SecretRef: creds-jupyterhub-s3
+pyspark: [lakehouse]
+sparkConnections:
+  - name: lakehouse
+    s3SecretRef: creds-examples-s3
+    properties: spark.hadoop.fs.s3a.access.key=$(S3_ACCESS_KEY)
+upstream:
+  jupyterhub:
+    singleuser:
+      extraEnv:
+        LAKEHOUSE_S3_ACCESS_KEY: overridden

@@ -1,0 +1,196 @@
+# The values of the charts, by dependency key, computed from the parameters,
+# the platform values and the storage connection (the former KuboCD modules
+# main and spark-rbac, with .Context -> global.okdp, .Parameters -> values).
+# They see the bindings of okdp.yaml (vars).
+#
+# jupyterhub, the former module main. The chart generates the proxy token,
+# the cookie secret and the auth-state keys of its hub Secret with lookup +
+# randAlphaNum, which Argo CD (helm template) would redraw on every sync. It
+# is handed placeholders instead; the real values are in the ESO-generated
+# Secret <release>-hub-generated (okdp.yaml objects): the hub reads the cookie
+# secret and the auth-state keys from it (hub.existingSecret). The proxy
+# token references of the hub and proxy Deployments still name the chart's
+# Secret <release>-hub: re-pointing them is a gap (README, Known gaps).
+jupyterhub:
+  # Resource names derive from the release name.
+  fullnameOverride: ${{ release.name }}
+  nameOverride: ${{ release.name }}
+  hub:
+    extraEnv:
+      OAUTH_CLIENT_ID:
+        valueFrom: {secretKeyRef: {name: "${{ platform.oidcClientSecret }}", key: client_id}}
+      OAUTH_CLIENT_SECRET:
+        valueFrom: {secretKeyRef: {name: "${{ platform.oidcClientSecret }}", key: client_secret}}
+      # The auth-state crypt key: from the provisioned client Secret, or in
+      # dcr mode from the generated hub passwords.
+      JUPYTERHUB_CRYPT_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: "${{ platform.oidc.dcr.enabled ? hubGenerated : platform.oidcClientSecret }}"
+            key: "${{ platform.oidc.dcr.enabled ? 'hub.config.CryptKeeper.keys' : 'JUPYTERHUB_CRYPT_KEY' }}"
+    config:
+      # Placeholders: the chart would otherwise generate them with lookup +
+      # randAlphaNum. The real values are in the ESO-generated Secret
+      # (existingSecret below), and the hub pops these keys from hub.config.
+      ConfigurableHTTPProxy:
+        auth_token: ${{ placeholder }}
+      CryptKeeper:
+        keys: ["${{ placeholder }}"]
+      JupyterHub:
+        cookie_secret: ${{ placeholder }}
+        hub_connect_url: http://${{ release.name }}-hub.${{ release.namespace }}.svc.cluster.local:8081
+      # The instance's oidcRoleMapping is merged over the defaults.
+      GenericOAuthenticator:
+        login_service: ${{ first([platform.oidc.?displayName.orValue(''), 'keycloak']) }}
+        oauth_callback_url: ${{ url }}/hub/oauth_callback
+        authorize_url: ${{ global.okdp.oidc.authUrl }}
+        token_url: ${{ global.okdp.oidc.tokenUrl }}
+        userdata_url: ${{ global.okdp.oidc.userinfoUrl }}
+        validate_server_cert: false
+        claim_groups_key: groups
+        manage_groups: true
+        userdata_params: {state: state}
+        username_key: preferred_username
+        scope: ${{ scope.split(' ') }}
+        $merge: ${{ oidcRoleMapping }}
+    # The hub reads the generated cookie secret and auth-state keys from it
+    # before its own Secret (z2jh get_secret_value).
+    existingSecret: ${{ hubGenerated }}
+    db:
+      pvc:
+        storageClassName: ${{ str(global.okdp.storageClass.workspace) }}
+
+  ingress:
+    annotations: ${{ platform.ingressAnnotations }}
+    ingressClassName: ${{ global.okdp.ingress.className }}
+    hosts: ["${{ host }}"]
+    tls:
+      - secretName: ${{ release.name }}-tls
+        hosts: ["${{ host }}"]
+
+  singleuser:
+    # User pod names carry the release name: no conflict between instances.
+    podNameTemplate: ${{ release.name }}-{username}{servername}
+
+    extraEnv:
+      # https://github.com/jpmorganchase/jupyter-fs
+      FS_S3_ENDPOINT_URL: ${{ str(s3.apiUrl) }}
+      FS_S3_ACCESS_KEY:
+        valueFrom: {secretKeyRef: {name: "${{ str(values.s3SecretRef) }}", key: accessKey}}
+      FS_S3_SECRET_KEY:
+        valueFrom: {secretKeyRef: {name: "${{ str(values.s3SecretRef) }}", key: secretKey}}
+      # Notebook pod IP used by Spark driver (spark.driver.host) in client mode
+      POD_IP:
+        valueFrom: {fieldRef: {fieldPath: status.podIP}}
+      # The PySpark connections' S3 identities and the platform proxy.
+      $merge: ${{ notebookEnv }}
+
+    lifecycleHooks:
+      $if: ${{ welcome != '' }}
+      postStart:
+        exec:
+          command:
+            - /bin/bash
+            - -lc
+            - |
+              set -e
+              HOME="/home/$JUPYTERHUB_USER"
+              if [ ! -f "$HOME/Welcome.ipynb" ]; then
+                cp /etc/jupyterhub/welcome/Welcome.ipynb "$HOME/Welcome.ipynb"
+              fi
+
+    defaultUrl:
+      $if: ${{ welcome != '' }}
+      $value: /lab/tree/Welcome.ipynb
+
+    extraFiles:
+      welcome-notebook:
+        $if: ${{ welcome != '' }}
+        mountPath: /etc/jupyterhub/welcome/Welcome.ipynb
+        stringData: ${{ welcome.trim() }}
+
+      jupyter_server_config_py:
+        mountPath: /etc/jupyter/jupyter_server_config.py
+        stringData: |
+          c.ServerApp.contents_manager_class = "jupyterfs.MetaManager"
+          c.ServerApp.jpserver_extensions = {"jupyterfs.extension": True}
+
+          file_browser_locations = ${{ locations }}
+
+          import os
+
+          c.JupyterFs.resources = [{
+            "name": loc["name"],
+            "url": loc["uri"],
+            "type": "fsspec",
+            "defaultWritable": True,
+            "use_listings_cache": False,
+            "auth": "none",
+            "kwargs": {
+              "key": os.environ["FS_S3_ACCESS_KEY"],
+              "secret": os.environ["FS_S3_SECRET_KEY"],
+              "client_kwargs": {
+                "endpoint_url": os.environ["FS_S3_ENDPOINT_URL"],
+                "verify": os.environ["AWS_CA_BUNDLE"],
+              },
+            },
+           }
+           for loc in file_browser_locations
+          ]
+
+    cpu:
+      limit: ${{ values.cpu * 2.0 }}
+      guarantee: ${{ values.cpu }}
+    memory:
+      limit: ${{ str(values.memoryGi * 2.0) }}G
+      guarantee: ${{ str(values.memoryGi) }}G
+
+    profileList:
+      - display_name: "📊 Scientific Python"
+        description: "Includes Git, Pandas, NumPy, S3 browser, and Trino SQL support."
+        kubespawner_override:
+          image: quay.io/okdp/jupyter/scipy-notebook:python-3.12.12-hub-5.4.2-lab-4.5.0
+          image_pull_policy: Always
+      - display_name: "📊 Data Science"
+        description: "Includes Git, Pandas, NumPy, S3 browser, and Trino SQL support, Matplotlib, R, and Julia"
+        kubespawner_override:
+          image: quay.io/okdp/jupyter/datascience-notebook:python-3.12.12-hub-5.4.2-lab-4.5.0
+          image_pull_policy: Always
+      - display_name: "🔥 PySpark"
+        description: "Apache Spark big data processing"
+        default: true
+        kubespawner_override:
+          image_pull_policy: Always
+          environment:
+            # Platform defaults every notebook job inherits. A job overrides
+            # them in its own SparkSession builder.
+            PYSPARK_SUBMIT_ARGS: ${{ submitArgs.join(' ') }}
+        profile_options:
+          image:
+            display_name: "Select PySpark kernel version"
+            choices:
+              spark344:
+                display_name: "PySpark 3.4.4 / Python 3.11"
+                kubespawner_override:
+                  image: quay.io/okdp/jupyter/all-spark-notebook:spark-3.4.4-python-3.11-java-17-scala-2.12
+                  image_pull_policy: Always
+                  environment:
+                    SPARK_EXECUTOR_IMAGE: quay.io/okdp/spark-py:spark-3.4.4-python-3.11-scala-2.12-java-17
+              spark356:
+                display_name: "PySpark 3.5.6 / Python 3.11"
+                default: true
+                kubespawner_override:
+                  image: quay.io/okdp/jupyter/all-spark-notebook:spark-3.5.6-python-3.11-java-17-scala-2.12
+                  image_pull_policy: Always
+                  environment:
+                    SPARK_EXECUTOR_IMAGE: quay.io/okdp/spark-py:spark-3.5.6-python-3.11-scala-2.12-java-17
+
+    storage:
+      dynamic:
+        # PVC and volume names carry the release name: no conflict between instances.
+        pvcNameTemplate: ${{ release.name }}-claim-{username}{servername}
+        volumeNameTemplate: ${{ release.name }}-volume-{username}{servername}
+
+# spark-rbac, the former module spark-rbac: the spark ServiceAccount and Role
+# the notebooks and their executors use. Not written: rendered with OKDP's
+# defaults alone (spark-rbac.defaults.yaml).

@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "jupyterhub",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "Notebook (singleuser) pod CPU guarantee in vCPU. The limit is twice the guarantee.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Notebooks",
+      "x-ui-order": 1,
+      "x-ui-columns": 2
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Notebook (singleuser) pod memory guarantee in GiB. The limit is twice the guarantee.",
+      "default": 1,
+      "multipleOf": 0.25,
+      "x-ui-group": "Notebooks",
+      "x-ui-order": 2,
+      "x-ui-columns": 2
+    },
+    "welcomeNotebook": {
+      "type": "string",
+      "title": "Welcome notebook",
+      "description": "Welcome.ipynb content copied into each user home. ${suffix}, ${release}, ${namespace} and ${url} (the hub URL) are replaced.",
+      "default": "",
+      "x-ui-group": "Notebooks",
+      "x-ui-widget": "textarea",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store backing the jupyter-fs file browser.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 1,
+      "default": ""
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this instance's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2,
+      "default": ""
+    },
+    "fileBrowserLocations": {
+      "type": "array",
+      "title": "File browser locations",
+      "description": "jupyter-fs file browser locations (display name + s3 uri).",
+      "default": [],
+      "x-ui-group": "Storage",
+      "x-ui-order": 3,
+      "x-ui-advanced": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "uri"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "uri": {
+            "type": "string",
+            "title": "URI",
+            "x-ui-placeholder": "s3://bucket"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "oidcRoleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "Optional GenericOAuthenticator overrides (claim_groups_key, allowed_groups, admin_groups, ...). Without allowed_groups the hub answers 403 to everyone.",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Authentication",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "pyspark": {
+      "type": "array",
+      "title": "Enabled connections",
+      "description": "Names of the Spark connections below to wire into the PySpark kernel. Empty leaves the kernel without S3A or catalog settings.",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "x-ui-group": "Spark",
+      "x-ui-order": 1,
+      "x-ui-advanced": true
+    },
+    "sparkConnections": {
+      "type": "array",
+      "title": "Connections",
+      "description": "PySpark connections: final spark conf lines (one per line) and optionally their own S3 identity (Secret with accessKey/secretKey, referenced as $(S3_ACCESS_KEY)/$(S3_SECRET_KEY)). ${suffix}, ${release}, ${namespace}, ${connection}, ${storage.apiUrl}, ${storage.region} and ${oidc.tokenUrl} are replaced.",
+      "default": [],
+      "x-ui-group": "Spark",
+      "x-ui-order": 2,
+      "x-ui-advanced": true,
+      "items": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "properties": {
+            "type": "string",
+            "title": "Spark properties",
+            "x-ui-widget": "textarea"
+          },
+          "s3SecretRef": {
+            "type": "string",
+            "title": "S3 credentials secret"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sparkDefaults": {
+      "type": "object",
+      "title": "Conf defaults",
+      "description": "Spark conf defaults injected into PYSPARK_SUBMIT_ARGS (final values). ${suffix}, ${release}, ${namespace} and NAMESPACE are replaced.",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Spark",
+      "x-ui-order": 4,
+      "x-ui-advanced": true
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "jupyterhub": {
+          "type": "object",
+          "title": "jupyterhub",
+          "description": "Values of the jupyterhub chart 4.4.2 (https://hub.jupyter.org/helm-chart/), for example hub.image, hub.resources, hub.extraConfig, hub.config (Authenticator, GenericOAuthenticator role mapping), singleuser.image, singleuser.extraEnv, singleuser.nodeSelector, scheduling, culling. Refused: fullnameOverride, nameOverride, hub.config.ConfigurableHTTPProxy, hub.config.CryptKeeper, hub.config.JupyterHub.cookie_secret/hub_connect_url/authenticator_class, hub.config.Authenticator.enable_auth_state, hub.config.GenericOAuthenticator.client_id/client_secret/oauth_callback_url/authorize_url/token_url/userdata_url, hub.extraEnv.OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET/JUPYTERHUB_CRYPT_KEY, hub.existingSecret, hub.cookieSecret, hub.services, proxy.secretToken, ingress.enabled/ingressClassName/hosts/tls, prePuller.hook.enabled, singleuser.podNameTemplate, singleuser.serviceAccountName, singleuser.storage.dynamic.pvcNameTemplate/volumeNameTemplate, singleuser.extraEnv FS_S3_ENDPOINT_URL/FS_S3_ACCESS_KEY/FS_S3_SECRET_KEY/POD_IP, the <PREFIX>_S3_ACCESS_KEY/<PREFIX>_S3_SECRET_KEY of the pyspark connections and the platform proxy variables, singleuser.extraFiles jupyter_server_config_py/notebook_oauth2/welcome-notebook. Appended to the lists this chart sets: hub.config.JupyterHub.load_roles, singleuser.storage.extraVolumes/extraVolumeMounts, singleuser.profileList.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        },
+        "spark-rbac": {
+          "type": "object",
+          "title": "spark-rbac",
+          "description": "Values of the spark-rbac chart 1.0.1 (oci://quay.io/okdp/charts), the spark ServiceAccount and Role of the notebooks: serviceAccount.annotations (workload identity), serviceAccount.automount, rbac.annotations. Refused: rbac.create, serviceAccount.create, serviceAccount.name.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 2,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
+}

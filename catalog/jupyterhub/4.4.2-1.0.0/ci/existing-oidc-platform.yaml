@@ -1,0 +1,11 @@
+# The platform values of the case existing-oidc, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      userinfoUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/userinfo
+      displayName: keycloak
+      clientProvisioning: existing

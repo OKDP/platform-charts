@@ -1,0 +1,3 @@
+# error: jupyterhub: s3SecretRef is required
+# Neither the storage connection nor the instance's S3 identity: both are
+# reported (errors).

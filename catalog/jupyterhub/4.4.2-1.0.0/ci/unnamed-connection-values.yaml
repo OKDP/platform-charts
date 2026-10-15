@@ -1,0 +1,9 @@
+# error: jupyterhub: sparkConnections[1]: name is required
+# A PySpark connection without a name (errors).
+storage: demo-storage
+s3SecretRef: creds-jupyterhub-s3
+sparkConnections:
+  - name: lakehouse
+    properties: spark.hadoop.fs.s3a.endpoint=${storage.apiUrl}
+  - name: ""
+    properties: spark.sql.catalog.x=org.apache.iceberg.spark.SparkCatalog

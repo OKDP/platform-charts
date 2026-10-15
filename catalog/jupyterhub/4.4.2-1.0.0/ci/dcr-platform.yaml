@@ -1,0 +1,14 @@
+# The platform values of the case dcr, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    oidc:
+      enabled: true
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+      authUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/auth
+      tokenUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/token
+      userinfoUrl: https://keycloak.okdp.sandbox/realms/master/protocol/openid-connect/userinfo
+      displayName: keycloak
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://keycloak.okdp.sandbox/realms/master/clients-registrations/openid-connect
+        authMethod: anonymous

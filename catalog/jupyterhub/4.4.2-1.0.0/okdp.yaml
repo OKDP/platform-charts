@@ -1,0 +1,302 @@
+# OKDP's part of jupyterhub: the platform values it needs, its upstream
+# charts' defaults and what an instance may override; then the mapping besides
+# the charts' values (values.cel.yaml): the bindings, the errors, its OAuth
+# client (the former module oidc-dcr), OKDP's own objects and what the
+# instance publishes. ${{ ... }} is a CEL expression; Kubernetes' $(VAR), the
+# shell's $VAR and the {{ ... }} of the ESO templates stay literal.
+
+roles: [notebooks]
+dependsOn: [ingress, storage]
+require:
+  - ingress.suffix
+  - ingress.className
+  - certificateIssuers.selfSigned.name
+  - storageClass.workspace
+  - oidc.authUrl
+  - oidc.tokenUrl
+  - oidc.userinfoUrl
+defaults:
+  jupyterhub: jupyterhub.defaults.yaml
+  spark-rbac: spark-rbac.defaults.yaml
+upstream:
+  jupyterhub:
+    # What the platform relies on. The names (the hub Secrets, the hub connect
+    # URL and the per-instance pod, PVC and volume names derive from them).
+    # The hub passwords: the placeholders of hub.config, hub.existingSecret
+    # (the ESO-generated Secret), the legacy proxy.secretToken and
+    # hub.cookieSecret, and hub.services (its api tokens would be generated
+    # with lookup + rand). OIDC sign-in: the authenticator class, the auth
+    # state the notebooks read their access token from, the endpoints and
+    # callback registered with the identity provider, the client env of the
+    # hub. The ingress host registered with the identity provider. The
+    # pre-pull hook (its checksum compares with the previous one, lookup).
+    # The notebook env and files the platform wires (jupyter-fs S3 identity,
+    # Spark driver host, access_token helper) and the spark ServiceAccount of
+    # spark-rbac. The env variables that depend on the instance (the
+    # <PREFIX>_S3_ACCESS_KEY/<PREFIX>_S3_SECRET_KEY of the PySpark
+    # connections, the platform proxy variables) cannot be listed here: the
+    # errors section refuses them. hub.extraConfig is a map an instance adds
+    # snippets to; extraConfig01.py holds no platform setting and may be
+    # replaced.
+    #
+    # The chart generates the three hub passwords with lookup of its previous
+    # Secret, else randAlphaNum/randNumeric (templates/hub/_helpers-passwords.tpl),
+    # only when hub.config's ConfigurableHTTPProxy.auth_token,
+    # JupyterHub.cookie_secret and CryptKeeper.keys are empty and hub.services
+    # holds a service: the mapping sets the three to a placeholder and keeps
+    # hub.services empty, so the chart never draws one.
+    protect:
+      - fullnameOverride
+      - nameOverride
+      - hub.config.ConfigurableHTTPProxy
+      - hub.config.CryptKeeper
+      - hub.config.JupyterHub.cookie_secret
+      - hub.config.JupyterHub.hub_connect_url
+      - hub.config.JupyterHub.authenticator_class
+      - hub.config.Authenticator.enable_auth_state
+      - hub.config.GenericOAuthenticator.client_id
+      - hub.config.GenericOAuthenticator.client_secret
+      - hub.config.GenericOAuthenticator.oauth_callback_url
+      - hub.config.GenericOAuthenticator.authorize_url
+      - hub.config.GenericOAuthenticator.token_url
+      - hub.config.GenericOAuthenticator.userdata_url
+      - hub.extraEnv.OAUTH_CLIENT_ID
+      - hub.extraEnv.OAUTH_CLIENT_SECRET
+      - hub.extraEnv.JUPYTERHUB_CRYPT_KEY
+      - hub.existingSecret
+      - hub.cookieSecret
+      - hub.services
+      - proxy.secretToken
+      - ingress.enabled
+      - ingress.ingressClassName
+      - ingress.hosts
+      - ingress.tls
+      - prePuller.hook.enabled
+      - singleuser.podNameTemplate
+      - singleuser.serviceAccountName
+      - singleuser.storage.dynamic.pvcNameTemplate
+      - singleuser.storage.dynamic.volumeNameTemplate
+      - singleuser.extraEnv.FS_S3_ENDPOINT_URL
+      - singleuser.extraEnv.FS_S3_ACCESS_KEY
+      - singleuser.extraEnv.FS_S3_SECRET_KEY
+      - singleuser.extraEnv.POD_IP
+      - singleuser.extraFiles.jupyter_server_config_py
+      - singleuser.extraFiles.notebook_oauth2
+      - singleuser.extraFiles.welcome-notebook
+    # The hub roles (the notebooks' auth-state scope), the CA bundle volume of
+    # the notebooks, and the profiles (the PySpark one carries the platform
+    # Spark conf): an instance adds to them.
+    append:
+      - hub.config.JupyterHub.load_roles
+      - singleuser.storage.extraVolumes
+      - singleuser.storage.extraVolumeMounts
+      - singleuser.profileList
+  spark-rbac:
+    # The spark ServiceAccount the notebooks and their executors run as
+    # (singleuser.serviceAccountName and
+    # spark.kubernetes.authenticate.serviceAccountName name it) and its Role.
+    # Annotations (workload identity) and automount remain open.
+    protect: [rbac.create, serviceAccount.create, serviceAccount.name]
+
+vars:
+  # Public URL: https://jupyterhub-<namespace>.<ingress suffix>.
+  host: jupyterhub-${{ release.namespace }}.${{ global.okdp.ingress.suffix }}
+  url: https://${{ host }}
+  # Scopes the hub requests at login (the oidc-dcr registration must grant
+  # them, openid aside).
+  scope: openid profile email groups
+  # The ESO-generated hub passwords (objects).
+  hubGenerated: ${{ release.name }}-hub-generated
+  # Values the jupyterhub chart would generate with lookup + randAlphaNum. The
+  # chart is handed this placeholder so that it renders nothing random; the
+  # real values are in the ESO-generated Secret, which the hub reads first
+  # (hub.existingSecret). The hub pops these keys from hub.config.
+  placeholder: generated-by-external-secrets
+  # The storage connection (s3 contract), resolved by the compiler; "" when
+  # unset (refused in errors).
+  s3: "${{ type(values.?storage.orValue('')) == map ? values.storage : {'apiUrl': '', 'region': ''} }}"
+  # The list and map parameters, [] / {} when unset or null (Helm's default).
+  pysparkNames: "${{ cel.bind(l, values.?pyspark.orValue([]), type(l) == list ? l : []) }}"
+  sparkConnections: "${{ cel.bind(l, values.?sparkConnections.orValue([]), type(l) == list ? l : []) }}"
+  fileBrowserLocations: "${{ cel.bind(l, values.?fileBrowserLocations.orValue([]), type(l) == list ? l : []) }}"
+  sparkDefaults: "${{ cel.bind(m, values.?sparkDefaults.orValue({}), type(m) == map ? m : {}) }}"
+  oidcRoleMapping: "${{ cel.bind(m, values.?oidcRoleMapping.orValue({}), type(m) == map ? m : {}) }}"
+  # The placeholders a free-text parameter (welcomeNotebook, sparkDefaults,
+  # the properties of sparkConnections) may carry, replaced by the chains of
+  # replace() below (CEL has no user functions). Written ${name}, as the
+  # x-okdp-internal conventions of the contracts: an instance value holds no
+  # "{{" (okdp-compile refuses it). Every free-text parameter:
+  #   ${suffix}     the platform's ingress suffix
+  #   ${release}    the release name
+  #   ${namespace}  the release namespace
+  # Another ${...} (Spark's ${env:VAR}) is left as written.
+  suffix: ${{ str(global.okdp.ingress.suffix) }}
+  # Resolved PySpark connections, in the order of `pyspark`, as a list of
+  # {name, envPrefix, s3SecretRef, conf: [<spark conf line>]}. A name
+  # `pyspark` lists without a matching sparkConnections item is skipped, as
+  # before; when two items share a name, the last one wins.
+  pyspark:
+    - $for: name in pysparkNames
+      $vars:
+        matches: ${{ sparkConnections.filter(c, type(c) == map && c.?name.orValue('') == name) }}
+        c: "${{ matches.size() > 0 ? matches[matches.size() - 1] : {} }}"
+        prefix: ${{ str(name).replace('-', '_').replace('.', '_').upperAscii() }}
+        secret: ${{ first([c.?s3SecretRef.orValue('')]) }}
+        # The properties, placeholders replaced: those of every free-text
+        # parameter, and ${connection} (its name), ${storage.apiUrl} and
+        # ${storage.region} (the storage connection), ${oidc.tokenUrl} (the
+        # platform's token endpoint).
+        placed: >-
+          ${{ str(first([c.?properties.orValue('')]))
+                .replace('${suffix}', suffix)
+                .replace('${release}', release.name)
+                .replace('${namespace}', release.namespace)
+                .replace('${connection}', str(name))
+                .replace('${storage.apiUrl}', str(s3.apiUrl))
+                .replace('${storage.region}', str(s3.?region.orValue('')))
+                .replace('${oidc.tokenUrl}', str(global.okdp.oidc.tokenUrl)) }}
+        # $(S3_ACCESS_KEY)/$(S3_SECRET_KEY) become the connection's own
+        # variables when it has its own S3 identity.
+        props: >-
+          ${{ secret == '' ? placed : placed
+                .replace('$(S3_ACCESS_KEY)', '$(' + prefix + '_S3_ACCESS_KEY)')
+                .replace('$(S3_SECRET_KEY)', '$(' + prefix + '_S3_SECRET_KEY)') }}
+      $each:
+        $if: ${{ matches.size() > 0 }}
+        name: ${{ name }}
+        envPrefix: ${{ prefix }}
+        s3SecretRef: ${{ secret }}
+        conf: ${{ props.split('\n').map(l, l.trim()).filter(l, l != '') }}
+  # Welcome.ipynb, placeholders replaced, and ${url}, the hub URL.
+  welcome: >-
+    ${{ str(first([values.?welcomeNotebook.orValue('')]))
+          .replace('${suffix}', suffix)
+          .replace('${release}', release.name)
+          .replace('${namespace}', release.namespace)
+          .replace('${url}', url) }}
+  # jupyter-fs file browser locations (those with a name and a uri), as JSON.
+  locations: >-
+    ${{ toJson(fileBrowserLocations
+          .filter(l, type(l) == map && first([l.?name.orValue('')]) != '' && first([l.?uri.orValue('')]) != '')
+          .map(l, {'name': l.name, 'uri': l.uri})) }}
+  # The notebook env the instance decides: the S3 identity of every PySpark
+  # connection that has one, and the platform proxy.
+  notebookEnvList:
+    - $for: c in pyspark.filter(c, c.s3SecretRef != '')
+      $each:
+        - name: ${{ c.envPrefix }}_S3_ACCESS_KEY
+          value: {valueFrom: {secretKeyRef: {name: "${{ c.s3SecretRef }}", key: accessKey}}}
+        - name: ${{ c.envPrefix }}_S3_SECRET_KEY
+          value: {valueFrom: {secretKeyRef: {name: "${{ c.s3SecretRef }}", key: secretKey}}}
+    - $for: k in ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'].filter(k, k in platform.proxyEnv)
+      $each:
+        name: ${{ k }}
+        value: ${{ platform.proxyEnv[k] }}
+  notebookEnv:
+    $for: e in notebookEnvList
+    $key: ${{ e.name }}
+    $value: ${{ e.value }}
+  # PYSPARK_SUBMIT_ARGS of the PySpark profile: the platform defaults, the
+  # sparkDefaults (sorted by key, placeholders and NAMESPACE, the release
+  # namespace, replaced), then
+  # the conf lines of every enabled PySpark connection, each quoted (Helm's
+  # quote).
+  submitArgs:
+    - --master k8s://https://kubernetes.default.svc.cluster.local
+    - --conf spark.submit.deployMode=client
+    - --conf spark.driver.host=$(POD_IP)
+    - --conf spark.kubernetes.driverEnv.SPARK_USER=$(NB_USER)
+    - --conf spark.executorEnv.SPARK_USER=$(NB_USER)
+    - --conf spark.kubernetes.container.image=$(SPARK_EXECUTOR_IMAGE)
+    - --conf spark.kubernetes.executor.secrets.certs-bundle=/cacerts
+    - --conf "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/cacerts/bundle.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword="
+    - --conf "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/cacerts/bundle.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword="
+    - --conf spark.kubernetes.namespace=${{ release.namespace }}
+    - --conf spark.eventLog.compress=true
+    - --conf spark.eventLog.rolling.enabled=true
+    - --conf spark.network.timeout=600
+    - $for: k in sparkDefaults.map(k, k).sort()
+      $vars:
+        v: >-
+          ${{ str(sparkDefaults[k])
+                .replace('${suffix}', suffix)
+                .replace('${release}', release.name)
+                .replace('${namespace}', release.namespace)
+                .replace('NAMESPACE', release.namespace) }}
+        kv: ${{ k + '=' + v }}
+      $each: ${{ '--conf ' + quote(kv) }}
+    - --conf spark.kubernetes.authenticate.serviceAccountName=spark
+    - $for: c in pyspark
+      $each: ${{ c.conf.map(l, '--conf ' + quote(l)) }}
+    - pyspark-shell
+  # The hub passwords, generated once by ESO (refreshInterval "0": the Secret
+  # is never rewritten, so every key is declared here from the start):
+  #
+  #   hub.config.ConfigurableHTTPProxy.auth_token  proxy API token (64 characters)
+  #   hub.config.JupyterHub.cookie_secret          64 hex characters (32 bytes)
+  #   hub.config.CryptKeeper.keys                  64 hex characters (32 bytes)
+  #
+  # The key names are the ones the hub looks up in its existing-secret mount
+  # (z2jh get_secret_value). Kept when the release goes away (Helm keep, Argo
+  # CD Delete=false) and adopted again by the next install: the auth state of
+  # the hub database is encrypted with CryptKeeper.keys, and a database kept
+  # or restored across a reinstall must stay readable.
+  #
+  # transform sha256: the key's ESO template filter ("| sha256sum": the hex
+  # SHA-256 of the password, 64 hex characters for a 32-byte key). Generator
+  # names longer than 63 characters (these three) are cut by
+  # okdpGeneratedSecret.
+  generatedKeys:
+    - {key: hub.config.ConfigurableHTTPProxy.auth_token, length: 64, digits: 10}
+    - {key: hub.config.JupyterHub.cookie_secret, length: 64, digits: 10, transform: sha256}
+    - {key: hub.config.CryptKeeper.keys, length: 64, digits: 10, transform: sha256}
+  # Paths of upstream.jupyterhub the platform sets that depend on the
+  # instance (the protect list of okdp.yaml is fixed): the S3 identity
+  # variables of the PySpark connections and the platform proxy variables.
+  dynamicProtect: >-
+    ${{ pyspark.filter(c, c.s3SecretRef != '').map(c, [c.envPrefix + '_S3_ACCESS_KEY', c.envPrefix + '_S3_SECRET_KEY']).flatten()
+        + ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'].filter(k, k in platform.proxyEnv) }}
+  # The instance's upstream.jupyterhub.singleuser.extraEnv (what okdp-compile
+  # will apply), {} when there is none.
+  userEnv: >-
+    ${{ cel.bind(u, cel.bind(up, values.?upstream.orValue({}), type(up) == map ? up.?jupyterhub.orValue({}) : {}),
+          type(u) == map && type(u.?singleuser.orValue({})) == map
+            && type(u.?singleuser.orValue({}).?extraEnv.orValue({})) == map
+          ? u.?singleuser.orValue({}).?extraEnv.orValue({}) : {}) }}
+
+errors:
+  - $if: ${{ first([values.?s3SecretRef.orValue('')]) == '' }}
+    $value: "jupyterhub: s3SecretRef is required: a Secret with the keys accessKey and secretKey, this instance's own S3 identity"
+  - $if: ${{ type(values.?storage.orValue('')) != map }}
+    $value: "jupyterhub: storage: no s3 connection given"
+  - $spread: >-
+      ${{ sparkConnections.transformList(i, c, type(c) != map || first([c.?name.orValue('')]) == '',
+            'jupyterhub: sparkConnections[' + string(i) + ']: name is required') }}
+  - $spread: >-
+      ${{ dynamicProtect.filter(k, k in userEnv).map(k, 'jupyterhub: upstream.jupyterhub.singleuser.extraEnv.' + k
+          + ': singleuser.extraEnv.' + k + ' is set by the platform and cannot be changed') }}
+
+# The OAuth client (the former module oidc-dcr), registered by dynamic client
+# registration in dcr mode (global.okdp.oidc.clientProvisioning: dcr): the
+# compiler adds the chart oidc-dcr (Job <release>-oidc-dcr), which writes the
+# Secret platform.oidcClientSecret (<release>-<namespace>-dcr). Nothing in
+# existing mode.
+oidcClients:
+  - redirectUris: ['${{ url }}/hub/oauth_callback']
+    grantTypes: [authorization_code, refresh_token]
+    scope: ${{ scope }}
+
+# OKDP's own objects, rendered by the umbrella (okdp.objects.yaml): the hub
+# passwords, one ESO Password generator per key and the ExternalSecret
+# writing <release>-hub-generated (see generatedKeys).
+objects:
+  - $spread: >-
+      ${{ okdpGeneratedSecret({'name': hubGenerated, 'type': 'Opaque', 'keys': generatedKeys,
+          'annotations': {'helm.sh/resource-policy': 'keep', 'argocd.argoproj.io/sync-options': 'Delete=false'}}) }}
+
+# okdp.instance.yaml: a UI, no provided connection.
+instance:
+  url: ${{ url }}
+  usage: |
+    JupyterHub provides multi-user Jupyter notebook environment with OAuth authentication.
+    Access the hub at ${{ url }}

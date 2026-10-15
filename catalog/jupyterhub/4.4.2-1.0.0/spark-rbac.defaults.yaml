@@ -1,0 +1,9 @@
+# OKDP's defaults of the spark-rbac chart, over its values.yaml and under the
+# values computed by values.cel.yaml (okdp.yaml defaults). Plain YAML, read as
+# a Helm values file. The spark ServiceAccount the notebooks run as.
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  name: spark
+  automount: true
