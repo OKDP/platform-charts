@@ -1,0 +1,2 @@
+# error: superset: metadataDb: no database-server connection given
+# No metadata database: Superset has nowhere to keep its state.

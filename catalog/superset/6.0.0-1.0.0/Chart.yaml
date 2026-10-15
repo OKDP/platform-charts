@@ -1,0 +1,25 @@
+apiVersion: v2
+name: superset
+description: >-
+  Apache Superset - Enterprise business intelligence platform for modern data teams.
+  Self-service analytics tool that enables users to create interactive dashboards, explore datasets,
+  and build data visualizations without coding. Integrates with popular databases and supports SQL Lab.
+type: application
+# <upstream>-<okdp semver>.
+version: 6.0.0-1.0.0
+appVersion: "6.0.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/apache/superset
+dependencies:
+  # Module main: the Apache Superset chart, OKDP's former wrapper chart folded
+  # into its values (superset.defaults.yaml, values.cel.yaml). Its bundled
+  # bitnami charts, postgresql and redis, are disabled by values.
+  - name: superset
+    repository: https://apache.github.io/superset
+    version: 0.22.8

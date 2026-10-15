@@ -1,0 +1,6 @@
+# error: superset: datasources[1].trino: no trino connection given
+# A datasource whose trino reference is left empty.
+metadataDb: meta
+datasources:
+  - {name: shared, trino: shared-trino, catalog: sales}
+  - {name: unset, trino: "", catalog: bronze}

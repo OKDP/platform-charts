@@ -1,0 +1,16 @@
+# The platform values of the case no-oidc-proxy, over platform.yaml (--context, level 0):
+# OIDC off, a forward proxy, another suffix and issuer.
+global:
+  okdp:
+    ingress:
+      suffix: okdp.example.com
+    oidc:
+      enabled: false
+      issuerUri: https://idp.example.com/realms/data
+    proxy:
+      httpProxy: http://proxy:3128
+      httpsProxy: http://proxy:3128
+      noProxy: .svc
+    certificateIssuers:
+      selfSigned:
+        name: platform-issuer

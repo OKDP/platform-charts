@@ -1,0 +1,14 @@
+# The demo project with one OAuth client registered by DCR for the sign-in and the
+# Trino datasources (<release>-<namespace>-dcr).
+metadataDb: demo-db-superset
+examplesDb: demo-db-examples
+load_examples: true
+datasources:
+  - {name: lakehouse, trino: demo-trino, catalog: bronze}
+  - {name: shared, trino: shared-trino, catalog: sales}
+oidcRoleMapping:
+  platform_admin: [Admin]
+  data_engineer: [Alpha, sql_lab]
+locale: fr-FR
+currency: EUR
+d3Format: {thousands: " "}

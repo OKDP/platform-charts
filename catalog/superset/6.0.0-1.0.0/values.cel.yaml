@@ -1,0 +1,299 @@
+# The values of the Apache Superset chart (the former KuboCD module main),
+# OKDP's former wrapper chart folded in. Keys left out keep the chart's
+# defaults or OKDP's (superset.defaults.yaml). They read the vars of
+# okdp.yaml (host, redis, internalSecret, waitContainers...).
+superset:
+  fullnameOverride: ${{ release.name }}
+  # The env Secrets of okdp.yaml (objects).
+  envFromSecret: ${{ release.name }}-superset-env
+  envFromSecrets:
+    - ${{ release.name }}-db-env
+    - ${{ release.name }}-oauth2-env
+    - ${{ release.name }}-redis-env
+    - ${{ release.name }}-trino-oauth2-env
+
+  # Computed blocks of superset_config.py (the fixed ones: superset.defaults.yaml).
+  configOverrides:
+    oauth_to_superset_roles_mapping: >-
+      ${{ 'AUTH_ROLES_MAPPING = {\n' + rolesMapping.map(l, l + '\n').join('') + '}\n' }}
+    extra_config: |
+      from datetime import timedelta
+      # Set up max age of session to 8 hours
+      PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+      # This will make sure the redirect_uri is properly computed, even with SSL offloading
+      ENABLE_PROXY_FIX = True
+      PROXY_FIX_CONFIG = {
+        "x_for": 1,
+        "x_proto": 1,
+        "x_host": 1,
+        "x_port": 1,
+        "x_prefix": 1,
+      }
+      # Chart number and date formats. The locale tables are read from CLDR through
+      # Babel, a Superset dependency, so that none has to be maintained in this package
+      import base64
+      import json
+
+      D3_LOCALE = ${{ quote(locale) }}
+      D3_CURRENCY = ${{ quote(currency) }}
+      D3_FORMAT = {}
+      D3_TIME_FORMAT = {}
+
+      if D3_LOCALE:
+          import logging
+          import re
+          from babel import Locale
+          from babel.numbers import get_currency_symbol, get_territory_currencies
+
+          # CLDR short patterns carry a two digit year, unreadable on a chart axis
+          _LDML_TO_STRFTIME = [
+              ("yyyy", "%Y"), ("yy", "%Y"), ("y", "%Y"), ("MMMM", "%B"), ("MMM", "%b"),
+              ("MM", "%m"), ("M", "%-m"), ("dd", "%d"), ("d", "%-d"), ("EEEE", "%A"),
+              ("EEE", "%a"), ("HH", "%H"), ("H", "%-H"), ("hh", "%I"), ("h", "%-I"),
+              ("mm", "%M"), ("ss", "%S"), ("a", "%p"),
+          ]
+
+          def _strftime(pattern):
+              out, index = "", 0
+              while index < len(pattern):
+                  for ldml, directive in _LDML_TO_STRFTIME:
+                      if pattern.startswith(ldml, index):
+                          out, index = out + directive, index + len(ldml)
+                          break
+                  else:
+                      out, index = out + pattern[index], index + 1
+              return out
+
+          try:
+              _locale = Locale.parse(D3_LOCALE, sep="-")
+              _symbols = _locale.number_symbols["latn"]
+              D3_FORMAT = {
+                  "decimal": _symbols["decimal"],
+                  "thousands": _symbols["group"],
+                  "grouping": [3],
+              }
+              _currency = D3_CURRENCY or (
+                  get_territory_currencies(_locale.territory)[0] if _locale.territory else ""
+              )
+              if _currency:
+                  _symbol = get_currency_symbol(_currency, locale=_locale)
+                  _affixes = re.split(
+                      r"[#0][#0,.]*", _locale.currency_formats["standard"].pattern
+                  )
+                  D3_FORMAT["currency"] = [
+                      _affixes[0].replace("¤", _symbol),
+                      _affixes[-1].replace("¤", _symbol),
+                  ]
+              # d3 has no spacing rule of its own, the percent sign carries it
+              _spacing = re.search(r"0(\D*?)%", _locale.percent_formats[None].pattern)
+              if _spacing and _spacing.group(1):
+                  D3_FORMAT["percent"] = _spacing.group(1) + "%"
+              _date = _strftime(_locale.date_formats["short"].pattern)
+              _time = _strftime(_locale.time_formats["medium"].pattern)
+              _periods = _locale.day_periods["format"]["wide"]
+              _days, _months = _locale.days["format"], _locale.months["format"]
+              D3_TIME_FORMAT = {
+                  "dateTime": "%s, %s" % (_date, _time),
+                  "date": _date,
+                  "time": _time,
+                  "periods": [_periods.get("am", "AM"), _periods.get("pm", "PM")],
+                  "days": [_days["wide"][(i + 6) % 7] for i in range(7)],
+                  "shortDays": [_days["abbreviated"][(i + 6) % 7] for i in range(7)],
+                  "months": [_months["wide"][i] for i in range(1, 13)],
+                  "shortMonths": [_months["abbreviated"][i] for i in range(1, 13)],
+              }
+          except Exception:
+              # A formatting detail must never keep the instance from starting
+              logging.getLogger(__name__).exception(
+                  "Falling back to the default formats, unusable locale %s", D3_LOCALE
+              )
+              D3_FORMAT, D3_TIME_FORMAT = {}, {}
+
+      # The overrides are data, never code: base64 of their JSON, so no value can
+      # end the Python string (or reach the chart's tpl as a template).
+      D3_FORMAT.update(json.loads(base64.b64decode("${{ base64.encode(bytes(toJson(d3Format))) }}").decode("utf-8")))
+      D3_TIME_FORMAT.update(json.loads(base64.b64decode("${{ base64.encode(bytes(toJson(d3TimeFormat))) }}").decode("utf-8")))
+  cache:
+    host: ${{ redis }}
+
+  extraConfigs:
+    import_datasources.yaml: >-
+      ${{ 'databases:\n' + datasourceItems.map(d, '  ' + d.replace('\n', '\n  ') + '\n').join('') }}
+  extraEnvRaw:
+    # Superset secret key
+    - name: SUPERSET_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ${{ internalSecret }}
+          key: superset_secret_key
+    # Superset/DB credentials
+    - name: DB_USER
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.metadataDb.secretRef.name }}
+          key: username
+    - name: DB_PASS
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.metadataDb.secretRef.name }}
+          key: password
+    # Superset/Redis credentials
+    - name: REDIS_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: ${{ internalSecret }}
+          key: redis-password
+    # OIDC credentials, and the OIDC Trino credentials.
+    - $for: "secret in (platform.oidc.enabled ? [platform.oidcClientSecret] : [])"
+      $each:
+        - name: AUTH_OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ${{ secret }}
+              key: client_id
+        - name: AUTH_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ${{ secret }}
+              key: client_secret
+        - name: TRINO_OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ${{ trinoOauthSecret }}
+              key: client_id
+        - name: TRINO_OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ${{ trinoOauthSecret }}
+              key: client_secret
+    # Password of the local admin (no OIDC): the init Job creates it.
+    - $if: ${{ !platform.oidc.enabled }}
+      name: SUPERSET_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: ${{ adminSecret }}
+          key: password
+    # CA
+    - name: REQUESTS_CA_BUNDLE
+      value: /cacerts/ca.crt
+    - $spread: >-
+        ${{ ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'].filter(k, k in platform.proxyEnv).map(k, {'name': k, 'value': platform.proxyEnv[k]}) }}
+    # Examples
+    - $for: "ex in (values.load_examples ? [values.examplesDb] : [])"
+      $each:
+        - name: DB_EXAMPLES_HOST
+          value: ${{ str(ex.host) }}
+        - name: DB_EXAMPLES_PORT
+          value: ${{ str(ex.port) }}
+        - name: DB_EXAMPLES_NAME
+          value: ${{ str(ex.dbName) }}
+        - name: DB_EXAMPLES_USER
+          valueFrom:
+            secretKeyRef:
+              name: ${{ ex.secretRef.name }}
+              key: username
+        - name: DB_EXAMPLES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: ${{ ex.secretRef.name }}
+              key: password
+
+  # The chart waits on the server TCP port, which says nothing about the
+  # databases existing: the schema upgrade then fails on a database not
+  # created yet, and the job burns its retries.
+  init:
+    # Without OIDC there is no other way in, so a local admin is created, with a
+    # password generated per instance (Secret <release>-admin, okdp.yaml objects).
+    # The chart can only write init.adminUser.password into its script, so its
+    # own admin creation is off (superset.defaults.yaml) and the command
+    # below creates the admin from SUPERSET_ADMIN_PASSWORD (extraEnvRaw), if it
+    # does not exist yet. {{ .Values.configMountPath }} is template code for the
+    # upstream chart, which passes init.command to tpl.
+    loadExamples: ${{ values.load_examples }}
+    command:
+      $if: ${{ !platform.oidc.enabled }}
+      $value:
+        - /bin/sh
+        - -c
+        - |
+          . {{ .Values.configMountPath }}/superset_bootstrap.sh
+          . {{ .Values.configMountPath }}/superset_init.sh
+          if superset fab list-users 2>/dev/null | grep -qF 'username:admin'; then
+            echo "Admin user already exists, skipping."
+          else
+            echo "Creating admin user..."
+            superset fab create-admin --username admin --firstname Superset \
+              --lastname Admin --email admin@superset.com --password "$SUPERSET_ADMIN_PASSWORD"
+          fi
+    initContainers:
+      - name: wait-for-databases
+        image: postgres:16-alpine
+        env:
+          # Connection fields through the environment: the script expands
+          # nothing that comes from the values.
+          - name: META_HOST
+            value: ${{ str(values.metadataDb.host) }}
+          - name: META_PORT
+            value: ${{ str(values.metadataDb.port) }}
+          - name: META_DB
+            value: ${{ str(values.metadataDb.dbName) }}
+          - name: META_PW
+            valueFrom:
+              secretKeyRef:
+                name: ${{ values.metadataDb.secretRef.name }}
+                key: password
+          - name: META_USER
+            valueFrom:
+              secretKeyRef:
+                name: ${{ values.metadataDb.secretRef.name }}
+                key: username
+          - $for: "ex in (values.load_examples ? [values.examplesDb] : [])"
+            $each:
+              - name: EX_HOST
+                value: ${{ str(ex.host) }}
+              - name: EX_PORT
+                value: ${{ str(ex.port) }}
+              - name: EX_DB
+                value: ${{ str(ex.dbName) }}
+              - name: EX_PW
+                valueFrom:
+                  secretKeyRef:
+                    name: ${{ ex.secretRef.name }}
+                    key: password
+              - name: EX_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: ${{ ex.secretRef.name }}
+                    key: username
+        command:
+          - /bin/sh
+          - -c
+          - ${{ waitDatabases.join('') }}
+
+  extraEnv:
+    SERVER_WORKER_AMOUNT: ${{ str(values.workers) }}
+
+  # The wait init containers read the host and port of the database and the
+  # cache from the env Secrets (the Apache defaults read envFromSecret).
+  supersetWorker:
+    initContainers:
+      - ${{ waitContainers['wait-for-postgres-redis'] }}
+  supersetNode:
+    initContainers:
+      - ${{ waitContainers['wait-for-postgres'] }}
+    resources:
+      limits:
+        memory: ${{ str(values.memoryGi) }}Gi
+        cpu: ${{ str(values.cpu) }}
+
+  ingress:
+    ingressClassName: ${{ global.okdp.ingress.className }}
+    annotations:
+      kubernetes.io/ingress.class: ${{ global.okdp.ingress.className }}
+      $merge: ${{ platform.ingressAnnotations }}
+    hosts:
+      - ${{ host }}
+    tls:
+      - hosts:
+          - ${{ host }}
+        secretName: ${{ release.name }}-tls-secret

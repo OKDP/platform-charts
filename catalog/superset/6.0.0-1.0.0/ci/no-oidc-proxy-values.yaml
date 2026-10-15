@@ -1,0 +1,8 @@
+# OIDC off (the local admin is created), no examples, no datasource, a
+# forward proxy, sizing parameters.
+metadataDb: meta
+examplesDb: ""
+load_examples: false
+cpu: 1
+memoryGi: 3.5
+workers: 4

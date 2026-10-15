@@ -1,0 +1,9 @@
+# The platform values of the case dcr, over platform.yaml (--context, level 0):
+# the OAuth clients registered by DCR.
+global:
+  okdp:
+    oidc:
+      clientProvisioning: dcr
+      dcr:
+        registrationUrl: https://keycloak.okdp.sandbox/realms/master/clients-registrations/openid-connect
+        authMethod: anonymous

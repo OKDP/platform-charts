@@ -1,0 +1,4 @@
+# error: superset: examplesDb: no database-server connection given
+# The examples on, without the database receiving them.
+metadataDb: meta
+load_examples: true

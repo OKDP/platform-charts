@@ -1,0 +1,15 @@
+# The demo project: metadata and examples databases as connections, one
+# datasource on an internal trino release (demo-trino), one on an external
+# trino connection. OIDC on (existing OAuth clients).
+metadataDb: demo-db-superset
+examplesDb: demo-db-examples
+load_examples: true
+datasources:
+  - {name: lakehouse, trino: demo-trino, catalog: bronze}
+  - {name: shared, trino: shared-trino, catalog: sales}
+oidcRoleMapping:
+  platform_admin: [Admin]
+  data_engineer: [Alpha, sql_lab]
+locale: fr-FR
+currency: EUR
+d3Format: {thousands: " "}

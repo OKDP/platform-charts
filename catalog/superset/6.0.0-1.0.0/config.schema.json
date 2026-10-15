@@ -1,0 +1,234 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "superset",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "metadataDb": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the SQL database hosting the Superset metadata. Its credentials Secret holds the keys username and password.",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 1,
+      "default": ""
+    },
+    "load_examples": {
+      "type": "boolean",
+      "title": "Load examples",
+      "description": "Whether to load superset examples (downloaded from GitHub)",
+      "default": false,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 2
+    },
+    "examplesDb": {
+      "type": "string",
+      "title": "Examples database",
+      "description": "Connection to the PostgreSQL database receiving the Superset examples (used when Load examples is on).",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 3,
+      "default": ""
+    },
+    "locale": {
+      "type": "string",
+      "title": "Chart locale",
+      "description": "CLDR locale used by charts to render numbers and dates, for instance en, fr, fr-CH or es. The UI language is not affected.",
+      "default": "en",
+      "x-ui-group": "Cluster",
+      "x-ui-order": 4,
+      "x-ui-advanced": true,
+      "pattern": "^([A-Za-z]{2,3}([_-][A-Za-z0-9]{2,8})*)?$"
+    },
+    "currency": {
+      "type": "string",
+      "title": "Chart currency",
+      "description": "ISO 4217 code, for instance EUR. Defaults to the currency of the locale territory when the locale carries one.",
+      "default": "",
+      "x-ui-group": "Cluster",
+      "x-ui-order": 5,
+      "x-ui-advanced": true,
+      "pattern": "^([A-Z]{3})?$"
+    },
+    "d3Format": {
+      "type": "object",
+      "title": "Number format overrides",
+      "description": "d3-format locale definition, applied over the one derived from locale. See https://github.com/d3/d3-format#formatLocale",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 6,
+      "x-ui-advanced": true
+    },
+    "d3TimeFormat": {
+      "type": "object",
+      "title": "Date format overrides",
+      "description": "d3-time-format locale definition, applied over the one derived from locale. See https://github.com/d3/d3-time-format#timeFormatLocale",
+      "default": {},
+      "properties": {},
+      "additionalProperties": true,
+      "x-ui-group": "Cluster",
+      "x-ui-order": 7,
+      "x-ui-advanced": true
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU limit of the Superset web server.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 1,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory limit of the Superset web server.",
+      "default": 2,
+      "multipleOf": 0.25,
+      "x-ui-group": "Sizing",
+      "x-ui-order": 2,
+      "x-ui-columns": 2,
+      "x-ui-advanced": true
+    },
+    "workers": {
+      "type": "integer",
+      "title": "Server workers",
+      "description": "Gunicorn workers of the web server.",
+      "default": 2,
+      "minimum": 1,
+      "x-ui-group": "Sizing",
+      "x-ui-widget": "stepper",
+      "x-ui-order": 3,
+      "x-ui-advanced": true
+    },
+    "oidcRoleMapping": {
+      "type": "object",
+      "title": "Role mapping",
+      "description": "Map of OIDC roles (groups) to lists of Superset roles.",
+      "default": {},
+      "properties": {},
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+          }
+        }
+      },
+      "x-ui-group": "Authentication",
+      "x-ui-order": 6,
+      "x-ui-advanced": true,
+      "propertyNames": {
+        "minLength": 1,
+        "not": {
+          "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+        }
+      }
+    },
+    "datasources": {
+      "type": "array",
+      "title": "Trino datasources",
+      "description": "One Superset database per item, on a Trino instance and one of its catalogs.",
+      "default": [],
+      "x-ui-group": "Datasources",
+      "x-ui-order": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "trino",
+          "catalog"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Display name in the Superset UI.",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]*$"
+          },
+          "trino": {
+            "type": "string",
+            "title": "Trino",
+            "description": "Trino connection, or a trino release of this project.",
+            "x-okdp-connection-ref": {
+              "contract": "trino"
+            },
+            "not": {
+              "pattern": "\\{\\{|\\}\\}|[\\r\\n]"
+            }
+          },
+          "catalog": {
+            "type": "string",
+            "title": "Catalog",
+            "description": "Trino catalog to expose, as named on the Trino instance.",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream charts this chart renders, one object per chart, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "superset": {
+          "type": "object",
+          "title": "superset",
+          "description": "Values of the superset chart 0.22.8 (https://apache.github.io/superset), for example image, resources, nodeSelector, tolerations, supersetWorker.replicas.replicaCount, extraEnv, new configOverrides blocks (Python appended to superset_config.py, after the chart's). Refused: fullnameOverride, envFromSecret, configFromSecret, configOverrides auth_registration/oauth_enabled/trino_oauth_enabled/custom_sso_security_manager/extra_config/load_examples/valkey_password, configOverridesFiles, config.resultsBackend, database.uri/driver, cache.enabled/host/port/user/password/cacheUrl/celeryUrl/cacheDb/celeryDb, postgresql, redis, init.createAdmin/adminUser/command, supersetNode/supersetWorker/supersetCeleryBeat/supersetMcp forceReload, ingress.enabled/ingressClassName/hosts/tls. Appended to the lists this chart sets: envFromSecrets, extraEnvRaw, extraVolumes, extraVolumeMounts, init.initContainers, supersetNode.initContainers, supersetWorker.initContainers.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "metadataDb",
+    "examplesDb"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
+}
