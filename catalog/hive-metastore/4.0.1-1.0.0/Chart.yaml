@@ -1,0 +1,23 @@
+apiVersion: v2
+name: hive-metastore
+description: >-
+  Hive Metastore is a centralized metadata repository for data lakes and big data analytics.
+  Stores and manages table schemas, partition information, and data locations for engines like Apache Hive, Spark, and Trino.
+  Enables consistent schema access across distributed storage systems such as HDFS and Amazon S3,
+  providing the foundation for unified SQL-based querying over large-scale datasets.
+type: application
+# <upstream>-<okdp semver>.
+version: 4.0.1-1.0.0
+appVersion: "4.0.1"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/okdp/hive-metastore
+dependencies:
+  - name: hive-metastore              # the former KuboCD module main
+    repository: oci://quay.io/okdp/charts
+    version: 1.4.0

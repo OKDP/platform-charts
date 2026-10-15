@@ -1,0 +1,58 @@
+# OKDP's part of hive-metastore: its upstream chart's defaults, what an
+# instance may override, the rules of the instance, and what it publishes.
+# values.cel.yaml computes the chart's values. No platform value is required.
+#
+# The db and storage references arrive resolved (their x-okdp-connection-ref
+# in config.schema.json): values.db holds the database-server contract fields
+# and secretRef, values.storage the s3 ones.
+
+roles: [data-catalog, metastore-catalog]
+dependsOn: [database-server, storage]
+defaults:
+  hive-metastore: hive-metastore.defaults.yaml
+upstream:
+  hive-metastore:
+    # What the platform relies on: the Service name and port the hive contract
+    # publishes (thrift://<release>-hive-metastore:9083), the database and S3
+    # credentials wired from the db/storage connections and s3SecretRef, the
+    # storage backend the s3 connection implies, and the schema init Job's hook
+    # annotations (hooks are limited to pre/post-install/upgrade).
+    protect: [fullNameOverride, serviceName, servicePort, db, s3.url, s3.accessKey,
+              s3.secretKey, cloud_storage, initJob.annotations]
+    # extraEnvRaw carries the database user Secret and the Thrift port: an
+    # instance adds to it.
+    append: [extraEnvRaw]
+
+vars:
+  # The Service name is the one the hive contract promises to internal
+  # references: <release>-hive-metastore.
+  fullname: ${{ release.name }}-hive-metastore
+  thriftUri: thrift://${{ fullname }}.${{ release.namespace }}.svc:9083
+
+errors:
+  # An unset reference stays "".
+  - $if: ${{ type(values.db) != map }}
+    $value: "hive-metastore: db: no database-server connection given"
+  - $if: ${{ type(values.storage) != map }}
+    $value: "hive-metastore: storage: no s3 connection given"
+  - $if: ${{ type(values.db) == map && !has(values.db.secretRef) }}
+    $value: >-
+      hive-metastore: db: connection "${{ values.db.okdp.ref }}" has no secretRef:
+      the metastore needs a Secret with the keys username and password
+  - $if: ${{ values.?s3SecretRef.orValue('') == '' }}
+    $value: "hive-metastore: s3SecretRef is required: a Secret with the keys accessKey and secretKey, this metastore's own S3 identity"
+
+# okdp.instance.yaml: no UI.
+instance:
+  usage: |
+    Hive Metastore is a centralized metadata repository for data lakes and big data analytics.
+
+    Thrift endpoint: `${{ thriftUri }}`
+
+# The connection this instance publishes: other instances of the project
+# reference it by its release name (the hive contract's naming convention,
+# x-okdp-internal, which the compiler checks these values against).
+provides:
+  - contract: hive
+    values:
+      thriftUri: ${{ thriftUri }}

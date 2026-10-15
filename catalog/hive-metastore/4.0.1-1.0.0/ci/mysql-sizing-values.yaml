@@ -1,0 +1,7 @@
+# A MySQL database (driver derived from the engine), bigger sizing.
+db: mysql
+storage: aws
+s3SecretRef: hms-aws
+warehouseBucket: lake
+cpu: 1.5
+memoryGi: 4

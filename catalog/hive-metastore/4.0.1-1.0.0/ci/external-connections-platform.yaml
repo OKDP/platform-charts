@@ -1,0 +1,9 @@
+# The platform values of the case external-connections, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx
+    certificateIssuers:
+      selfSigned:
+        name: default-issuer

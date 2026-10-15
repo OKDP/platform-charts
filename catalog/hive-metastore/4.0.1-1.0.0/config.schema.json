@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "hive-metastore",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object",
+      "description": "Platform values: the context (platform/platform-values.yaml, global.okdp), never an instance's."
+    },
+    "cpu": {
+      "type": "number",
+      "title": "CPU (vCPU)",
+      "description": "CPU request in vCPU. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 1,
+      "x-ui-columns": 2
+    },
+    "memoryGi": {
+      "type": "number",
+      "title": "Memory (GiB)",
+      "description": "Memory request in GiB. The limit is twice the request.",
+      "default": 0.5,
+      "multipleOf": 0.25,
+      "x-ui-group": "Resources",
+      "x-ui-order": 2,
+      "x-ui-columns": 2
+    },
+    "db": {
+      "type": "string",
+      "title": "Metadata database",
+      "description": "Connection to the SQL database hosting the metastore schema. Its credentials Secret holds the keys username and password.",
+      "x-okdp-connection-ref": {
+        "contract": "database-server"
+      },
+      "x-ui-group": "Cluster",
+      "x-ui-order": 1,
+      "default": ""
+    },
+    "storage": {
+      "type": "string",
+      "title": "Object store",
+      "description": "Connection to the S3-compatible object store hosting the warehouse.",
+      "x-okdp-connection-ref": {
+        "contract": "s3"
+      },
+      "x-ui-group": "Storage",
+      "x-ui-order": 1,
+      "default": ""
+    },
+    "s3SecretRef": {
+      "type": "string",
+      "title": "S3 credentials secret",
+      "description": "Secret with keys accessKey/secretKey, this consumer's own S3 identity.",
+      "x-ui-group": "Storage",
+      "x-ui-order": 2,
+      "default": ""
+    },
+    "warehouseBucket": {
+      "type": "string",
+      "title": "Warehouse bucket",
+      "description": "S3 bucket used as the warehouse directory.",
+      "default": "hive",
+      "x-ui-group": "Storage",
+      "x-ui-order": 3,
+      "x-ui-columns": 2
+    },
+    "upstream": {
+      "type": "object",
+      "title": "Upstream chart values",
+      "description": "Values of the upstream chart this chart renders, merged over the values it computes: any upstream parameter can be set, except the ones the platform relies on. Maps merge, lists and scalars replace. No key or value may contain '{{'.",
+      "default": {},
+      "x-ui-group": "Upstream values",
+      "x-ui-order": 1,
+      "x-ui-advanced": true,
+      "additionalProperties": false,
+      "properties": {
+        "hive-metastore": {
+          "type": "object",
+          "title": "hive-metastore",
+          "description": "Values of the hive-metastore chart 1.4.0 (oci://quay.io/okdp/charts/hive-metastore), for example image, replicaCount, resources, nodeSelector, tolerations, configOverrides, networkPolicies, s3.proxy. Refused: fullNameOverride, serviceName, servicePort, db, s3.url, s3.accessKey, s3.secretKey, cloud_storage, initJob.annotations. Appended to the list this chart sets: extraEnvRaw.",
+          "default": {},
+          "x-ui-widget": "yaml",
+          "x-ui-order": 1,
+          "allOf": [
+            {
+              "$ref": "#/definitions/noTemplate"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "db",
+    "storage",
+    "s3SecretRef"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "noTemplate": {
+      "description": "No key or string value, at any depth, contains '{{': upstream charts pass some values to tpl.",
+      "not": {
+        "type": "string",
+        "pattern": "\\{\\{"
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\{\\{"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/noTemplate"
+      },
+      "items": {
+        "$ref": "#/definitions/noTemplate"
+      }
+    }
+  }
+}

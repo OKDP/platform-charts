@@ -1,0 +1,5 @@
+# The demo project: database and object store declared as connection files.
+db: demo-db-hive
+storage: demo-storage
+s3SecretRef: creds-hive-metastore-s3
+warehouseBucket: hive

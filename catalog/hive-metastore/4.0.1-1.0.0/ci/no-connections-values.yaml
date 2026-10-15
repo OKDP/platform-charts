@@ -1,0 +1,4 @@
+# error: hive-metastore: db: no database-server connection given
+# Neither a database nor an object store, nor an S3 identity: every rule of
+# the errors section reports, together.
+warehouseBucket: hive
