@@ -58,7 +58,7 @@ okdp-compile both refuse it).
 
 ## Provided connection
 
-`<release>` (contract `hive`), in `okdp.instance.yaml`:
+`<release>` (contract `hive`), in `okdp.info.yaml`:
 
 ```yaml
 thriftUri: thrift://<release>-hive-metastore.<namespace>.svc:9083

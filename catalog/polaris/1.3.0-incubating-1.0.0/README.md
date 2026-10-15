@@ -95,7 +95,7 @@ template`) do not see alike; it stays disabled, as upstream.
 
 ## Provided connection
 
-`<release>` (contract `iceberg-catalog`), in `okdp.instance.yaml`:
+`<release>` (contract `iceberg-catalog`), in `okdp.info.yaml`:
 
 ```yaml
 uri: https://polaris-<namespace>.<suffix>/api/catalog

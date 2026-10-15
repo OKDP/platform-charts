@@ -13,7 +13,7 @@ OKDP's own objects, written whole in the `objects` of `okdp.yaml`; the
 compiled umbrella renders them (`okdp.objects.yaml`). They follow `chart/` of
 the okdp-control-plane-server repository (the environment of
 `internal/config/config.go`) and read `global.okdp`. What the instance
-publishes (its usage) is `okdp.instance.yaml`.
+publishes (its usage) is `okdp.info.yaml`.
 
 The package takes no upstream values (no `upstream.<chart>`): every object is
 computed from the parameters below (`config.schema.json`).

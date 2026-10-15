@@ -135,7 +135,7 @@ objects:
       ${{ oidcOn ? okdpGeneratedSecret({'name': cookieSecret,
           'keys': [{'key': 'cookie-cipher-secret-key', 'length': 32}]}) : [] }}
 
-# okdp.instance.yaml: a UI (the web proxy), no provided connection.
+# okdp.info.yaml: a UI (the web proxy), no provided connection.
 instance:
   url: https://${{ host }}
   usage: |

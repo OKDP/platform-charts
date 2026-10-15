@@ -11,7 +11,7 @@ upstream charts of `Chart.yaml` (its dependencies), whose values
 OKDP's defaults (`<key>.defaults.yaml`). `okdp.yaml` holds the rest: the
 platform values required, what an instance may override, OKDP's own
 objects (`objects`, rendered by the umbrella chart of the instance), the
-OAuth client and the instance's URL and usage (`okdp.instance.yaml`).
+OAuth client and the instance's URL and usage (`okdp.info.yaml`).
 
 The former module `main` rendered OKDP's superset chart
 (`quay.io/okdp/charts/superset` 0.15.2-2.0,
@@ -156,7 +156,7 @@ express (okdp-compiler gap list):
 - the values ConfigMaps `<release>-superset-values` and
   `<release>-oidc-dcr-values` are gone: the compiled values replace them;
 - the descriptor ConfigMap `<release>-okdp` is gone: the instance's URL and
-  usage are in `okdp.instance.yaml`, beside its compiled chart;
+  usage are in `okdp.info.yaml`, beside its compiled chart;
 - the bundled bitnami charts `postgresql` and `redis` are no longer dropped
   from the chart: it is rendered as published, both disabled by
   `superset.defaults.yaml` (and protected), so they render nothing.

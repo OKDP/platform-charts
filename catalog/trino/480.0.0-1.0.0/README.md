@@ -96,7 +96,7 @@ both refuse it). `opal` and `oidc-dcr` take no upstream values.
 
 ## Provided connection
 
-`<release>` (contract `trino`), in `okdp.instance.yaml`:
+`<release>` (contract `trino`), in `okdp.info.yaml`:
 
 ```yaml
 url: https://trino-<namespace>.<suffix>

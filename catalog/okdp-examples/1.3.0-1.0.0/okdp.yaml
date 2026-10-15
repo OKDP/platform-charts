@@ -67,7 +67,7 @@ errors:
           .filter(k, first([r.admin.credentialsSecret[?k].orValue('')]) == '')
           .map(k, 'okdp-examples: polarisRealms: principal "' + str(r.admin.?name.orValue('')) + '" in realm "' + r.name + '" is missing credentialsSecret.' + k)).flatten() }}
 
-# okdp.instance.yaml: no UI, no provided connection.
+# okdp.info.yaml: no UI, no provided connection.
 instance:
   usage: |
     A collection of hands-on examples, helper utilities, Jupyter notebooks,

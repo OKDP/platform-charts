@@ -403,7 +403,7 @@ objects:
       ${{ platform.oidc.enabled ? [] : okdpGeneratedSecret({'name': adminSecret, 'annotations': keep,
             'keys': [{'key': 'password', 'length': 24}]}) }}
 
-# okdp.instance.yaml: a UI, no provided connection.
+# okdp.info.yaml: a UI, no provided connection.
 instance:
   url: https://${{ host }}
   usage: |

@@ -155,7 +155,7 @@ objects:
                     port:
                       number: 4200
 
-# okdp.instance.yaml: what the console lists of the instance.
+# okdp.info.yaml: what the console lists of the instance.
 instance:
   url: https://${{ host }}
   usage: |

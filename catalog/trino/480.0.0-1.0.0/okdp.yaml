@@ -340,7 +340,7 @@ objects:
                       mountPath: /data
                       readOnly: true
 
-# okdp.instance.yaml: what the console lists of the instance.
+# okdp.info.yaml: what the console lists of the instance.
 instance:
   url: https://${{ host }}
   usage: |

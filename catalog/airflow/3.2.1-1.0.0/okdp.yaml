@@ -16,7 +16,7 @@ defaults:
   airflow: airflow.defaults.yaml
 upstream:
   airflow:
-    # What the platform relies on. Names (okdp.instance.yaml and the internal
+    # What the platform relies on. Names (okdp.info.yaml and the internal
     # Secret derive from the release). OIDC sign-in (extraEnv carries the
     # client Secret and S3 credentials as a templated string, which cannot be
     # appended to: an instance adds variables with env, secret or extraEnvFrom
@@ -188,7 +188,7 @@ objects:
                    {'key': 'fernet-key', 'length': 32, 'transform': 'b64enc'}],
           'annotations': internalAnnotations}) }}
 
-# okdp.instance.yaml. No provided connection.
+# okdp.info.yaml. No provided connection.
 instance:
   url: https://${{ host }}
   usage: |

@@ -294,7 +294,7 @@ objects:
       ${{ okdpGeneratedSecret({'name': hubGenerated, 'type': 'Opaque', 'keys': generatedKeys,
           'annotations': {'helm.sh/resource-policy': 'keep', 'argocd.argoproj.io/sync-options': 'Delete=false'}}) }}
 
-# okdp.instance.yaml: a UI, no provided connection.
+# okdp.info.yaml: a UI, no provided connection.
 instance:
   url: ${{ url }}
   usage: |

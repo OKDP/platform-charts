@@ -109,7 +109,7 @@ OKDP's own objects (generated Secrets, hooks, custom resources, the control
 plane's workloads) are the package's `objects`: the compiled umbrella renders
 them from `okdp.objects.yaml`, as written. What an instance publishes (URL,
 usage, provided connections), which the console lists, is
-`okdp.instance.yaml`, beside the compiled umbrella in the deployments
+`okdp.info.yaml`, beside the compiled umbrella in the deployments
 repository. Generated passwords come from External Secrets Operator
 generators: a compile is deterministic, it never produces a secret.
 

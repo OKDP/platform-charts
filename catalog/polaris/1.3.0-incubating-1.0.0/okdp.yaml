@@ -148,7 +148,7 @@ objects:
           'stringData': {'client_id': 'root'},
           'annotations': keep}) }}
 
-# okdp.instance.yaml: the console's URL and how to use the instance.
+# okdp.info.yaml: the console's URL and how to use the instance.
 instance:
   url: ${{ consoleUrl }}
   usage: |

@@ -42,7 +42,7 @@ errors:
   - $if: ${{ values.?s3SecretRef.orValue('') == '' }}
     $value: "hive-metastore: s3SecretRef is required: a Secret with the keys accessKey and secretKey, this metastore's own S3 identity"
 
-# okdp.instance.yaml: no UI.
+# okdp.info.yaml: no UI.
 instance:
   usage: |
     Hive Metastore is a centralized metadata repository for data lakes and big data analytics.

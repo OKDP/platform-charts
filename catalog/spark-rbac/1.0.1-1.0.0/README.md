@@ -38,7 +38,7 @@ upstream:
 ```
 
 `serviceAccount.name` is refused (`protect`): it is the `serviceAccountName`
-parameter, which `okdp.instance.yaml` publishes to the Spark jobs. An
+parameter, which `okdp.info.yaml` publishes to the Spark jobs. An
 upstream value wins over the parameter it overlaps
 (`serviceAccount.automount` over `automountServiceAccountToken`). No key or
 value may contain `{{` (the schema and okdp-compile both refuse it).

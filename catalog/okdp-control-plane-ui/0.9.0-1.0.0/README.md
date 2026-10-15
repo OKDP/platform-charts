@@ -11,7 +11,7 @@ of `okdp.yaml`; the compiled umbrella renders them (`okdp.objects.yaml`).
 They follow `chart/` of the okdp-control-plane-ui repository (the
 environment its `docker-entrypoint.sh` writes into `config.js`) and read
 `global.okdp`. What the instance publishes (its URL and usage) is
-`okdp.instance.yaml`.
+`okdp.info.yaml`.
 
 The package takes no upstream values (no `upstream.<chart>`): every object is
 computed from the parameters below (`config.schema.json`).

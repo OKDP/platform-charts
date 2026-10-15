@@ -5,7 +5,7 @@
 roles: [spark-rbac]
 upstream:
   spark-rbac:
-    # okdp.instance.yaml publishes it, and the Spark jobs of the namespace use
+    # okdp.info.yaml publishes it, and the Spark jobs of the namespace use
     # it (serviceAccountName).
     protect: [serviceAccount.name]
 
