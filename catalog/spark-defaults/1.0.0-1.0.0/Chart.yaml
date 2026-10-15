@@ -1,0 +1,20 @@
+apiVersion: v2
+name: spark-defaults
+description: >-
+  Spark default properties (spark-defaults.conf) for the Spark jobs of a namespace.
+type: application
+# <upstream>-<okdp semver>.
+version: 1.0.0-1.0.0
+appVersion: "1.0.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/okdp-sandbox
+dependencies:
+  - name: spark-defaults
+    repository: oci://quay.io/okdp/charts
+    version: 1.0.0

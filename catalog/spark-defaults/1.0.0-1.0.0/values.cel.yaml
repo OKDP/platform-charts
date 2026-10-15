@@ -1,0 +1,6 @@
+# The values of the spark-defaults chart (the former KuboCD module main,
+# whose values were static). The chart was a plain Helm dependency, its
+# values set under the spark-defaults key of the instance: they are passed
+# through as they are (e.g. config, the spark-defaults.conf properties).
+spark-defaults:
+  $merge: ${{ values['spark-defaults'] }}

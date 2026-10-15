@@ -1,0 +1,6 @@
+# The platform values of the case default (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx

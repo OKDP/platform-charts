@@ -1,0 +1,12 @@
+# OKDP's part of spark-defaults: what the instance publishes. values.cel.yaml
+# passes the instance's spark-defaults values to the upstream chart. No
+# platform value is read, no upstream.<chart> values (the spark-defaults
+# parameter already carries any value of the chart).
+
+roles: [spark-defaults]
+
+# No UI, no provided connection.
+instance:
+  usage: |
+    Spark default properties for the Spark jobs of namespace `${{ release.namespace }}`:
+    ConfigMap `spark-defaults`, key `spark-defaults.conf`.

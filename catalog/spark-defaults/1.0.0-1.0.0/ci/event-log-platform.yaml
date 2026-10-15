@@ -1,0 +1,6 @@
+# The platform values of the case event-log (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: example.org
+      className: nginx
