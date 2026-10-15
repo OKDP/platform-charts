@@ -52,7 +52,10 @@ contract's "only standard tooling" rule to be revisited.
 A `trino` reference is a connection (the platform's, the project's or the
 instance's own) or the release name of a trino instance in the same namespace
 (its `uri`, `trino://trino@trino-<namespace>.<suffix>:443`, is used).
-`database-server` references are always connections.
+A `database-server` reference is a connection or, by its name, an output of
+an instance in the same namespace (e.g. `demo-pg-superset`, a database of a
+cnpg-postgresql instance). A provider of another namespace is always a
+connection.
 
 Platform values read from `global.okdp`: `ingress.suffix`, `ingress.className`,
 `certificateIssuers.selfSigned.name`,

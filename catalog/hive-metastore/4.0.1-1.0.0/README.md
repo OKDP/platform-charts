@@ -24,9 +24,13 @@ instance, what it publishes and what an instance may override.
 | `cpu` | `0.5` | CPU request (vCPU); the limit is twice the request. |
 | `memoryGi` | `0.5` | Memory request (GiB); the limit is twice the request. |
 
-No platform value is read. `db` and `storage` must be external connections
-(`connections.<name>` of the platform, the project or the instance): the
-`database-server` and `s3` contracts have no internal naming convention.
+No platform value is read. The `database-server` and `s3` contracts have no
+internal naming convention: `db` and `storage` name a connection
+(`connections.<name>` of the platform, the project or the instance) or, by
+its name, an output of another instance of the same namespace (e.g.
+`demo-pg-hive`, a database of a cnpg-postgresql instance), whose release
+this one then waits for. A provider of another namespace is always a
+connection.
 
 ## Upstream values
 

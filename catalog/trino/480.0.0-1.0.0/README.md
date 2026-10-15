@@ -39,9 +39,12 @@ OKDP's objects are rendered by the instance's umbrella chart
 | `enableOPAL` | `false` | Feed OPA from a policy repository (`policyRepoUrl`, `policyRepoMainBranch`, `OPAL_POLICY_SUBSCRIPTION_DIRS`, `OPAL_POLICY_REPO_MANIFEST_PATH`); off, kube-mgmt loads policies from labelled ConfigMaps. |
 
 A connection reference is either a connection (`connections.<name>` of the
-platform, the project or the instance) or, for `hive` and `iceberg-catalog`,
-the release name of a hive-metastore or polaris instance in the same
-namespace (e.g. `demo-hive`). `s3` references are always connections.
+platform, the project or the instance) or a provider in the same namespace:
+for `hive` and `iceberg-catalog`, the release name of a hive-metastore or
+polaris instance (e.g. `demo-hive`), resolved by the contract's naming
+convention; for `s3`, which has none, the name of an object store's output
+(e.g. `demo-storage`). A provider of another namespace is always a
+connection.
 
 Free-text parameters (connection references, secret names, `warehouse`,
 `oauth2Scope`, the OPA/OPAL settings) may not contain `{{`, `}}` or line

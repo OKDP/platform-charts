@@ -82,10 +82,15 @@ A compile reads the context, by level: the platform's values (`global.okdp`:
 ingress, OIDC, proxy, certificate issuers, storage classes) and connections,
 a project's, an instance's own connections; then the instance's values, its
 parameters and its upstream values (`upstream.<key>`). A connection
-reference parameter names either a connection of the context or another
-OKDP instance of the same project (`hive`, `iceberg-catalog`, `trino`): the
+reference parameter names either a connection of the context or a provider
+in the same namespace: for a contract with a naming convention (`hive`,
+`iceberg-catalog`, `trino`), the release name of another OKDP instance,
+resolved by the convention; for a contract without one (`s3`,
+`database-server`), the name of an output another instance publishes. The
 compiler resolves it against its contract (`contracts/`) before the mapping
-runs, and reports the instances it depends on (`okdp.dependencies.yaml`).
+runs, and prints the instances it depends on (on stderr), whose releases
+this one waits for. A provider of another namespace is always a connection
+of the context.
 
 Each upstream chart then receives, merged in this order: its own defaults
 (Helm applies them), OKDP's defaults (`<key>.defaults.yaml`), the values the
