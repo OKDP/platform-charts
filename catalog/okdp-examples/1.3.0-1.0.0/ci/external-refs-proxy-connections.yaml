@@ -1,0 +1,13 @@
+# The connections of the case external-refs-proxy: the instance's own (--context 2:).
+connections:
+  store:
+    contract: s3
+    apiUrl: https://s3.example.com
+  shared-trino:
+    contract: trino
+    url: https://trino.example.com
+    uri: trino://trino@trino.example.com:443
+  shared-polaris:
+    contract: iceberg-catalog
+    uri: https://polaris.example.com/api/catalog
+    realm: prod

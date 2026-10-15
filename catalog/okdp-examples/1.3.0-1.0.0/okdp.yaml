@@ -1,0 +1,74 @@
+# OKDP's part of okdp-examples: the platform values it needs, OKDP's
+# defaults of its upstream chart and what an instance may override, then the
+# mapping besides the chart's values (values.cel.yaml), with the connections
+# resolved by okdp-compile.
+
+roles: [examples]
+dependsOn: [storage, metastore-catalog, iceberg-catalog, interactive-query]
+require:
+  - oidc.issuerUri
+defaults:
+  okdp-examples: okdp-examples.defaults.yaml
+upstream:
+  # Module main: the seed Job (post-install/post-upgrade hook) and its scripts.
+  okdp-examples:
+    # The object names, the seed Job's hook annotations (hooks are limited to
+    # pre/post-install/upgrade) and the realms file the 03-polaris step
+    # applies, generated from polarisRealms.
+    protect: [fullnameOverride, job.annotations, extraFiles.polaris-catalogs]
+    # The lists carrying the S3, Trino and Polaris credentials and the CA
+    # bundle: an instance adds to them.
+    append: [extraEnvRaw, extraVolumes, extraVolumeMounts]
+
+# ${{ ... }} is a CEL expression; the shell's $VAR and ${VAR} stay literal.
+vars:
+  # The s3 connection: its internal URL, else its API URL.
+  storageApiUrl: >-
+    ${{ type(values.storage) == map ? first([values.storage.?internalUrl.orValue(''), values.storage.apiUrl]) : '' }}
+  # The connection publishes the Iceberg REST base; polaris-admin wants the
+  # server root.
+  polarisUri: >-
+    ${{ type(values.polaris) == map ? first([values.polaris.?internalUri.orValue(''), values.polaris.uri]) : '' }}
+  polarisEndpointUrl: >-
+    ${{ polarisUri.endsWith('/api/catalog') ? polarisUri.substring(0, polarisUri.size() - 12) : polarisUri }}
+  # Per Polaris realm, the first principal holding the catalog_admin role and a
+  # credentialsSecret (admin, null when none), and the prefix of its env
+  # variables: the realm name upper-cased, every run of characters other than
+  # A-Z and 0-9 as one "_", none at either end.
+  realms:
+    - $for: "r in (type(values.polarisRealms.?realms.orValue(null)) == list ? values.polarisRealms.realms : [])"
+      $vars:
+        name: ${{ str(r.?name.orValue('')) }}
+        upper: ${{ name.upperAscii() }}
+        admins: >-
+          ${{ (type(r.?principals.orValue(null)) == list ? r.principals : []).filter(p,
+              'catalog_admin' in (type(p.?principalRoles.orValue(null)) == list ? p.principalRoles : [])
+              && type(p.?credentialsSecret.orValue(null)) == map && p.credentialsSecret.size() > 0) }}
+      $each:
+        name: ${{ name }}
+        prefix: >-
+          ${{ lists.range(upper.size()).map(i, upper.charAt(i)).map(c, c.matches('^[A-Z0-9]$') ? c : ' ')
+              .join('').split(' ').filter(w, w != '').join('_') }}
+        admin: "${{ admins.size() > 0 ? admins[0] : null }}"
+
+errors:
+  - $spread: >-
+      ${{ ['s3SecretRef', 'trinoOidcSecretRef'].filter(p, first([values[p]]) == '').map(p, 'okdp-examples: ' + p + ' is required') }}
+  # The connections: a reference left empty.
+  - $spread: >-
+      ${{ [['storage', 's3'], ['trino', 'trino'], ['polaris', 'iceberg-catalog']].filter(f, type(values[f[0]]) != map)
+          .map(f, 'okdp-examples: ' + f[0] + ': no ' + f[1] + ' connection given') }}
+  - $for: r in realms
+    $each:
+      $if: ${{ r.admin == null }}
+      $value: 'okdp-examples: polarisRealms: no principal with role ''catalog_admin'' and a credentialsSecret found in realm "${{ r.name }}"'
+  - $spread: >-
+      ${{ realms.filter(r, r.admin != null).map(r, ['name', 'clientIdKey', 'clientSecretKey']
+          .filter(k, first([r.admin.credentialsSecret[?k].orValue('')]) == '')
+          .map(k, 'okdp-examples: polarisRealms: principal "' + str(r.admin.?name.orValue('')) + '" in realm "' + r.name + '" is missing credentialsSecret.' + k)).flatten() }}
+
+# okdp.instance.yaml: no UI, no provided connection.
+instance:
+  usage: |
+    A collection of hands-on examples, helper utilities, Jupyter notebooks,
+    and data workflows that showcases how to work with the OKDP Platform.

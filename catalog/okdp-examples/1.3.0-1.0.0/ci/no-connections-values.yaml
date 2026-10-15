@@ -1,0 +1,2 @@
+# error: okdp-examples: s3SecretRef is required
+# Nothing set: the Secrets and the three connections are reported at once.

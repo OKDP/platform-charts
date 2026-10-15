@@ -1,0 +1,15 @@
+# The platform values of the case realm-without-admin, over platform.yaml (--context, level 0).
+global:
+  okdp:
+    ingress:
+      suffix: okdp.sandbox
+      className: nginx
+    oidc:
+      issuerUri: https://keycloak.okdp.sandbox/realms/master
+    proxy:
+      httpProxy: ""
+      httpsProxy: ""
+      noProxy: ""
+    certificateIssuers:
+      selfSigned:
+        name: default-issuer

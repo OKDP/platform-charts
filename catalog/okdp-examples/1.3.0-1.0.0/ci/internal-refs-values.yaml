@@ -1,0 +1,18 @@
+# The demo project: internal trino and polaris releases (demo-trino,
+# demo-polaris), the platform S3 store as a connection file, one realm.
+storage: demo-storage
+s3SecretRef: creds-examples-s3
+trino: demo-trino
+trinoOidcSecretRef: creds-examples-trino-oauth2
+polaris: demo-polaris
+polarisRealms:
+  realms:
+    - name: sandbox
+      catalogs:
+        - {name: silver, storageLocation: s3://silver}
+      principals:
+        - name: reader
+          principalRoles: [catalog_reader]
+        - name: admin
+          principalRoles: [catalog_admin]
+          credentialsSecret: {name: creds-polaris-admin, clientIdKey: client_id, clientSecretKey: client_secret}

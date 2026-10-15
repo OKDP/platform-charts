@@ -1,0 +1,19 @@
+# error: okdp-examples: polarisRealms: no principal with role 'catalog_admin' and a credentialsSecret found in realm "sandbox"
+# A realm whose catalog_admin principal has no credentialsSecret, and one
+# whose credentialsSecret lacks a key.
+storage: demo-storage
+s3SecretRef: creds-examples-s3
+trino: demo-trino
+trinoOidcSecretRef: creds-examples-trino-oauth2
+polaris: demo-polaris
+polarisRealms:
+  realms:
+    - name: sandbox
+      principals:
+        - name: admin
+          principalRoles: [catalog_admin]
+    - name: prod
+      principals:
+        - name: admin
+          principalRoles: [catalog_admin]
+          credentialsSecret: {name: creds-polaris-prod, clientIdKey: client_id}

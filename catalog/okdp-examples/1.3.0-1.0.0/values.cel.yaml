@@ -1,0 +1,101 @@
+# The values of the okdp-examples chart (the former KuboCD module main),
+# computed from the parameters, the platform values and the connections;
+# they see the vars of okdp.yaml. The shell's $VAR and ${VAR} stay literal.
+okdp-examples:
+  fullnameOverride: ${{ release.name }}
+  extraEnvRaw:
+    - name: MC_INSECURE
+      value: "1"
+    - name: S3_ENDPOINT
+      value: ${{ storageApiUrl }}
+
+    # Bronze Layer
+    - name: S3_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: accessKey
+    - name: S3_SECRET_KEY
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.s3SecretRef }}
+          key: secretKey
+
+    - name: BRONZE_BUCKET
+      value: ${{ values.bronzeBucket }}
+    - name: BRONZE_BUCKET_PREFIX
+      value: ${{ values.bronzePrefix }}
+    - name: BRONZE_DATA_URL
+      value: ${{ values.bronzeDataUrl }}
+    - name: SILVER_BUCKET
+      value: ${{ values.silverBucket }}
+    - name: GOLD_BUCKET
+      value: ${{ values.goldBucket }}
+
+    - name: TRINO_SERVER_URL
+      value: ${{ values.trino.url }}
+    - name: TRINO_TERMINAL
+      value: dumb
+    - name: EXAMPLES_TRINO_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.trinoOidcSecretRef }}
+          key: client_id
+    - name: EXAMPLES_TRINO_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: ${{ values.trinoOidcSecretRef }}
+          key: client_secret
+
+    - name: SPARK_EVENT_LOG_DIRECTORY
+      value: ${{ values.sparkEventsLogDir }}
+    # The platform proxy (HTTPS_PROXY, HTTP_PROXY, NO_PROXY, the set ones).
+    - $spread: >-
+        ${{ ['HTTPS_PROXY', 'HTTP_PROXY', 'NO_PROXY'].filter(k, k in platform.proxyEnv)
+            .map(k, {'name': k, 'value': platform.proxyEnv[k]}) }}
+    # Polaris
+    - name: OIDC_ISSUER_URL
+      value: ${{ global.okdp.oidc.issuerUri }}
+    - name: POLARIS_URL
+      value: ${{ polarisEndpointUrl }}
+    - name: CA_CERT_PATH
+      value: /cacerts/ca.crt
+    - name: CURL_CA_BUNDLE
+      value: /cacerts/ca.crt
+    - name: TRUSTSTORE_PASSWORD
+      value: ""
+    - $for: r in realms
+      $each:
+        - name: ${{ r.prefix }}_POLARIS_OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: ${{ r.admin.credentialsSecret.name }}
+              key: ${{ r.admin.credentialsSecret.clientIdKey }}
+        - name: ${{ r.prefix }}_POLARIS_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: ${{ r.admin.credentialsSecret.name }}
+              key: ${{ r.admin.credentialsSecret.clientSecretKey }}
+
+  resources:
+    requests:
+      cpu: ${{ str(values.cpu) }}
+      memory: ${{ str(values.memoryGi) }}Gi
+    limits:
+      cpu: ${{ str(values.cpu * 2.0) }}
+      memory: ${{ str(values.memoryGi * 2.0) }}Gi
+
+  extraVolumes:
+    - name: cacerts
+      secret:
+        secretName: certs-bundle
+
+  extraVolumeMounts:
+    - name: cacerts
+      mountPath: /cacerts
+
+  extraFiles:
+    # The realms file the 03-polaris step applies: polarisRealms as YAML.
+    polaris-catalogs:
+      mountPath: /etc/polaris/catalogs.yaml
+      stringData: ${{ toYaml(values.polarisRealms) }}

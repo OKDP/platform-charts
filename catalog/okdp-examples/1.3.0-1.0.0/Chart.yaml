@@ -1,0 +1,21 @@
+apiVersion: v2
+name: okdp-examples
+description: >-
+  A collection of hands-on examples, helper utilities, Jupyter notebooks,
+  and data workflows that showcases how to work with the OKDP Platform.
+type: application
+# <upstream>-<okdp semver>.
+version: 1.3.0-1.0.0
+appVersion: "1.3.0"
+home: https://okdp.io
+maintainers:
+  - name: Pierre Sauvage
+    email: m.sauvage.pierre@gmail.com
+    url: https://github.com/Pierrotws
+sources:
+  - https://github.com/OKDP/platform-charts
+  - https://github.com/OKDP/okdp-examples
+dependencies:
+  - name: okdp-examples
+    repository: oci://quay.io/okdp/charts
+    version: 1.3.0
